@@ -1,0 +1,13 @@
+{
+  "kind": "companionRuleCatalog",
+  "schemaVersion": 1,
+  "rules": [
+    {
+      "id": "companion_rule.follow_distance.default",
+      "chipName": "Stay Near Me",
+      "priority": 50,
+      "editableVariable": "follow_distance_meters",
+      "defaultValue": 6.0
+    }
+  ]
+}

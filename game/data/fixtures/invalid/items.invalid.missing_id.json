@@ -1,0 +1,12 @@
+{
+  "kind": "itemCatalog",
+  "schemaVersion": 1,
+  "items": [
+    {
+      "displayName": "Broken Item",
+      "category": "salvage",
+      "stackLimit": 5,
+      "description": "This fixture intentionally fails validation."
+    }
+  ]
+}

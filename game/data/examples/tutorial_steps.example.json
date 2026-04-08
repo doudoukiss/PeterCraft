@@ -1,0 +1,21 @@
+{
+  "kind": "tutorialCatalog",
+  "schemaVersion": 1,
+  "tutorials": [
+    {
+      "id": "tutorial.foundation.first_boot",
+      "steps": [
+        {
+          "id": "tutorial_step.foundation.open_menu",
+          "action": "show_menu",
+          "prompt": "Open the main menu shell."
+        },
+        {
+          "id": "tutorial_step.foundation.load_scene",
+          "action": "load_scene",
+          "prompt": "Load the empty scene shell."
+        }
+      ]
+    }
+  ]
+}

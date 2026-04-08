@@ -1,0 +1,13 @@
+{
+  "kind": "missionCatalog",
+  "schemaVersion": 1,
+  "missions": [
+    {
+      "id": "Mission.Foundation.BadId",
+      "template": "extract",
+      "entryRoomId": "room.foundation.entry_hall",
+      "extractionRoomId": "room.foundation.exit_pad",
+      "lootTableId": "loot_table.foundation.entry_hall"
+    }
+  ]
+}

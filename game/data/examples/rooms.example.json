@@ -1,0 +1,18 @@
+{
+  "kind": "roomCatalog",
+  "schemaVersion": 1,
+  "rooms": [
+    {
+      "id": "room.foundation.entry_hall",
+      "theme": "foundation",
+      "connectorCount": 2,
+      "supportsExtraction": false
+    },
+    {
+      "id": "room.foundation.exit_pad",
+      "theme": "foundation",
+      "connectorCount": 1,
+      "supportsExtraction": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "kind": "itemCatalog",
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "item.salvage.scrap_metal",
+      "displayName": "Scrap Metal",
+      "category": "salvage",
+      "stackLimit": 50,
+      "description": "Foundation salvage used for placeholder crafting."
+    }
+  ]
+}

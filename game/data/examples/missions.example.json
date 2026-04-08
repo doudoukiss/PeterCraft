@@ -1,0 +1,13 @@
+{
+  "kind": "missionCatalog",
+  "schemaVersion": 1,
+  "missions": [
+    {
+      "id": "mission.foundation.shell_boot",
+      "template": "tutorial",
+      "entryRoomId": "room.foundation.entry_hall",
+      "extractionRoomId": "room.foundation.exit_pad",
+      "lootTableId": "loot_table.foundation.entry_hall"
+    }
+  ]
+}

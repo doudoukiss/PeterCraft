@@ -1,0 +1,49 @@
+name: validate_build_test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-build-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up MSVC developer command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Bootstrap
+        shell: pwsh
+        run: ./tools/build-scripts/bootstrap.ps1
+
+      - name: Validate
+        shell: pwsh
+        run: ./tools/build-scripts/validate.ps1
+
+      - name: Build
+        shell: pwsh
+        run: ./tools/build-scripts/build.ps1
+
+      - name: Test
+        shell: pwsh
+        run: ./tools/build-scripts/test.ps1
+
+      - name: Upload development build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: petercraft-phase0-dev-build
+          path: |
+            out/build/windows-vs2022-dev/bin/Debug/PeterCraftApp.exe
+            Saved/Logs/*.jsonl
