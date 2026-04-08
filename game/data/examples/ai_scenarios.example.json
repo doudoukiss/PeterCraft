@@ -1,0 +1,12 @@
+{
+  "kind": "aiScenarioCatalog",
+  "schemaVersion": 1,
+  "scenarios": [
+    { "id": "scenario.ai.follow_corridor.v1", "displayName": "Follow Corridor", "deterministic": true, "steps": [{ "stepId": "step.follow_gap", "expectedActionId": "move_to", "expectedState": "follow" }] },
+    { "id": "scenario.ai.enemy_ambush.v1", "displayName": "Enemy Ambush", "deterministic": true, "steps": [{ "stepId": "step.enemy_attack", "expectedActionId": "attack", "expectedState": "attack" }] },
+    { "id": "scenario.ai.low_health_retreat.v1", "displayName": "Low Health Retreat", "deterministic": true, "steps": [{ "stepId": "step.retreat", "expectedActionId": "evade", "expectedState": "retreat_regroup" }] },
+    { "id": "scenario.ai.revive_under_pressure.v1", "displayName": "Revive Under Pressure", "deterministic": true, "steps": [{ "stepId": "step.revive", "expectedActionId": "revive", "expectedState": "revive_help" }] },
+    { "id": "scenario.ai.extraction_rush.v1", "displayName": "Extraction Rush", "deterministic": true, "steps": [{ "stepId": "step.extract", "expectedActionId": "extract", "expectedState": "extract_assist" }] },
+    { "id": "scenario.ai.loot_vs_safety.v1", "displayName": "Loot Versus Safety", "deterministic": true, "steps": [{ "stepId": "step.loot_after_clear", "expectedActionId": "loot", "expectedState": "loot_support" }] }
+  ]
+}

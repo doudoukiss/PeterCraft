@@ -102,6 +102,10 @@ namespace Peter::Adapters
     virtual void PresentPrompt(std::string_view prompt) = 0;
     virtual void PresentPanel(std::string_view panelId, std::string_view body) = 0;
     virtual void ApplyPresentationSettings(const PresentationSettings& settings) = 0;
+    virtual void PresentDebugMarkers(const std::vector<std::string>& markerIds) = 0;
+    virtual void PresentCompanionFeedback(
+      std::string_view calloutToken,
+      std::string_view gestureToken) = 0;
   };
 
   struct PlatformServices

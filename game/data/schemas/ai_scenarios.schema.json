@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft AI Scenarios",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "scenarios"],
+  "properties": {
+    "kind": { "const": "aiScenarioCatalog" },
+    "schemaVersion": { "const": 1 },
+    "scenarios": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "deterministic", "steps"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^scenario\\.ai\\.[a-z0-9_]+\\.v[0-9]+$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "deterministic": { "type": "boolean", "const": true },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["stepId", "expectedActionId", "expectedState"],
+              "properties": {
+                "stepId": { "type": "string", "minLength": 1 },
+                "expectedActionId": { "enum": ["move_to", "attack", "evade", "revive", "extract", "loot", "wait"] },
+                "expectedState": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

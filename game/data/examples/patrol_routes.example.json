@@ -1,0 +1,26 @@
+{
+  "kind": "patrolRouteCatalog",
+  "schemaVersion": 1,
+  "routes": [
+    {
+      "id": "route.machine_silo.entry_loop",
+      "displayName": "Entry Loop",
+      "nodeIds": [
+        "room.raid.entry_platform",
+        "room.raid.patrol_hall",
+        "room.raid.guard_post"
+      ],
+      "looped": true
+    },
+    {
+      "id": "route.machine_silo.vault_watch",
+      "displayName": "Vault Watch",
+      "nodeIds": [
+        "room.raid.guard_post",
+        "room.raid.high_risk_vault",
+        "room.raid.coolant_walk"
+      ],
+      "looped": true
+    }
+  ]
+}

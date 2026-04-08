@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Companion Stances",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "stances"],
+  "properties": {
+    "kind": { "const": "companionStanceCatalog" },
+    "schemaVersion": { "const": 1 },
+    "stances": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "summary", "attackBias", "defendBias", "lootBias", "reviveBias", "extractionBias", "cautionBias"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^stance\\.[a-z0-9_]+$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "attackBias": { "type": "number", "minimum": -3, "maximum": 3 },
+          "defendBias": { "type": "number", "minimum": -3, "maximum": 3 },
+          "lootBias": { "type": "number", "minimum": -3, "maximum": 3 },
+          "reviveBias": { "type": "number", "minimum": -3, "maximum": 3 },
+          "extractionBias": { "type": "number", "minimum": -3, "maximum": 3 },
+          "cautionBias": { "type": "number", "minimum": -3, "maximum": 3 }
+        }
+      }
+    }
+  }
+}

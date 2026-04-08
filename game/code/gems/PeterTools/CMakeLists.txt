@@ -8,6 +8,11 @@ target_include_directories(PeterTools
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+target_link_libraries(PeterTools
+  PUBLIC
+    PeterAI
+)
+
 target_compile_features(PeterTools PUBLIC cxx_std_20)
 
 peter_enable_strict_warnings(PeterTools)

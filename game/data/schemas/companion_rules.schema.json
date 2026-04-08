@@ -1,28 +1,40 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PeterCraft Companion Rule Catalog",
+  "title": "PeterCraft Companion Behavior Chip Catalog",
   "type": "object",
   "additionalProperties": false,
-  "required": ["kind", "schemaVersion", "rules"],
+  "required": ["kind", "schemaVersion", "chips"],
   "properties": {
-    "kind": { "const": "companionRuleCatalog" },
-    "schemaVersion": { "const": 1 },
-    "rules": {
+    "kind": { "const": "companionChipCatalog" },
+    "schemaVersion": { "const": 2 },
+    "chips": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 5,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "chipName", "priority", "editableVariable", "defaultValue", "minValue", "maxValue", "previewText", "effectDescription"],
+        "required": [
+          "id",
+          "chipName",
+          "editableVariable",
+          "defaultValue",
+          "minValue",
+          "maxValue",
+          "plainLanguage",
+          "promiseText",
+          "cautionText",
+          "effectDescription"
+        ],
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "id": { "type": "string", "pattern": "^chip\\.[a-z0-9_]+$" },
           "chipName": { "type": "string", "minLength": 1 },
-          "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
           "editableVariable": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-          "defaultValue": { "type": "number", "minimum": 4, "maximum": 10 },
-          "minValue": { "type": "number", "minimum": 4, "maximum": 10 },
-          "maxValue": { "type": "number", "minimum": 4, "maximum": 10 },
-          "previewText": { "type": "string", "minLength": 1 },
+          "defaultValue": { "type": "number", "minimum": 0, "maximum": 10 },
+          "minValue": { "type": "number", "minimum": 0, "maximum": 10 },
+          "maxValue": { "type": "number", "minimum": 0, "maximum": 10 },
+          "plainLanguage": { "type": "string", "minLength": 1 },
+          "promiseText": { "type": "string", "minLength": 1 },
+          "cautionText": { "type": "string", "minLength": 1 },
           "effectDescription": { "type": "string", "minLength": 1 }
         }
       }

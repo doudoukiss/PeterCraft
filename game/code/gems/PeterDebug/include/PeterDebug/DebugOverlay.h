@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PeterAI/CompanionAi.h"
+
 #include <map>
 #include <string>
 
@@ -9,6 +11,7 @@ namespace Peter::Debug
   {
   public:
     void SetValue(const std::string& key, const std::string& value);
+    void SetAiSnapshot(const Peter::AI::AgentExplainSnapshot& snapshot);
     [[nodiscard]] std::string Render() const;
 
   private:

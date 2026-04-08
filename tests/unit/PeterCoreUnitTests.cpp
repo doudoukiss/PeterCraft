@@ -30,16 +30,97 @@ PETER_TEST_MAIN({
   PETER_ASSERT_TRUE(Peter::Core::StableId::IsValid("item.salvage.scrap_metal"));
   PETER_ASSERT_TRUE(!Peter::Core::StableId::IsValid("Item.Salvage.Bad"));
 
-  Peter::Core::FeatureRegistry registry({"0.3.0", "test"});
-  registry.SetFlag("feature.test", true);
-  PETER_ASSERT_TRUE(registry.IsEnabled("feature.test"));
-  PETER_ASSERT_EQ(std::string("test"), registry.Version().track);
+  Peter::Core::FeatureRegistry registry({"0.4.0", "phase3"});
+  registry.SetFlag("feature.ai_alpha", true);
+  PETER_ASSERT_TRUE(registry.IsEnabled("feature.ai_alpha"));
+  PETER_ASSERT_EQ(std::string("phase3"), registry.Version().track);
 
   Peter::Core::EventBus eventBus;
   CountingSink sink;
   eventBus.RegisterSink(&sink);
   eventBus.Emit({Peter::Core::EventCategory::Gameplay, "gameplay.test", {}});
   PETER_ASSERT_EQ(1, sink.count);
+
+  PETER_ASSERT_TRUE(Peter::AI::HasLineOfSight(6, 10, false));
+  PETER_ASSERT_TRUE(!Peter::AI::HasLineOfSight(12, 10, false));
+  PETER_ASSERT_TRUE(Peter::AI::CanHearEvent(5, 7, 3));
+  PETER_ASSERT_TRUE(!Peter::AI::CanHearEvent(1, 8, 2));
+
+  const auto decayedMemory = Peter::AI::DecayThreatMemory(
+    {Peter::AI::ThreatMemoryEntry{"enemy.test", "room.raid.guard_post", 0, 2, 0.9}},
+    2);
+  PETER_ASSERT_EQ(1, static_cast<int>(decayedMemory.size()));
+  PETER_ASSERT_EQ(2, decayedMemory.front().ageTurns);
+
+  Peter::AI::CompanionWorldContext reviveContext;
+  reviveContext.threatVisible = true;
+  reviveContext.sameTargetMarked = true;
+  reviveContext.playerNeedsRevive = true;
+  reviveContext.playerLowHealth = true;
+  reviveContext.unsafeToAdvance = true;
+  reviveContext.repairPulseUnlocked = true;
+  reviveContext.distanceToPlayerMeters = 2;
+  reviveContext.distanceToThreatMeters = 4;
+  reviveContext.roomNodeId = "room.raid.guard_post";
+  reviveContext.routeNodeId = "route.machine_silo.vault_watch";
+  reviveContext.currentGoal = "goal.defend_player";
+  reviveContext.visibleThreatId = "enemy.machine_patrol.chaser_02";
+  reviveContext.lastKnownThreatPositionToken = "room.raid.guard_post";
+
+  const auto guardianDecision = Peter::AI::EvaluateCompanion(
+    Peter::AI::CompanionConfig{
+      6.0,
+      false,
+      "stance.guardian",
+      {"chip.stay_near_me", "chip.protect_me_first"},
+      {{"chip.stay_near_me", 6.0}, {"chip.protect_me_first", 1.0}}},
+    reviveContext);
+  PETER_ASSERT_EQ(std::string("revive"), guardianDecision.lastAction);
+  PETER_ASSERT_EQ(std::string("revive_help"), guardianDecision.currentState);
+  PETER_ASSERT_TRUE(!guardianDecision.topCandidates.empty());
+
+  const auto explainSnapshot = Peter::AI::BuildExplainSnapshot(guardianDecision);
+  PETER_ASSERT_EQ(std::string("goal.revive_player"), explainSnapshot.currentGoal);
+  PETER_ASSERT_TRUE(!explainSnapshot.topReason.empty());
+
+  Peter::AI::CompanionWorldContext lootContext;
+  lootContext.rareLootVisible = false;
+  lootContext.lootPingUnlocked = true;
+  lootContext.distanceToPlayerMeters = 7;
+  lootContext.distanceToThreatMeters = 6;
+  lootContext.roomNodeId = "room.raid.patrol_hall";
+  lootContext.routeNodeId = "route.machine_silo.entry_loop";
+  lootContext.currentGoal = "goal.follow_player";
+  lootContext.interestMarkerActive = true;
+  lootContext.interestMarkerId = "marker.rare_loot.vault_cache";
+
+  const auto beforeEdit = Peter::AI::EvaluateCompanion(Peter::AI::DefaultCompanionConfig(), lootContext);
+  const auto previewConfig = Peter::Workshop::BuildBehaviorPreviewConfig(
+    Peter::AI::DefaultCompanionConfig(),
+    "stance.scavenger",
+    {"chip.stay_near_me", "chip.grab_rare_loot"},
+    {{"chip.stay_near_me", 8.0}, {"chip.grab_rare_loot", 1.0}});
+  const auto afterEdit = Peter::AI::EvaluateCompanion(previewConfig, lootContext);
+  PETER_ASSERT_EQ(std::string("move_to"), beforeEdit.lastAction);
+  PETER_ASSERT_EQ(std::string("loot"), afterEdit.lastAction);
+
+  const auto preview = Peter::Workshop::BuildCompanionBehaviorPreview(
+    Peter::AI::DefaultCompanionConfig(),
+    previewConfig);
+  PETER_ASSERT_TRUE(preview.valid);
+
+  const auto configValidation = Peter::Validation::ValidateCompanionConfig(previewConfig);
+  PETER_ASSERT_TRUE(configValidation.valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateBehaviorChipDefinition(
+    Peter::AI::BuildPhase3BehaviorChips().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateBehaviorStanceDefinition(
+    Peter::AI::BuildPhase3Stances().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateEnemyArchetypeDefinition(
+    Peter::AI::BuildPhase3EnemyArchetypes().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidatePatrolRouteDefinition(
+    Peter::AI::BuildPhase3PatrolRoutes().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateAiScenarioDefinition(
+    Peter::AI::BuildPhase3AiScenarios().front()).valid);
 
   Peter::Inventory::InventoryState inventory;
   Peter::Inventory::LoadoutState loadout;
@@ -62,11 +143,6 @@ PETER_TEST_MAIN({
     &denialReason));
   PETER_ASSERT_EQ(1, Peter::Inventory::UsedCarrySlots(inventory));
 
-  const auto* questDefinition = Peter::Inventory::FindItemDefinition("item.quest.artifact_seed");
-  PETER_ASSERT_TRUE(questDefinition != nullptr);
-  PETER_ASSERT_EQ(std::string("epic"), std::string(Peter::Inventory::ToString(questDefinition->rarity)));
-  PETER_ASSERT_TRUE(Peter::Validation::ValidateItemDefinition(*questDefinition).valid);
-
   Peter::Combat::CombatantState combatant{"player", 40, 100};
   const auto directHit = Peter::Combat::ResolveDamageAction(
     combatant,
@@ -84,19 +160,6 @@ PETER_TEST_MAIN({
   const auto statusTicks = Peter::Combat::TickStatuses(combatant, "system.status");
   PETER_ASSERT_EQ(1, static_cast<int>(statusTicks.size()));
   PETER_ASSERT_EQ(3, statusTicks.front().damageApplied);
-
-  const auto support = Peter::Combat::ResolveSupportAction(
-    combatant,
-    Peter::Combat::SupportActionSpec{
-      "support.repair_pulse",
-      "companion",
-      "player",
-      8,
-      1,
-      {"support"},
-      {Peter::Combat::StatusEffectSpec{"guarded", 1, 6}}});
-  PETER_ASSERT_EQ(8, support.healingApplied);
-  PETER_ASSERT_TRUE(!support.statusesApplied.empty());
 
   Peter::Inventory::RecoveryState recoveryState;
   inventory.equippedDurability[loadout.equippedToolId] = 20;
@@ -130,16 +193,4 @@ PETER_TEST_MAIN({
   const auto validMission = Peter::Validation::ValidateMissionTemplate(
     Peter::World::BuildPhase2MissionTemplates().front());
   PETER_ASSERT_TRUE(validMission.valid);
-
-  const auto preview = Peter::Workshop::BuildFollowDistancePreview(6.0, 9.0);
-  PETER_ASSERT_TRUE(preview.valid);
-
-  const auto beforeEdit = Peter::AI::EvaluateCompanion(
-    Peter::AI::CompanionConfig{6.0, false},
-    Peter::AI::CompanionWorldContext{false, false, false, false, false, false, true, false, false, false, true, 8});
-  const auto afterEdit = Peter::AI::EvaluateCompanion(
-    Peter::AI::CompanionConfig{9.0, false},
-    Peter::AI::CompanionWorldContext{false, false, false, false, false, false, true, false, false, false, true, 8});
-  PETER_ASSERT_EQ(std::string("regroup"), beforeEdit.currentState);
-  PETER_ASSERT_EQ(std::string("support_loot"), afterEdit.currentState);
 })

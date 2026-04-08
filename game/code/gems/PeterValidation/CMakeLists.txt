@@ -10,6 +10,7 @@ target_include_directories(PeterValidation
 target_link_libraries(PeterValidation
   PUBLIC
     PeterAdapters
+    PeterAI
     PeterInventory
     PeterUI
     PeterWorld

@@ -32,7 +32,13 @@ namespace Peter::UI
   [[nodiscard]] std::string RenderRaidZoneOverview(
     const Peter::World::RaidZoneDefinition& raidZone,
     const Peter::World::MissionTemplateDefinition& mission);
+  [[nodiscard]] std::string RenderCompanionBehaviorEditor(const Peter::AI::CompanionConfig& config);
   [[nodiscard]] std::string RenderCompanionExplainPanel(const Peter::AI::CompanionDecisionSnapshot& snapshot);
+  [[nodiscard]] std::string RenderCompanionCompareView(
+    const Peter::AI::CompanionDecisionSnapshot& before,
+    const Peter::AI::CompanionDecisionSnapshot& after,
+    std::string_view previewSummary);
+  [[nodiscard]] std::string RenderAiDebugPanel(const Peter::AI::AgentExplainSnapshot& snapshot);
   [[nodiscard]] std::string RenderPostRaidSummary(const Peter::World::RaidSummary& summary);
   [[nodiscard]] std::string RenderTutorialLesson(
     const Peter::World::TutorialLessonDefinition& lesson,

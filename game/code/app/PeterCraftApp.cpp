@@ -47,12 +47,14 @@ namespace Peter::App
     JsonlTelemetrySink telemetrySink(logRoot / "petercraft-events.jsonl");
     eventBus.RegisterSink(&telemetrySink);
 
-    FeatureRegistry features(VersionInfo{"0.3.0", "phase2"});
+    FeatureRegistry features(VersionInfo{"0.4.0", "phase3"});
     features.SetFlag("feature.vertical_slice", true);
     features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
     features.SetFlag("feature.safe_rule_edit", true);
     features.SetFlag("feature.recovery_state", true);
+    features.SetFlag("feature.ai_alpha", true);
+    features.SetFlag("feature.behavior_chips", true);
 
     ProfileService profileService(*platform.save, eventBus);
     const auto profile = profileService.EnsureProfile(m_options.profileId);
@@ -82,7 +84,7 @@ namespace Peter::App
     const auto validationStatus = ValidationStatus::PlaceholderHealthy();
     eventBus.Emit(Event{
       EventCategory::Validation,
-      "validation.runtime.phase2_ready",
+      "validation.runtime.phase3_ready",
       {{"summary", validationStatus.summary}, {"status", validationStatus.status}}});
 
     Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
@@ -97,6 +99,7 @@ namespace Peter::App
     overlay.SetValue("Companion State", runReport.lastCompanionDecision.currentState);
     overlay.SetValue("Save Slot", profile.root.string());
     overlay.SetValue("Raid Tip", runReport.raidSummary.lessonTip);
+    overlay.SetAiSnapshot(Peter::AI::BuildExplainSnapshot(runReport.lastCompanionDecision));
 
     eventBus.Emit(Event{
       EventCategory::Performance,
@@ -107,7 +110,7 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 2 Core Systems Alpha\n";
+    std::cout << "PeterCraft Phase 3 AI and Companions Alpha\n";
     std::cout << runReport.summary << "\n";
     std::cout << overlay.Render() << '\n';
 

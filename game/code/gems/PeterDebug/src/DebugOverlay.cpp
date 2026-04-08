@@ -9,6 +9,19 @@ namespace Peter::Debug
     m_values[key] = value;
   }
 
+  void DebugOverlay::SetAiSnapshot(const Peter::AI::AgentExplainSnapshot& snapshot)
+  {
+    SetValue("AI Goal", snapshot.currentGoal);
+    SetValue("AI Action", snapshot.lastCompletedAction);
+    SetValue("AI Confidence", snapshot.confidenceLabel);
+    SetValue("AI Risk", snapshot.riskIndicator);
+    SetValue("AI Route", snapshot.routeNodeId);
+    SetValue("AI Top Reason", snapshot.topReason);
+    SetValue("AI Secondary Reason", snapshot.secondaryReason);
+    SetValue("AI Edit Delta", snapshot.editDelta);
+    SetValue("AI Alert", snapshot.blackboard.alertLevel);
+  }
+
   std::string DebugOverlay::Render() const
   {
     std::ostringstream output;

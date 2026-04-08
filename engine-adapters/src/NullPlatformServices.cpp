@@ -133,6 +133,24 @@ namespace Peter::Adapters
                   << " subtitle_scale=" << settings.subtitleScalePercent
                   << " text_scale=" << settings.textScalePercent << '\n';
       }
+
+      void PresentDebugMarkers(const std::vector<std::string>& markerIds) override
+      {
+        std::cout << "[debug-markers]";
+        for (const auto& markerId : markerIds)
+        {
+          std::cout << ' ' << markerId;
+        }
+        std::cout << '\n';
+      }
+
+      void PresentCompanionFeedback(
+        const std::string_view calloutToken,
+        const std::string_view gestureToken) override
+      {
+        std::cout << "[companion-feedback] callout=" << calloutToken
+                  << " gesture=" << gestureToken << '\n';
+      }
     };
   } // namespace
 

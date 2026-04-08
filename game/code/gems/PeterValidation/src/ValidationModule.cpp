@@ -6,7 +6,7 @@ namespace Peter::Validation
 {
   ValidationStatus ValidationStatus::PlaceholderHealthy()
   {
-    return ValidationStatus{"ok", "phase 2 validation, migration checks, and authored content guards are active"};
+    return ValidationStatus{"ok", "phase 3 validation, AI authoring checks, migrations, and deterministic scenario guards are active"};
   }
 
   RuleValidationResult ValidateFollowDistance(const double followDistanceMeters)
@@ -123,6 +123,134 @@ namespace Peter::Validation
     return RuleValidationResult{true, "Tutorial lesson is valid."};
   }
 
+  RuleValidationResult ValidateCompanionConfig(const Peter::AI::CompanionConfig& config)
+  {
+    if (Peter::AI::FindBehaviorStance(config.stanceId) == nullptr)
+    {
+      return RuleValidationResult{false, "Companion stance must reference a known Phase 3 stance."};
+    }
+
+    std::set<std::string, std::less<>> uniqueChips;
+    if (config.activeChipIds.size() > 3)
+    {
+      return RuleValidationResult{false, "Only three active behavior chips are allowed at once."};
+    }
+
+    for (const auto& chipId : config.activeChipIds)
+    {
+      if (!uniqueChips.insert(chipId).second)
+      {
+        return RuleValidationResult{false, "Behavior chips cannot be duplicated."};
+      }
+      if (Peter::AI::FindBehaviorChip(chipId) == nullptr)
+      {
+        return RuleValidationResult{false, "Behavior chips must reference the Phase 3 chip catalog."};
+      }
+    }
+
+    return ValidateFollowDistance(Peter::AI::ResolveFollowDistance(config));
+  }
+
+  RuleValidationResult ValidateBehaviorChipDefinition(const Peter::AI::BehaviorChipDefinition& chip)
+  {
+    if (chip.id.empty() || chip.displayName.empty() || chip.promiseText.empty() || chip.mappedVariableId.empty())
+    {
+      return RuleValidationResult{false, "Behavior chips need id, display name, promise text, and a mapped variable."};
+    }
+
+    if (chip.minValue > chip.maxValue || chip.defaultValue < chip.minValue || chip.defaultValue > chip.maxValue)
+    {
+      return RuleValidationResult{false, "Behavior chip ranges must be safe and internally consistent."};
+    }
+
+    if (chip.id == "chip.stay_near_me" && (chip.minValue < 4.0 || chip.maxValue > 10.0))
+    {
+      return RuleValidationResult{false, "Stay Near Me must stay within the safe 4m to 10m range."};
+    }
+
+    return RuleValidationResult{true, "Behavior chip definition is valid."};
+  }
+
+  RuleValidationResult ValidateBehaviorStanceDefinition(const Peter::AI::BehaviorStanceDefinition& stance)
+  {
+    if (stance.id.empty() || stance.displayName.empty() || stance.summary.empty())
+    {
+      return RuleValidationResult{false, "Behavior stances need id, display name, and summary text."};
+    }
+
+    return RuleValidationResult{true, "Behavior stance definition is valid."};
+  }
+
+  RuleValidationResult ValidateEnemyArchetypeDefinition(
+    const Peter::AI::EnemyArchetypeDefinition& archetype)
+  {
+    if (archetype.id.empty() || archetype.displayName.empty() || archetype.summary.empty())
+    {
+      return RuleValidationResult{false, "Enemy archetypes need id, display name, and summary text."};
+    }
+
+    if (archetype.preferredRangeMeters < 1)
+    {
+      return RuleValidationResult{false, "Enemy archetypes need a positive preferred range."};
+    }
+
+    return RuleValidationResult{true, "Enemy archetype definition is valid."};
+  }
+
+  RuleValidationResult ValidatePatrolRouteDefinition(const Peter::AI::PatrolRouteDefinition& route)
+  {
+    if (route.id.empty() || route.nodeIds.size() < 2)
+    {
+      return RuleValidationResult{false, "Patrol routes need an id and at least two linked nodes."};
+    }
+
+    std::set<std::string, std::less<>> uniqueNodes;
+    for (const auto& nodeId : route.nodeIds)
+    {
+      if (!uniqueNodes.insert(nodeId).second)
+      {
+        return RuleValidationResult{false, "Patrol routes cannot repeat node ids in this shell."};
+      }
+    }
+
+    return RuleValidationResult{true, "Patrol route definition is valid."};
+  }
+
+  RuleValidationResult ValidateAiScenarioDefinition(const Peter::AI::AiScenarioDefinition& scenario)
+  {
+    if (scenario.id.empty() || scenario.steps.empty())
+    {
+      return RuleValidationResult{false, "AI scenarios need a stable id and at least one step."};
+    }
+
+    if (!scenario.deterministic)
+    {
+      return RuleValidationResult{false, "Phase 3 AI scenarios must be deterministic."};
+    }
+
+    for (const auto& step : scenario.steps)
+    {
+      if (step.expectedActionId.empty() || step.expectedState.empty())
+      {
+        return RuleValidationResult{false, "Every AI scenario step needs an expected action and state."};
+      }
+      if (step.useEnemy && step.enemy.enemyId.empty())
+      {
+        return RuleValidationResult{false, "Enemy AI scenario steps need an enemy unit."};
+      }
+      if (!step.useEnemy)
+      {
+        const auto configValidation = ValidateCompanionConfig(step.config);
+        if (!configValidation.valid)
+        {
+          return configValidation;
+        }
+      }
+    }
+
+    return RuleValidationResult{true, "AI scenario definition is valid."};
+  }
+
   RuleValidationResult ValidateFavoriteItemReference(
     const std::string_view favoriteItemId,
     const Peter::Inventory::InventoryState& inventory)
@@ -160,6 +288,6 @@ namespace Peter::Validation
 
   std::string_view GetModuleSummary()
   {
-    return "Runtime validation hooks, save migrations, mission checks, and authored safety boundaries.";
+    return "Runtime validation hooks, save migrations, mission checks, and authored safety boundaries including AI contracts.";
   }
 } // namespace Peter::Validation

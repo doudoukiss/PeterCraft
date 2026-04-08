@@ -1,0 +1,14 @@
+{
+  "kind": "patrolRouteCatalog",
+  "schemaVersion": 1,
+  "routes": [
+    {
+      "id": "route.machine_silo.invalid",
+      "displayName": "Broken Route",
+      "nodeIds": [
+        "room.raid.guard_post"
+      ],
+      "looped": true
+    }
+  ]
+}

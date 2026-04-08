@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Enemy Archetypes",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "archetypes"],
+  "properties": {
+    "kind": { "const": "enemyArchetypeCatalog" },
+    "schemaVersion": { "const": 1 },
+    "archetypes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "summary", "variant", "preferredRangeMeters"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^enemy\\.archetype\\.[a-z0-9_]+$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "variant": { "enum": ["melee_chaser", "alarm_support"] },
+          "preferredRangeMeters": { "type": "integer", "minimum": 1, "maximum": 12 }
+        }
+      }
+    }
+  }
+}

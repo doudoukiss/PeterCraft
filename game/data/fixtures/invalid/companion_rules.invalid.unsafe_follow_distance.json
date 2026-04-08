@@ -1,17 +1,66 @@
 {
-  "kind": "companionRuleCatalog",
-  "schemaVersion": 1,
-  "rules": [
+  "kind": "companionChipCatalog",
+  "schemaVersion": 2,
+  "chips": [
     {
-      "id": "companion_rule.follow_distance.invalid",
-      "chipName": "Stay Far Away",
-      "priority": 50,
+      "id": "chip.stay_near_me",
+      "chipName": "Stay Near Me",
       "editableVariable": "follow_distance_meters",
       "defaultValue": 12.0,
       "minValue": 4.0,
       "maxValue": 10.0,
-      "previewText": "Unsafe preview.",
+      "plainLanguage": "Unsafe preview.",
+      "promiseText": "Unsafe preview.",
+      "cautionText": "Unsafe preview.",
       "effectDescription": "This should fail schema validation."
+    },
+    {
+      "id": "chip.placeholder.one",
+      "chipName": "Placeholder",
+      "editableVariable": "placeholder",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Placeholder",
+      "promiseText": "Placeholder",
+      "cautionText": "Placeholder",
+      "effectDescription": "Placeholder"
+    },
+    {
+      "id": "chip.placeholder.two",
+      "chipName": "Placeholder",
+      "editableVariable": "placeholder",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Placeholder",
+      "promiseText": "Placeholder",
+      "cautionText": "Placeholder",
+      "effectDescription": "Placeholder"
+    },
+    {
+      "id": "chip.placeholder.three",
+      "chipName": "Placeholder",
+      "editableVariable": "placeholder",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Placeholder",
+      "promiseText": "Placeholder",
+      "cautionText": "Placeholder",
+      "effectDescription": "Placeholder"
+    },
+    {
+      "id": "chip.placeholder.four",
+      "chipName": "Placeholder",
+      "editableVariable": "placeholder",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Placeholder",
+      "promiseText": "Placeholder",
+      "cautionText": "Placeholder",
+      "effectDescription": "Placeholder"
     }
   ]
 }

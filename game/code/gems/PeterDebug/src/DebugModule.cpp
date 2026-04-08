@@ -4,6 +4,6 @@ namespace Peter::Debug
 {
   std::string_view GetModuleSummary()
   {
-    return "Development overlays and debug visibility contracts.";
+    return "Development overlays, AI visibility panels, and deterministic debugging aids.";
   }
 } // namespace Peter::Debug

@@ -1,0 +1,20 @@
+{
+  "kind": "enemyArchetypeCatalog",
+  "schemaVersion": 1,
+  "archetypes": [
+    {
+      "id": "enemy.archetype.machine_patrol",
+      "displayName": "Machine Patrol",
+      "summary": "Invalid variant fixture.",
+      "variant": "stealth_sniper",
+      "preferredRangeMeters": 3
+    },
+    {
+      "id": "enemy.archetype.ranged_ambush_support",
+      "displayName": "Ranged Ambush Support",
+      "summary": "Placeholder valid entry.",
+      "variant": "alarm_support",
+      "preferredRangeMeters": 7
+    }
+  ]
+}

@@ -123,6 +123,22 @@ namespace Peter::App
       }
       return {};
     }
+
+    Peter::AI::CompanionWorldContext BuildExplainPreviewContext(const Peter::Progression::WorkshopState& workshopState)
+    {
+      Peter::AI::CompanionWorldContext context;
+      context.rareLootVisible = false;
+      context.lootPingUnlocked = false;
+      context.guardProtocolUnlocked = HasNode(workshopState, "track.companion_capabilities.guard_protocol");
+      context.repairPulseUnlocked = HasNode(workshopState, "track.companion_capabilities.repair_pulse");
+      context.distanceToPlayerMeters = 7;
+      context.distanceToThreatMeters = 6;
+      context.roomNodeId = "room.raid.patrol_hall";
+      context.routeNodeId = "route.machine_silo.entry_loop";
+      context.currentGoal = "goal.follow_player";
+      context.currentTargetId = "player";
+      return context;
+    }
   } // namespace
 
   SliceScenario ParseScenario(const std::string_view scenarioName)
@@ -239,8 +255,16 @@ namespace Peter::App
 
     if (m_saveDomainStore.DomainExists(kCompanionDomain))
     {
-      state.companionConfig = Peter::AI::CompanionConfigFromSaveFields(
-        m_saveDomainStore.ReadDomain(std::string(kCompanionDomain)));
+      const auto fields = m_saveDomainStore.ReadDomain(std::string(kCompanionDomain));
+      const auto schemaVersion = fields.find("schema_version");
+      if (schemaVersion == fields.end() || schemaVersion->second == "2")
+      {
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::SaveLoad,
+          "save_load.migration.phase2_to_phase3.companion_config",
+          {{"domain_id", std::string(kCompanionDomain)}, {"profile_id", m_profile.profileId}}});
+      }
+      state.companionConfig = Peter::AI::CompanionConfigFromSaveFields(fields);
     }
 
     if (m_saveDomainStore.DomainExists(kAccessibilityDomain))
@@ -338,7 +362,7 @@ namespace Peter::App
   {
     auto cameraRig = m_traversal.cameraRig;
     cameraRig.followDistanceMeters =
-      std::max(cameraRig.followDistanceMeters, state.companionConfig.followDistanceMeters - 1.0);
+      std::max(cameraRig.followDistanceMeters, Peter::AI::ResolveFollowDistance(state.companionConfig) - 1.0);
     m_platform.camera->ApplyRig(cameraRig);
     m_platform.ui->ApplyPresentationSettings(Peter::Adapters::PresentationSettings{
       state.accessibility.subtitlesEnabled,
@@ -346,6 +370,7 @@ namespace Peter::App
       state.accessibility.textScalePercent});
     m_platform.ui->PresentState("ui.home_base");
     m_platform.ui->PresentPanel("home_base.overview", Peter::UI::RenderHomeBaseOverview(m_homeBase));
+    m_platform.ui->PresentPanel("home_base.companion_editor", Peter::UI::RenderCompanionBehaviorEditor(state.companionConfig));
     m_platform.ui->PresentPanel(
       "home_base.accessibility",
       Peter::UI::RenderAccessibilitySettings(state.accessibility, m_platform.input->DefaultBindings()));
@@ -390,6 +415,48 @@ namespace Peter::App
     const std::string_view roomId,
     const Peter::AI::CompanionDecisionSnapshot& snapshot) const
   {
+    m_platform.ui->PresentCompanionFeedback(snapshot.calloutToken, snapshot.gestureToken);
+    m_platform.ui->PresentDebugMarkers(
+      {
+        std::string(roomId),
+        snapshot.blackboard.routeNodeId,
+        snapshot.perception.noticedReason
+      });
+    m_eventBus.Emit(Peter::Core::Event{
+      Peter::Core::EventCategory::AI,
+      "ai.perception.notice",
+      {
+        {"alert_level", snapshot.blackboard.alertLevel},
+        {"reason", snapshot.perception.noticedReason},
+        {"room_id", std::string(roomId)}
+      }});
+    m_eventBus.Emit(Peter::Core::Event{
+      Peter::Core::EventCategory::AI,
+      "ai.memory.updated",
+      {
+        {"last_known_threat", snapshot.blackboard.lastKnownThreatPositionToken},
+        {"room_id", std::string(roomId)},
+        {"target_id", snapshot.blackboard.currentTargetId}
+      }});
+    m_eventBus.Emit(Peter::Core::Event{
+      Peter::Core::EventCategory::AI,
+      "ai.decision.selected",
+      {
+        {"action", snapshot.lastAction},
+        {"confidence", snapshot.confidenceLabel},
+        {"goal", snapshot.currentGoal},
+        {"reason", snapshot.topReason},
+        {"room_id", std::string(roomId)},
+        {"state", snapshot.currentState}
+      }});
+    m_eventBus.Emit(Peter::Core::Event{
+      Peter::Core::EventCategory::AI,
+      "ai.action.started",
+      {
+        {"action", snapshot.lastAction},
+        {"room_id", std::string(roomId)},
+        {"stage", std::string(Peter::AI::ToString(Peter::AI::ActionExecutionStage::Started))}
+      }});
     m_eventBus.Emit(Peter::Core::Event{
       Peter::Core::EventCategory::AI,
       "ai.companion.action",
@@ -398,6 +465,14 @@ namespace Peter::App
         {"reason", snapshot.topReason},
         {"room_id", std::string(roomId)},
         {"state", snapshot.currentState}
+      }});
+    m_eventBus.Emit(Peter::Core::Event{
+      Peter::Core::EventCategory::AI,
+      "ai.action.succeeded",
+      {
+        {"action", snapshot.lastAction},
+        {"room_id", std::string(roomId)},
+        {"stage", std::string(Peter::AI::ToString(snapshot.lastResult.stage))}
       }});
   }
 
@@ -579,6 +654,19 @@ namespace Peter::App
     combatContext.repairPulseUnlocked = HasNode(state.workshop, "track.companion_capabilities.repair_pulse");
     combatContext.lootPingUnlocked = HasNode(state.workshop, "track.companion_capabilities.loot_ping");
     combatContext.distanceToPlayerMeters = mission->templateType == "escort_companion" ? 4 : 6;
+    combatContext.distanceToThreatMeters = mission->templateType == "timed_extraction" ? 7 : 4;
+    combatContext.companionHealthPercent = expectSuccess ? 92 : 41;
+    combatContext.urgencyLevel = mission->templateType == "timed_extraction" ? 3 : 2;
+    combatContext.roomNodeId = "room.raid.patrol_hall";
+    combatContext.routeNodeId = "route.machine_silo.entry_loop";
+    combatContext.currentGoal = mission->templateType == "recover_artifact"
+      ? "goal.recover_artifact_objective"
+      : (mission->templateType == "escort_companion" ? "goal.defend_player" : "goal.follow_player");
+    combatContext.currentTargetId = "player";
+    combatContext.visibleThreatId = m_raidZone.encounters.at(0).enemies.front().enemyId;
+    combatContext.lastKnownThreatPositionToken = "room.raid.patrol_hall";
+    combatContext.interestMarkerActive = combatContext.rareLootVisible;
+    combatContext.interestMarkerId = combatContext.rareLootVisible ? "marker.rare_loot.vault_cache" : "";
 
     auto companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
     EmitCompanionDecision("room.raid.patrol_hall", companionDecision);
@@ -604,6 +692,14 @@ namespace Peter::App
       combatContext.playerNeedsRevive = mission->templateType == "escort_companion" &&
         HasNode(state.workshop, "track.companion_capabilities.repair_pulse");
       combatContext.distanceToPlayerMeters = 3;
+      combatContext.distanceToThreatMeters = mission->templateType == "timed_extraction" ? 6 : 4;
+      combatContext.roomNodeId = "room.raid.guard_post";
+      combatContext.routeNodeId = "route.machine_silo.vault_watch";
+      combatContext.currentGoal = mission->templateType == "escort_companion"
+        ? "goal.defend_player"
+        : "goal.scout_path";
+      combatContext.visibleThreatId = m_raidZone.encounters.at(1).enemies.front().enemyId;
+      combatContext.lastKnownThreatPositionToken = "room.raid.guard_post";
       companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
       EmitCompanionDecision("room.raid.guard_post", companionDecision);
       encounterRequest.enemies = m_raidZone.encounters.at(1).enemies;
@@ -726,6 +822,16 @@ namespace Peter::App
       combatContext.sameTargetMarked = false;
       combatContext.extractionActive = true;
       combatContext.playerLowHealth = raid.playerHealth < 35;
+      combatContext.distanceToPlayerMeters = 2;
+      combatContext.distanceToThreatMeters = 8;
+      combatContext.extractionUrgency = state.accessibility.reducedTimePressure ? 2 : 3;
+      combatContext.roomNodeId = m_raidZone.extractionRoomId;
+      combatContext.routeNodeId = "route.machine_silo.vault_watch";
+      combatContext.currentGoal = "goal.reach_extraction";
+      combatContext.visibleThreatId = "enemy.none";
+      combatContext.heardEventToken = "sound.extraction_alarm";
+      combatContext.interestMarkerActive = true;
+      combatContext.interestMarkerId = "marker.extraction.pad";
       companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
       EmitCompanionDecision(m_raidZone.extractionRoomId, companionDecision);
 
@@ -778,7 +884,13 @@ namespace Peter::App
       m_platform.ui->PresentPanel("workbench.tracks", workshopPanel);
 
       VisitStation(FindStation("station.home.companion"));
+      m_platform.ui->PresentPanel(
+        "companion.editor",
+        Peter::UI::RenderCompanionBehaviorEditor(state.companionConfig));
       m_platform.ui->PresentPanel("companion.explain", Peter::UI::RenderCompanionExplainPanel(companionDecision));
+      m_platform.ui->PresentPanel(
+        "companion.debug",
+        Peter::UI::RenderAiDebugPanel(Peter::AI::BuildExplainSnapshot(companionDecision)));
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::CreatorTools,
         "creator_tools.explain_panel.opened",
@@ -790,49 +902,46 @@ namespace Peter::App
       if (guidedMode)
       {
         const auto previousConfig = state.companionConfig;
-        const auto preview = Peter::Workshop::BuildFollowDistancePreview(
-          state.companionConfig.followDistanceMeters,
-          9.0);
-        m_platform.ui->PresentPanel("companion.rule_preview", preview.summary + "\n" + preview.deltaSummary);
+        const auto previewConfig = Peter::Workshop::BuildBehaviorPreviewConfig(
+          previousConfig,
+          "stance.guardian",
+          {"chip.stay_near_me", "chip.protect_me_first", "chip.help_at_extraction"},
+          {{"chip.stay_near_me", 4.0}});
+        const auto preview = Peter::Workshop::BuildCompanionBehaviorPreview(previousConfig, previewConfig);
+        m_platform.ui->PresentPanel(
+          "companion.rule_preview",
+          preview.summary + "\n" + preview.deltaSummary + "\n" + preview.comparisonSummary);
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::CreatorTools,
+          "creator_tools.behavior_chip.previewed",
+          {
+            {"preview_label", preview.previewLabel},
+            {"valid", preview.valid ? "true" : "false"}
+          }});
         if (preview.valid)
         {
-          state.companionConfig.followDistanceMeters = preview.previewValue;
+          state.companionConfig = previewConfig;
+          m_eventBus.Emit(Peter::Core::Event{
+            Peter::Core::EventCategory::CreatorTools,
+            "creator_tools.behavior_chip.applied",
+            {
+              {"stance_id", state.companionConfig.stanceId},
+              {"valid", "true"}
+            }});
         }
-        const auto beforePreview = Peter::AI::EvaluateCompanion(
-          previousConfig,
-          Peter::AI::CompanionWorldContext{
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            true,
-            false,
-            HasNode(state.workshop, "track.companion_capabilities.guard_protocol"),
-            HasNode(state.workshop, "track.companion_capabilities.repair_pulse"),
-            HasNode(state.workshop, "track.companion_capabilities.loot_ping"),
-            8});
-        const auto afterPreview = Peter::AI::EvaluateCompanion(
-          state.companionConfig,
-          Peter::AI::CompanionWorldContext{
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            true,
-            false,
-            HasNode(state.workshop, "track.companion_capabilities.guard_protocol"),
-            HasNode(state.workshop, "track.companion_capabilities.repair_pulse"),
-            HasNode(state.workshop, "track.companion_capabilities.loot_ping"),
-            8});
+        const auto previewContext = BuildExplainPreviewContext(state.workshop);
+        const auto beforePreview = Peter::AI::EvaluateCompanion(previousConfig, previewContext);
+        const auto afterPreview = Peter::AI::EvaluateCompanion(state.companionConfig, previewContext);
         m_platform.ui->PresentPanel(
           "companion.rule_effect",
-          std::string("Before: ") + beforePreview.currentState +
-            "\nAfter: " + afterPreview.currentState +
-            "\nChange: the companion stays helpful from farther away.");
+          Peter::UI::RenderCompanionCompareView(beforePreview, afterPreview, preview.deltaSummary));
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::CreatorTools,
+          "creator_tools.comparison_view.opened",
+          {
+            {"after_state", afterPreview.currentState},
+            {"before_state", beforePreview.currentState}
+          }});
         state.ruleEditComplete = preview.valid;
       }
 
@@ -936,13 +1045,11 @@ namespace Peter::App
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 2 systems alpha loop: mission, combat, progression, explainability, and post-raid clarity."
-        : "Completed the Phase 2 failure-and-recovery loop: loss was explained, durability degraded fairly, and recovery remained available.",
+        ? "Completed the Phase 3 AI alpha loop: deterministic companion tuning, readable combat support, explainability, and post-raid clarity."
+        : "Completed the Phase 3 failure-and-recovery loop: loss was explained, durability stayed fair, and AI guidance remained readable.",
       mission->id,
       companionDecision,
-      Peter::Workshop::BuildFollowDistancePreview(
-        state.companionConfig.followDistanceMeters,
-        state.companionConfig.followDistanceMeters),
+      Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),
       extractionResult,
       raidSummary};
   }

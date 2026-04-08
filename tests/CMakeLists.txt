@@ -34,10 +34,10 @@ target_link_libraries(PeterFoundationIntegrationTests
     PeterAI
     PeterCore
     PeterInventory
-    PeterProgression
     PeterTelemetry
     PeterUI
     PeterValidation
+    PeterWorkshop
     PeterWorld
 )
 

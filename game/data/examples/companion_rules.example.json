@@ -1,17 +1,66 @@
 {
-  "kind": "companionRuleCatalog",
-  "schemaVersion": 1,
-  "rules": [
+  "kind": "companionChipCatalog",
+  "schemaVersion": 2,
+  "chips": [
     {
-      "id": "companion_rule.follow_distance.default",
+      "id": "chip.stay_near_me",
       "chipName": "Stay Near Me",
-      "priority": 50,
       "editableVariable": "follow_distance_meters",
       "defaultValue": 6.0,
       "minValue": 4.0,
       "maxValue": 10.0,
-      "previewText": "Give the player a little more room before regrouping.",
-      "effectDescription": "A larger follow distance lets the companion keep helping while you explore nearby loot."
+      "plainLanguage": "Keep the companion close enough to help fast.",
+      "promiseText": "I will stay close enough to help quickly.",
+      "cautionText": "Smaller spacing can make scouting slower.",
+      "effectDescription": "Maps directly to the follow distance threshold in meters."
+    },
+    {
+      "id": "chip.protect_me_first",
+      "chipName": "Protect Me First",
+      "editableVariable": "protect_bias",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Help me before optional tasks.",
+      "promiseText": "I will help the player before optional tasks.",
+      "cautionText": "I may ignore nearby loot while danger is active.",
+      "effectDescription": "Raises defend and revive utility scores."
+    },
+    {
+      "id": "chip.grab_rare_loot",
+      "chipName": "Grab Rare Loot",
+      "editableVariable": "loot_bias",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Notice rare loot when it is safe.",
+      "promiseText": "I will notice and secure rare loot more often.",
+      "cautionText": "I may step away for a short moment when the room is calm.",
+      "effectDescription": "Raises rare-loot and interest-marker utility scores."
+    },
+    {
+      "id": "chip.retreat_when_hurt",
+      "chipName": "Retreat When Hurt",
+      "editableVariable": "retreat_threshold",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Pull back before getting knocked out.",
+      "promiseText": "I will pull back before I get knocked out.",
+      "cautionText": "I may stop attacking sooner than usual.",
+      "effectDescription": "Raises evade utility when companion health falls."
+    },
+    {
+      "id": "chip.help_at_extraction",
+      "chipName": "Help At Extraction",
+      "editableVariable": "extraction_bias",
+      "defaultValue": 1.0,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "plainLanguage": "Focus on safe exits when extraction starts.",
+      "promiseText": "I will focus on helping the team leave safely.",
+      "cautionText": "I may skip late optional loot when extraction starts.",
+      "effectDescription": "Raises extraction and cover utility near the exit."
     }
   ]
 }

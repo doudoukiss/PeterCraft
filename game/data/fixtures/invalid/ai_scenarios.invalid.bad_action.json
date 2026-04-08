@@ -1,0 +1,12 @@
+{
+  "kind": "aiScenarioCatalog",
+  "schemaVersion": 1,
+  "scenarios": [
+    { "id": "scenario.ai.follow_corridor.v1", "displayName": "Broken Scenario", "deterministic": true, "steps": [{ "stepId": "step.bad", "expectedActionId": "teleport", "expectedState": "follow" }] },
+    { "id": "scenario.ai.enemy_ambush.v1", "displayName": "Placeholder", "deterministic": true, "steps": [{ "stepId": "step.ok", "expectedActionId": "attack", "expectedState": "attack" }] },
+    { "id": "scenario.ai.low_health_retreat.v1", "displayName": "Placeholder", "deterministic": true, "steps": [{ "stepId": "step.ok", "expectedActionId": "evade", "expectedState": "retreat_regroup" }] },
+    { "id": "scenario.ai.revive_under_pressure.v1", "displayName": "Placeholder", "deterministic": true, "steps": [{ "stepId": "step.ok", "expectedActionId": "revive", "expectedState": "revive_help" }] },
+    { "id": "scenario.ai.extraction_rush.v1", "displayName": "Placeholder", "deterministic": true, "steps": [{ "stepId": "step.ok", "expectedActionId": "extract", "expectedState": "extract_assist" }] },
+    { "id": "scenario.ai.loot_vs_safety.v1", "displayName": "Placeholder", "deterministic": true, "steps": [{ "stepId": "step.ok", "expectedActionId": "loot", "expectedState": "loot_support" }] }
+  ]
+}

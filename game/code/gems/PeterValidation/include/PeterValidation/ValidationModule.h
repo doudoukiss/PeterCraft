@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PeterAI/CompanionAi.h"
 #include "PeterAdapters/PlatformServices.h"
 #include "PeterInventory/InventoryState.h"
 #include "PeterUI/SlicePresentation.h"
@@ -30,6 +31,13 @@ namespace Peter::Validation
   [[nodiscard]] RuleValidationResult ValidateItemDefinition(const Peter::Inventory::ItemDefinition& definition);
   [[nodiscard]] RuleValidationResult ValidateMissionTemplate(const Peter::World::MissionTemplateDefinition& mission);
   [[nodiscard]] RuleValidationResult ValidateTutorialLesson(const Peter::World::TutorialLessonDefinition& lesson);
+  [[nodiscard]] RuleValidationResult ValidateCompanionConfig(const Peter::AI::CompanionConfig& config);
+  [[nodiscard]] RuleValidationResult ValidateBehaviorChipDefinition(const Peter::AI::BehaviorChipDefinition& chip);
+  [[nodiscard]] RuleValidationResult ValidateBehaviorStanceDefinition(const Peter::AI::BehaviorStanceDefinition& stance);
+  [[nodiscard]] RuleValidationResult ValidateEnemyArchetypeDefinition(
+    const Peter::AI::EnemyArchetypeDefinition& archetype);
+  [[nodiscard]] RuleValidationResult ValidatePatrolRouteDefinition(const Peter::AI::PatrolRouteDefinition& route);
+  [[nodiscard]] RuleValidationResult ValidateAiScenarioDefinition(const Peter::AI::AiScenarioDefinition& scenario);
   [[nodiscard]] RuleValidationResult ValidateFavoriteItemReference(
     std::string_view favoriteItemId,
     const Peter::Inventory::InventoryState& inventory);

@@ -4,12 +4,11 @@
 #include "PeterCore/ProfileService.h"
 #include "PeterCore/SaveDomainStore.h"
 #include "PeterInventory/InventoryState.h"
-#include "PeterProgression/Crafting.h"
 #include "PeterTelemetry/JsonlTelemetrySink.h"
 #include "PeterTest/TestMacros.h"
 #include "PeterUI/SlicePresentation.h"
 #include "PeterValidation/ValidationModule.h"
-#include "PeterWorld/SliceContent.h"
+#include "PeterWorkshop/WorkshopTuning.h"
 
 #include <filesystem>
 #include <fstream>
@@ -17,7 +16,7 @@
 #include <string>
 
 PETER_TEST_MAIN({
-  const auto root = std::filesystem::temp_directory_path() / "PeterCraftPhase2Integration";
+  const auto root = std::filesystem::temp_directory_path() / "PeterCraftPhase3Integration";
   std::filesystem::remove_all(root);
 
   const Peter::Adapters::BootConfig bootConfig{
@@ -36,64 +35,67 @@ PETER_TEST_MAIN({
   Peter::Core::SaveDomainStore saveDomainStore(profile, eventBus);
 
   saveDomainStore.WriteDomain(
-    "save_domain.inventory",
+    "save_domain.companion_config",
     Peter::Core::StructuredFields{
-      {"carried", ""},
-      {"stash", "item.salvage.scrap_metal=3"},
-      {"base_carry_slot_capacity", "2"},
-      {"carry_slot_bonus", "1"},
-      {"salvage_pouch_equipped", "true"}
-    });
-  saveDomainStore.WriteDomain(
-    "save_domain.workshop_upgrades",
-    Peter::Core::StructuredFields{
-      {"salvage_pouch_crafted", "true"}
+      {"schema_version", "2"},
+      {"follow_distance_meters", "9.0"},
+      {"hold_position", "true"}
     });
 
-  Peter::Inventory::InventoryState inventory;
-  Peter::Inventory::LoadoutState loadout;
-  Peter::Inventory::LoadFromSaveFields(saveDomainStore.ReadDomain("save_domain.inventory"), inventory, loadout);
-  const auto workshop =
-    Peter::Progression::WorkshopStateFromSaveFields(saveDomainStore.ReadDomain("save_domain.workshop_upgrades"));
+  const auto migratedConfig = Peter::AI::CompanionConfigFromSaveFields(
+    saveDomainStore.ReadDomain("save_domain.companion_config"));
+  PETER_ASSERT_EQ(std::string("stance.balanced"), migratedConfig.stanceId);
+  PETER_ASSERT_EQ(9.0, Peter::AI::ResolveFollowDistance(migratedConfig));
+  PETER_ASSERT_TRUE(!migratedConfig.activeChipIds.empty());
 
-  PETER_ASSERT_EQ(1, loadout.carrySlotBonus);
-  PETER_ASSERT_TRUE(workshop.salvagePouchCrafted);
-  PETER_ASSERT_TRUE(Peter::Inventory::CountItem(inventory.equippedDurability, loadout.equippedToolId) > 0);
+  const auto previewConfig = Peter::Workshop::BuildBehaviorPreviewConfig(
+    migratedConfig,
+    "stance.guardian",
+    {"chip.stay_near_me", "chip.protect_me_first", "chip.help_at_extraction"},
+    {{"chip.stay_near_me", 8.5}});
+  const auto preview = Peter::Workshop::BuildCompanionBehaviorPreview(migratedConfig, previewConfig);
+  PETER_ASSERT_TRUE(preview.valid);
 
-  Peter::Inventory::RecoveryState recoveryState;
-  recoveryState.favoriteItemInRecovery = loadout.equippedToolId;
   saveDomainStore.WriteDomain(
-    "save_domain.recovery_state",
-    Peter::Inventory::RecoveryStateToSaveFields(recoveryState));
-  Peter::Inventory::RecoveryState loadedRecovery;
-  Peter::Inventory::LoadRecoveryStateFromSaveFields(
-    saveDomainStore.ReadDomain("save_domain.recovery_state"),
-    loadedRecovery);
-  PETER_ASSERT_EQ(loadout.equippedToolId, loadedRecovery.favoriteItemInRecovery);
+    "save_domain.companion_config",
+    Peter::AI::ToSaveFields(previewConfig));
+  const auto reloadedConfig = Peter::AI::CompanionConfigFromSaveFields(
+    saveDomainStore.ReadDomain("save_domain.companion_config"));
+  PETER_ASSERT_EQ(std::string("stance.guardian"), reloadedConfig.stanceId);
+  PETER_ASSERT_EQ(8.5, Peter::AI::ResolveFollowDistance(reloadedConfig));
 
-  Peter::UI::AccessibilitySettings settings;
-  settings.textScalePercent = 120;
-  settings.actionBindings["action.interact"] = "F";
-  saveDomainStore.WriteDomain(
-    "save_domain.settings_accessibility",
-    Peter::UI::ToSaveFields(settings));
-  const auto loadedSettings = Peter::UI::AccessibilitySettingsFromSaveFields(
-    saveDomainStore.ReadDomain("save_domain.settings_accessibility"),
-    platform.input->DefaultBindings());
-  PETER_ASSERT_EQ(120, loadedSettings.textScalePercent);
-  PETER_ASSERT_EQ(std::string("F"), loadedSettings.actionBindings.at("action.interact"));
+  Peter::AI::CompanionWorldContext extractionContext;
+  extractionContext.extractionActive = true;
+  extractionContext.timedMissionPressure = true;
+  extractionContext.playerLowHealth = true;
+  extractionContext.distanceToPlayerMeters = 2;
+  extractionContext.distanceToThreatMeters = 7;
+  extractionContext.companionHealthPercent = 80;
+  extractionContext.extractionUrgency = 3;
+  extractionContext.urgencyLevel = 3;
+  extractionContext.roomNodeId = "room.raid.extraction_pad";
+  extractionContext.routeNodeId = "route.machine_silo.vault_watch";
+  extractionContext.currentGoal = "goal.reach_extraction";
+  extractionContext.currentTargetId = "player";
+  extractionContext.heardEventToken = "sound.extraction_alarm";
+  extractionContext.interestMarkerActive = true;
+  extractionContext.interestMarkerId = "marker.extraction.pad";
 
-  const auto lessonValidation =
-    Peter::Validation::ValidateTutorialLesson(Peter::World::BuildPhase2TutorialLessons().front());
-  PETER_ASSERT_TRUE(lessonValidation.valid);
+  const auto beforeExplain = Peter::AI::EvaluateCompanion(migratedConfig, extractionContext);
+  const auto afterExplain = Peter::AI::EvaluateCompanion(reloadedConfig, extractionContext);
+  const auto compareView = Peter::UI::RenderCompanionCompareView(beforeExplain, afterExplain, preview.deltaSummary);
+  PETER_ASSERT_TRUE(compareView.find("What changed after your edit?") != std::string::npos);
 
-  eventBus.Emit({Peter::Core::EventCategory::Gameplay, "gameplay.integration.complete", {}});
+  const auto explainPanel = Peter::UI::RenderCompanionExplainPanel(afterExplain);
+  const auto debugPanel = Peter::UI::RenderAiDebugPanel(Peter::AI::BuildExplainSnapshot(afterExplain));
+  PETER_ASSERT_TRUE(explainPanel.find("Goal:") != std::string::npos);
+  PETER_ASSERT_TRUE(debugPanel.find("Top actions:") != std::string::npos);
 
-  PETER_ASSERT_TRUE(std::filesystem::exists(profile.root));
-  PETER_ASSERT_TRUE(std::filesystem::exists(profile.saveDataRoot / "save_domain.inventory.json"));
-  PETER_ASSERT_TRUE(std::filesystem::exists(profile.saveDataRoot / "save_domain.recovery_state.json"));
-  PETER_ASSERT_TRUE(std::filesystem::exists(profile.saveDataRoot / "save_domain.settings_accessibility.json"));
-  PETER_ASSERT_TRUE(std::filesystem::exists(profile.backupRoot / "save_domain.inventory.bak.json"));
+  platform.ui->PresentCompanionFeedback(afterExplain.calloutToken, afterExplain.gestureToken);
+  platform.ui->PresentDebugMarkers({"room.raid.extraction_pad", afterExplain.blackboard.routeNodeId});
+  eventBus.Emit({Peter::Core::EventCategory::AI, "ai.decision.selected", {{"action", afterExplain.lastAction}}});
+
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateCompanionConfig(reloadedConfig).valid);
 
   const auto logPath = root / "Logs" / "integration-events.jsonl";
   PETER_ASSERT_TRUE(std::filesystem::exists(logPath));
@@ -106,5 +108,5 @@ PETER_TEST_MAIN({
   PETER_ASSERT_TRUE(logContents.find("save_load.profile.ready") != std::string::npos);
   PETER_ASSERT_TRUE(logContents.find("save_load.domain.write") != std::string::npos);
   PETER_ASSERT_TRUE(logContents.find("save_load.domain.read") != std::string::npos);
-  PETER_ASSERT_TRUE(logContents.find("gameplay.integration.complete") != std::string::npos);
+  PETER_ASSERT_TRUE(logContents.find("ai.decision.selected") != std::string::npos);
 })

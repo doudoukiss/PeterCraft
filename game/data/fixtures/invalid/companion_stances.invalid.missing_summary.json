@@ -1,0 +1,11 @@
+{
+  "kind": "companionStanceCatalog",
+  "schemaVersion": 1,
+  "stances": [
+    { "id": "stance.cautious", "displayName": "Cautious", "attackBias": -0.5, "defendBias": 0.5, "lootBias": -0.5, "reviveBias": 0.5, "extractionBias": 0.5, "cautionBias": 1.5 },
+    { "id": "stance.placeholder.one", "displayName": "Placeholder", "summary": "Placeholder", "attackBias": 0.0, "defendBias": 0.0, "lootBias": 0.0, "reviveBias": 0.0, "extractionBias": 0.0, "cautionBias": 0.0 },
+    { "id": "stance.placeholder.two", "displayName": "Placeholder", "summary": "Placeholder", "attackBias": 0.0, "defendBias": 0.0, "lootBias": 0.0, "reviveBias": 0.0, "extractionBias": 0.0, "cautionBias": 0.0 },
+    { "id": "stance.placeholder.three", "displayName": "Placeholder", "summary": "Placeholder", "attackBias": 0.0, "defendBias": 0.0, "lootBias": 0.0, "reviveBias": 0.0, "extractionBias": 0.0, "cautionBias": 0.0 },
+    { "id": "stance.placeholder.four", "displayName": "Placeholder", "summary": "Placeholder", "attackBias": 0.0, "defendBias": 0.0, "lootBias": 0.0, "reviveBias": 0.0, "extractionBias": 0.0, "cautionBias": 0.0 }
+  ]
+}

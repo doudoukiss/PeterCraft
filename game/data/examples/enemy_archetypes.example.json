@@ -1,0 +1,20 @@
+{
+  "kind": "enemyArchetypeCatalog",
+  "schemaVersion": 1,
+  "archetypes": [
+    {
+      "id": "enemy.archetype.machine_patrol",
+      "displayName": "Machine Patrol",
+      "summary": "Patrols, investigates, alerts, chases, and returns cleanly.",
+      "variant": "melee_chaser",
+      "preferredRangeMeters": 3
+    },
+    {
+      "id": "enemy.archetype.ranged_ambush_support",
+      "displayName": "Ranged Ambush Support",
+      "summary": "Pressures cover and escalates fights from range.",
+      "variant": "alarm_support",
+      "preferredRangeMeters": 7
+    }
+  ]
+}

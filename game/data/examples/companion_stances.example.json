@@ -1,0 +1,11 @@
+{
+  "kind": "companionStanceCatalog",
+  "schemaVersion": 1,
+  "stances": [
+    { "id": "stance.cautious", "displayName": "Cautious", "summary": "Retreats earlier and values safety.", "attackBias": -0.5, "defendBias": 0.5, "lootBias": -0.5, "reviveBias": 0.5, "extractionBias": 0.5, "cautionBias": 1.5 },
+    { "id": "stance.balanced", "displayName": "Balanced", "summary": "Keeps support choices even and readable.", "attackBias": 0.0, "defendBias": 0.0, "lootBias": 0.0, "reviveBias": 0.0, "extractionBias": 0.0, "cautionBias": 0.0 },
+    { "id": "stance.aggressive", "displayName": "Aggressive", "summary": "Pushes pressure and attacks harder.", "attackBias": 1.8, "defendBias": 0.2, "lootBias": -0.3, "reviveBias": -0.2, "extractionBias": -0.2, "cautionBias": -1.0 },
+    { "id": "stance.scavenger", "displayName": "Scavenger", "summary": "Values optional loot when the room is safe.", "attackBias": -0.2, "defendBias": -0.1, "lootBias": 1.8, "reviveBias": 0.0, "extractionBias": 0.0, "cautionBias": 0.2 },
+    { "id": "stance.guardian", "displayName": "Guardian", "summary": "Favors defense, rescue, and safe exits.", "attackBias": 0.4, "defendBias": 1.7, "lootBias": -0.2, "reviveBias": 1.4, "extractionBias": 0.8, "cautionBias": 0.8 }
+  ]
+}

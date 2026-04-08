@@ -4,6 +4,6 @@ namespace Peter::Workshop
 {
   std::string_view GetModuleSummary()
   {
-    return "Workshop and creator-mode placeholder behind safe seams.";
+    return "Workshop preview, apply, revert, and comparison flows for safe companion behavior editing.";
   }
 } // namespace Peter::Workshop

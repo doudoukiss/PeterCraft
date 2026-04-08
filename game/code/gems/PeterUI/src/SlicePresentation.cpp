@@ -97,9 +97,70 @@ namespace Peter::UI
     return output.str();
   }
 
+  std::string RenderCompanionBehaviorEditor(const Peter::AI::CompanionConfig& config)
+  {
+    std::ostringstream output;
+    output << "Companion terminal\n"
+           << "Stance: " << config.stanceId << "\n"
+           << "Active chips:";
+
+    for (const auto& chipId : config.activeChipIds)
+    {
+      output << "\n- " << chipId;
+    }
+
+    output << "\nFollow distance: " << Peter::AI::ResolveFollowDistance(config) << "m";
+    return output.str();
+  }
+
   std::string RenderCompanionExplainPanel(const Peter::AI::CompanionDecisionSnapshot& snapshot)
   {
     return Peter::AI::RenderExplainText(snapshot);
+  }
+
+  std::string RenderCompanionCompareView(
+    const Peter::AI::CompanionDecisionSnapshot& before,
+    const Peter::AI::CompanionDecisionSnapshot& after,
+    const std::string_view previewSummary)
+  {
+    std::ostringstream output;
+    output << "What changed after your edit?\n"
+           << "Before: " << before.currentState << " -> " << before.lastAction << "\n"
+           << "After: " << after.currentState << " -> " << after.lastAction << "\n"
+           << "Reason shift: " << after.topReason << "\n"
+           << "Preview: " << previewSummary;
+    return output.str();
+  }
+
+  std::string RenderAiDebugPanel(const Peter::AI::AgentExplainSnapshot& snapshot)
+  {
+    std::ostringstream output;
+    output << "AI Debug\n"
+           << "Goal: " << snapshot.currentGoal << "\n"
+           << "Last action: " << snapshot.lastCompletedAction << "\n"
+           << "Alert: " << snapshot.perception.noticedReason << " (" << snapshot.blackboard.alertLevel << ")\n"
+           << "Route node: " << snapshot.routeNodeId << "\n"
+           << "Last failure: "
+           << (snapshot.lastActionFailureReason.empty() ? "none" : snapshot.lastActionFailureReason)
+           << "\nTop actions:";
+
+    for (const auto& candidate : snapshot.topCandidates)
+    {
+      output << "\n- " << candidate.actionId << " score=" << candidate.score;
+    }
+
+    output << "\nStance modifiers:";
+    for (const auto& entry : snapshot.stanceModifiers)
+    {
+      output << "\n- " << entry;
+    }
+
+    output << "\nChip modifiers:";
+    for (const auto& entry : snapshot.chipModifiers)
+    {
+      output << "\n- " << entry;
+    }
+    return output.str();
   }
 
   std::string RenderPostRaidSummary(const Peter::World::RaidSummary& summary)

@@ -10,6 +10,7 @@ target_include_directories(PeterWorkshop
 
 target_link_libraries(PeterWorkshop
   PUBLIC
+    PeterAI
     PeterValidation
 )
 
