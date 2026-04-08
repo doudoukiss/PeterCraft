@@ -20,6 +20,17 @@ namespace Peter::Adapters
       {
         return {};
       }
+
+      std::vector<ActionBinding> DefaultBindings() const override
+      {
+        return {
+          {"action.move", "WASD", "Left Stick", false},
+          {"action.interact", "E", "X", true},
+          {"action.jump", "Space", "A", true},
+          {"action.sprint", "Left Shift", "Left Stick Click", true},
+          {"action.crouch", "C", "B", true}
+        };
+      }
     };
 
     class NullCameraAdapter final : public ICameraAdapter
@@ -91,6 +102,11 @@ namespace Peter::Adapters
       {
         std::cout << "[world-audio] " << cueId << '\n';
       }
+
+      void PostFeedbackCue(std::string_view cueFamily, std::string_view variantId) override
+      {
+        std::cout << "[feedback-audio] " << cueFamily << ':' << variantId << '\n';
+      }
     };
 
     class NullUiAdapter final : public IUiAdapter
@@ -109,6 +125,13 @@ namespace Peter::Adapters
       void PresentPanel(std::string_view panelId, std::string_view body) override
       {
         std::cout << "[panel:" << panelId << "] " << body << '\n';
+      }
+
+      void ApplyPresentationSettings(const PresentationSettings& settings) override
+      {
+        std::cout << "[ui-settings] subtitles=" << (settings.subtitlesEnabled ? "on" : "off")
+                  << " subtitle_scale=" << settings.subtitleScalePercent
+                  << " text_scale=" << settings.textScalePercent << '\n';
       }
     };
   } // namespace

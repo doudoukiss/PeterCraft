@@ -5,11 +5,14 @@ add_executable(PeterCoreUnitTests
 target_link_libraries(PeterCoreUnitTests
   PRIVATE
     PeterAI
+    PeterCombat
     PeterCore
     PeterInventory
     PeterProgression
+    PeterUI
     PeterValidation
     PeterWorkshop
+    PeterWorld
 )
 
 target_include_directories(PeterCoreUnitTests
@@ -33,6 +36,9 @@ target_link_libraries(PeterFoundationIntegrationTests
     PeterInventory
     PeterProgression
     PeterTelemetry
+    PeterUI
+    PeterValidation
+    PeterWorld
 )
 
 target_include_directories(PeterFoundationIntegrationTests
@@ -51,7 +57,12 @@ add_executable(PeterScenarioTests
 target_link_libraries(PeterScenarioTests
   PRIVATE
     PeterAI
+    PeterCombat
+    PeterInventory
+    PeterProgression
     PeterTools
+    PeterValidation
+    PeterWorld
 )
 
 target_include_directories(PeterScenarioTests
@@ -76,4 +87,14 @@ add_test(
 add_test(
   NAME smoke_vertical_slice
   COMMAND $<TARGET_FILE:PeterCraftApp> --smoke-test --profile-id player.test.smoke --no-settings
+)
+
+add_test(
+  NAME slice_artifact_recovery
+  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario artifact_recovery --profile-id player.test.artifact --no-settings
+)
+
+add_test(
+  NAME slice_escort_support
+  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario escort_support --profile-id player.test.escort --no-settings
 )

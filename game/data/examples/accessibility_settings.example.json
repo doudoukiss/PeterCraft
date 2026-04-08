@@ -1,0 +1,17 @@
+{
+  "kind": "accessibilitySettings",
+  "schemaVersion": 2,
+  "textScalePercent": 110,
+  "subtitlesEnabled": true,
+  "subtitleScalePercent": 120,
+  "cameraSensitivity": 1.1,
+  "invertY": false,
+  "holdToInteract": true,
+  "reducedTimePressure": false,
+  "lightAimAssist": true,
+  "actionBindings": {
+    "action.interact": "E",
+    "action.jump": "Space",
+    "action.sprint": "Left Shift"
+  }
+}

@@ -1,16 +1,96 @@
 {
   "kind": "missionCatalog",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "missions": [
     {
-      "id": "mission.foundation.shell_boot",
-      "template": "tutorial",
-      "entryRoomId": "room.foundation.entry_hall",
-      "extractionRoomId": "room.foundation.exit_pad",
-      "lootTableId": "loot_table.foundation.entry_hall",
-      "roomIds": ["room.foundation.entry_hall", "room.foundation.exit_pad"],
-      "recommendedMinutes": 8,
-      "tutorialId": "tutorial.foundation.first_boot"
+      "id": "mission.salvage_run.machine_silo",
+      "template": "salvage_run",
+      "zoneId": "scene.raid.machine_silo",
+      "roomIds": [
+        "room.raid.entry_platform",
+        "room.raid.patrol_hall",
+        "room.raid.salvage_nook",
+        "room.raid.guard_post",
+        "room.raid.high_risk_vault",
+        "room.raid.extraction_pad"
+      ],
+      "recommendedMinutes": 9,
+      "extractionCountdownSeconds": 6,
+      "failRuleId": "fail_rule.standard_extraction",
+      "objectives": [
+        {
+          "id": "objective.salvage.collect_scrap",
+          "kind": "collect_item",
+          "targetId": "item.salvage.scrap_metal",
+          "description": "Collect three Scrap Metal.",
+          "requiredCount": 3,
+          "optional": false
+        },
+        {
+          "id": "objective.salvage.extract",
+          "kind": "extract",
+          "targetId": "room.raid.extraction_pad",
+          "description": "Reach the extraction pad and leave safely.",
+          "requiredCount": 1,
+          "optional": false
+        }
+      ],
+      "sideObjectives": [
+        {
+          "id": "objective.salvage.power_cell",
+          "kind": "collect_item",
+          "targetId": "item.salvage.power_cell",
+          "description": "Recover a Power Cell from the high-risk vault.",
+          "requiredCount": 1,
+          "optional": true
+        }
+      ],
+      "rewardBundle": {
+        "guaranteedItems": [
+          { "itemId": "item.salvage.scrap_metal", "quantity": 2 }
+        ],
+        "upgradeTrackId": "track.inventory_capacity",
+        "lessonTipId": "tip.raid.keep_rarity_feedback"
+      }
+    },
+    {
+      "id": "mission.timed_extraction.machine_silo",
+      "template": "timed_extraction",
+      "zoneId": "scene.raid.machine_silo",
+      "roomIds": [
+        "room.raid.entry_platform",
+        "room.raid.guard_post",
+        "room.raid.high_risk_vault",
+        "room.raid.extraction_pad"
+      ],
+      "recommendedMinutes": 7,
+      "extractionCountdownSeconds": 5,
+      "failRuleId": "fail_rule.timer_expired",
+      "objectives": [
+        {
+          "id": "objective.timed.loot",
+          "kind": "collect_item",
+          "targetId": "item.salvage.power_cell",
+          "description": "Grab the Power Cell before the timer expires.",
+          "requiredCount": 1,
+          "optional": false
+        },
+        {
+          "id": "objective.timed.extract",
+          "kind": "extract",
+          "targetId": "room.raid.extraction_pad",
+          "description": "Reach extraction before the countdown ends.",
+          "requiredCount": 1,
+          "optional": false
+        }
+      ],
+      "rewardBundle": {
+        "guaranteedItems": [
+          { "itemId": "item.salvage.power_cell", "quantity": 1 }
+        ],
+        "upgradeTrackId": "track.creator_unlocks",
+        "lessonTipId": "tip.raid_reduced_time_pressure_available"
+      }
     }
   ]
 }

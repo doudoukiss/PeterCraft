@@ -19,6 +19,6 @@
 
 ## Notes
 
-- Phase 0 targets Windows only.
-- The current slice keeps engine integration behind adapter seams while the portable gameplay loop remains buildable and testable locally.
+- Phase 2 still targets Windows only.
+- The current systems alpha keeps engine integration behind adapter seams while the portable gameplay loop, recovery systems, tutorial lessons, and mission templates remain buildable and testable locally.
 - GitHub Actions uses the same scripts as local development to reduce drift.

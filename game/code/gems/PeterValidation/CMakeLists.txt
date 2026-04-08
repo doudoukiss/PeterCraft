@@ -7,6 +7,14 @@ target_include_directories(PeterValidation
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+target_link_libraries(PeterValidation
+  PUBLIC
+    PeterAdapters
+    PeterInventory
+    PeterUI
+    PeterWorld
+)
+
 target_compile_features(PeterValidation PUBLIC cxx_std_20)
 
 peter_enable_strict_warnings(PeterValidation)

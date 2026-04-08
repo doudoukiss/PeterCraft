@@ -1,0 +1,23 @@
+{
+  "kind": "tutorialCatalog",
+  "schemaVersion": 2,
+  "tutorials": [
+    {
+      "id": "lesson.phase2.invalid.no_completion",
+      "displayName": "Broken Lesson",
+      "summary": "This lesson never completes.",
+      "replayable": true,
+      "steps": [
+        {
+          "id": "lesson.phase2.invalid.prompt",
+          "action": "show_prompt",
+          "prompt": "This lesson is missing its completion step.",
+          "triggerEvent": "gameplay.raid.start",
+          "completionEvent": "",
+          "targetId": "",
+          "hintThreshold": 0
+        }
+      ]
+    }
+  ]
+}

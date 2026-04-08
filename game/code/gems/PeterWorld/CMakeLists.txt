@@ -13,6 +13,7 @@ target_link_libraries(PeterWorld
   PUBLIC
     PeterAI
     PeterCore
+    PeterInventory
 )
 
 target_compile_features(PeterWorld PUBLIC cxx_std_20)

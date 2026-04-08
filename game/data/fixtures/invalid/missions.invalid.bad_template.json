@@ -1,0 +1,33 @@
+{
+  "kind": "missionCatalog",
+  "schemaVersion": 2,
+  "missions": [
+    {
+      "id": "mission.invalid.template_test",
+      "template": "unknown_template",
+      "zoneId": "scene.raid.machine_silo",
+      "roomIds": [
+        "room.raid.entry_platform",
+        "room.raid.extraction_pad"
+      ],
+      "recommendedMinutes": 9,
+      "extractionCountdownSeconds": 6,
+      "failRuleId": "fail_rule.standard_extraction",
+      "objectives": [
+        {
+          "id": "objective.invalid.extract",
+          "kind": "extract",
+          "targetId": "room.raid.extraction_pad",
+          "description": "This mission should fail schema validation.",
+          "requiredCount": 1,
+          "optional": false
+        }
+      ],
+      "rewardBundle": {
+        "guaranteedItems": [],
+        "upgradeTrackId": "track.inventory_capacity",
+        "lessonTipId": "tip.invalid"
+      }
+    }
+  ]
+}

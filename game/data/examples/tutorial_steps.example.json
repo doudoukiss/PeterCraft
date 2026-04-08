@@ -1,19 +1,91 @@
 {
   "kind": "tutorialCatalog",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "tutorials": [
     {
-      "id": "tutorial.foundation.first_boot",
+      "id": "lesson.phase2.first_combat",
+      "displayName": "First Combat",
+      "summary": "Teach the player what a combat action means and why the companion helped.",
+      "replayable": true,
       "steps": [
         {
-          "id": "tutorial_step.foundation.open_menu",
-          "action": "show_menu",
-          "prompt": "Open the main menu shell."
+          "id": "lesson.phase2.first_combat.prompt",
+          "action": "show_prompt",
+          "prompt": "Stay calm and watch the combat cues.",
+          "triggerEvent": "gameplay.raid.start",
+          "completionEvent": "",
+          "targetId": "",
+          "hintThreshold": 0
         },
         {
-          "id": "tutorial_step.foundation.load_scene",
-          "action": "load_scene",
-          "prompt": "Load the empty scene shell."
+          "id": "lesson.phase2.first_combat.why",
+          "action": "show_why_panel",
+          "prompt": "Open the why panel to see why the companion acted.",
+          "triggerEvent": "creator_tools.explain_panel.opened",
+          "completionEvent": "creator_tools.explain_panel.opened",
+          "targetId": "",
+          "hintThreshold": 0
+        },
+        {
+          "id": "lesson.phase2.first_combat.done",
+          "action": "complete_lesson",
+          "prompt": "Combat lesson complete.",
+          "triggerEvent": "gameplay.raid.end",
+          "completionEvent": "gameplay.raid.end",
+          "targetId": "",
+          "hintThreshold": 0
+        }
+      ]
+    },
+    {
+      "id": "lesson.phase2.first_repair",
+      "displayName": "First Repair",
+      "summary": "Teach the player how recovery and repairs work.",
+      "replayable": true,
+      "steps": [
+        {
+          "id": "lesson.phase2.first_repair.open_panel",
+          "action": "open_panel",
+          "prompt": "Open the recovery panel in the workshop.",
+          "triggerEvent": "creator_tools.station.opened",
+          "completionEvent": "creator_tools.station.opened",
+          "targetId": "station.home.workbench",
+          "hintThreshold": 1
+        },
+        {
+          "id": "lesson.phase2.first_repair.done",
+          "action": "complete_lesson",
+          "prompt": "Repair lesson complete.",
+          "triggerEvent": "gameplay.workshop.recovery_used",
+          "completionEvent": "gameplay.workshop.recovery_used",
+          "targetId": "",
+          "hintThreshold": 0
+        }
+      ]
+    },
+    {
+      "id": "lesson.phase2.mission_choice",
+      "displayName": "Mission Choice",
+      "summary": "Teach the player how mission templates change the run.",
+      "replayable": true,
+      "steps": [
+        {
+          "id": "lesson.phase2.mission_choice.launch",
+          "action": "launch_lesson_mission",
+          "prompt": "Launch a lesson mission from the board.",
+          "triggerEvent": "creator_tools.station.opened",
+          "completionEvent": "gameplay.mission.selected",
+          "targetId": "mission.salvage_run.machine_silo",
+          "hintThreshold": 0
+        },
+        {
+          "id": "lesson.phase2.mission_choice.done",
+          "action": "complete_lesson",
+          "prompt": "Mission choice lesson complete.",
+          "triggerEvent": "gameplay.mission.selected",
+          "completionEvent": "gameplay.mission.selected",
+          "targetId": "",
+          "hintThreshold": 0
         }
       ]
     }

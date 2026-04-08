@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Accessibility Settings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "textScalePercent",
+    "subtitlesEnabled",
+    "subtitleScalePercent",
+    "cameraSensitivity",
+    "invertY",
+    "holdToInteract",
+    "reducedTimePressure",
+    "lightAimAssist",
+    "actionBindings"
+  ],
+  "properties": {
+    "kind": { "const": "accessibilitySettings" },
+    "schemaVersion": { "const": 2 },
+    "textScalePercent": { "type": "integer", "minimum": 80, "maximum": 150 },
+    "subtitlesEnabled": { "type": "boolean" },
+    "subtitleScalePercent": { "type": "integer", "minimum": 80, "maximum": 150 },
+    "cameraSensitivity": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
+    "invertY": { "type": "boolean" },
+    "holdToInteract": { "type": "boolean" },
+    "reducedTimePressure": { "type": "boolean" },
+    "lightAimAssist": { "type": "boolean" },
+    "actionBindings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

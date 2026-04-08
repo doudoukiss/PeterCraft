@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Recovery Rules",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "favoriteReclaimCost", "durabilityLossPercent", "favoriteItemSlotEnabled"],
+  "properties": {
+    "kind": { "const": "recoveryRules" },
+    "schemaVersion": { "const": 2 },
+    "favoriteReclaimCost": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "durabilityLossPercent": { "type": "integer", "minimum": 1, "maximum": 25 },
+    "favoriteItemSlotEnabled": { "type": "boolean" },
+    "brokenItemRepairCosts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      }
+    }
+  }
+}

@@ -6,21 +6,80 @@
   "required": ["kind", "schemaVersion", "items"],
   "properties": {
     "kind": { "const": "itemCatalog" },
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "items": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "displayName", "category", "stackLimit", "description"],
+        "required": [
+          "id",
+          "displayName",
+          "category",
+          "rarity",
+          "stackLimit",
+          "description",
+          "colorToken",
+          "audioCueFamily",
+          "countsTowardCarrySlots",
+          "lostOnFailure",
+          "repairable",
+          "maxDurability"
+        ],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
           "displayName": { "type": "string", "minLength": 1 },
-          "category": { "enum": ["salvage", "consumable", "tool", "gadget", "companion_module", "crafting_material"] },
+          "category": {
+            "enum": [
+              "salvage",
+              "consumable",
+              "tool",
+              "gadget",
+              "companion_module",
+              "crafting_material",
+              "quest_item"
+            ]
+          },
+          "rarity": { "enum": ["common", "uncommon", "rare", "epic"] },
           "stackLimit": { "type": "integer", "minimum": 1, "maximum": 999 },
-          "description": { "type": "string", "minLength": 1 }
-        }
+          "description": { "type": "string", "minLength": 1 },
+          "colorToken": { "type": "string", "minLength": 1 },
+          "audioCueFamily": { "type": "string", "minLength": 1 },
+          "countsTowardCarrySlots": { "type": "boolean" },
+          "lostOnFailure": { "type": "boolean" },
+          "repairable": { "type": "boolean" },
+          "maxDurability": { "type": "integer", "minimum": 0, "maximum": 100 }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "category": { "enum": ["tool", "gadget", "companion_module"] }
+              }
+            },
+            "then": {
+              "properties": {
+                "repairable": { "const": true },
+                "maxDurability": { "minimum": 1 }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "category": { "const": "quest_item" }
+              }
+            },
+            "then": {
+              "properties": {
+                "rarity": { "enum": ["rare", "epic"] },
+                "countsTowardCarrySlots": { "const": false },
+                "lostOnFailure": { "const": false }
+              }
+            }
+          }
+        ]
       }
     }
   }

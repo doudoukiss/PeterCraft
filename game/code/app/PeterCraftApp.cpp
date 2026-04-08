@@ -47,10 +47,12 @@ namespace Peter::App
     JsonlTelemetrySink telemetrySink(logRoot / "petercraft-events.jsonl");
     eventBus.RegisterSink(&telemetrySink);
 
-    FeatureRegistry features(VersionInfo{"0.2.0", "phase1"});
+    FeatureRegistry features(VersionInfo{"0.3.0", "phase2"});
     features.SetFlag("feature.vertical_slice", true);
+    features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
     features.SetFlag("feature.safe_rule_edit", true);
+    features.SetFlag("feature.recovery_state", true);
 
     ProfileService profileService(*platform.save, eventBus);
     const auto profile = profileService.EnsureProfile(m_options.profileId);
@@ -80,7 +82,7 @@ namespace Peter::App
     const auto validationStatus = ValidationStatus::PlaceholderHealthy();
     eventBus.Emit(Event{
       EventCategory::Validation,
-      "validation.runtime.phase1_ready",
+      "validation.runtime.phase2_ready",
       {{"summary", validationStatus.summary}, {"status", validationStatus.status}}});
 
     Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
@@ -90,10 +92,11 @@ namespace Peter::App
     overlay.SetValue("FPS", "60");
     overlay.SetValue("Frame Time", "16.6ms");
     overlay.SetValue("Scene", runReport.success ? "scene.results.success" : "scene.results.failure");
-    overlay.SetValue("Mission", "mission.vertical_slice.machine_silo");
+    overlay.SetValue("Mission", runReport.missionId);
     overlay.SetValue("Player State", runReport.success ? "returned_home" : "raid_failed");
     overlay.SetValue("Companion State", runReport.lastCompanionDecision.currentState);
     overlay.SetValue("Save Slot", profile.root.string());
+    overlay.SetValue("Raid Tip", runReport.raidSummary.lessonTip);
 
     eventBus.Emit(Event{
       EventCategory::Performance,
@@ -104,7 +107,7 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 1 Vertical Slice\n";
+    std::cout << "PeterCraft Phase 2 Core Systems Alpha\n";
     std::cout << runReport.summary << "\n";
     std::cout << overlay.Render() << '\n';
 

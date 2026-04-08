@@ -1,0 +1,11 @@
+{
+  "kind": "recoveryRules",
+  "schemaVersion": 2,
+  "favoriteReclaimCost": 1,
+  "durabilityLossPercent": 25,
+  "favoriteItemSlotEnabled": true,
+  "brokenItemRepairCosts": {
+    "item.tool.field_wrench": 1,
+    "item.gadget.burst_beacon": 2
+  }
+}

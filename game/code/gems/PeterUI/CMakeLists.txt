@@ -11,7 +11,10 @@ target_include_directories(PeterUI
 
 target_link_libraries(PeterUI
   PUBLIC
+    PeterAdapters
     PeterAI
+    PeterCore
+    PeterProgression
     PeterWorld
 )
 

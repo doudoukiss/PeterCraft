@@ -11,6 +11,7 @@ target_include_directories(PeterCombat
 target_link_libraries(PeterCombat
   PUBLIC
     PeterAI
+    PeterCore
 )
 
 target_compile_features(PeterCombat PUBLIC cxx_std_20)

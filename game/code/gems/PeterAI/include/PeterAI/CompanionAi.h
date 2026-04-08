@@ -22,6 +22,10 @@ namespace Peter::AI
     bool playerNeedsRevive = false;
     bool unsafeToAdvance = false;
     bool rareLootVisible = false;
+    bool timedMissionPressure = false;
+    bool guardProtocolUnlocked = false;
+    bool repairPulseUnlocked = false;
+    bool lootPingUnlocked = false;
     int distanceToPlayerMeters = 0;
   };
 

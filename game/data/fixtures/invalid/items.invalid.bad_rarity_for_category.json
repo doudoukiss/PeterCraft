@@ -1,0 +1,20 @@
+{
+  "kind": "itemCatalog",
+  "schemaVersion": 2,
+  "items": [
+    {
+      "id": "item.quest.bad_common_seed",
+      "displayName": "Bad Common Seed",
+      "category": "quest_item",
+      "rarity": "common",
+      "stackLimit": 1,
+      "description": "This should fail because quest items cannot be common.",
+      "colorToken": "gray",
+      "audioCueFamily": "loot.common",
+      "countsTowardCarrySlots": false,
+      "lostOnFailure": false,
+      "repairable": false,
+      "maxDurability": 0
+    }
+  ]
+}

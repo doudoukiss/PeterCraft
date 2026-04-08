@@ -10,27 +10,35 @@ namespace Peter::AI
   {
     CompanionDecisionSnapshot snapshot;
 
-    if (context.playerNeedsRevive)
+    if (context.playerNeedsRevive && context.repairPulseUnlocked)
     {
       snapshot.currentState = "support";
-      snapshot.lastAction = "revive_player";
-      snapshot.topReason = "Player needs help immediately.";
-      snapshot.influentialVariableA = "revive_priority=highest";
-      snapshot.influentialVariableB = "player_health=critical";
+      snapshot.lastAction = "revive_with_repair_pulse";
+      snapshot.topReason = "Player needs immediate help and the repair pulse is ready.";
+      snapshot.influentialVariableA = "repair_pulse_unlocked=true";
+      snapshot.influentialVariableB = "revive_priority=highest";
     }
-    else if (context.unsafeToAdvance)
+    else if (context.playerLowHealth && context.repairPulseUnlocked)
     {
-      snapshot.currentState = "retreat";
-      snapshot.lastAction = "retreat_to_cover";
-      snapshot.topReason = "Area is unsafe for the companion.";
-      snapshot.influentialVariableA = "threat_pressure=high";
-      snapshot.influentialVariableB = "safety_override=true";
+      snapshot.currentState = "support";
+      snapshot.lastAction = "repair_pulse";
+      snapshot.topReason = "Player health is low, so the companion is stabilizing the run.";
+      snapshot.influentialVariableA = "player_health=low";
+      snapshot.influentialVariableB = "repair_pulse_unlocked=true";
+    }
+    else if (context.unsafeToAdvance && context.guardProtocolUnlocked)
+    {
+      snapshot.currentState = "support_guard";
+      snapshot.lastAction = "deploy_guard_field";
+      snapshot.topReason = "The area is unsafe, so the companion is buying safer space.";
+      snapshot.influentialVariableA = "guard_protocol_unlocked=true";
+      snapshot.influentialVariableB = "threat_pressure=high";
     }
     else if (context.threatVisible && context.sameTargetMarked)
     {
       snapshot.currentState = "combat_support";
-      snapshot.lastAction = "attack_same_target";
-      snapshot.topReason = "Player marked a nearby threat.";
+      snapshot.lastAction = context.guardProtocolUnlocked ? "attack_and_guard" : "attack_same_target";
+      snapshot.topReason = "Player marked a nearby threat and the companion can support that target.";
       snapshot.influentialVariableA =
         std::string("follow_distance=") + std::to_string(config.followDistanceMeters);
       snapshot.influentialVariableB =
@@ -39,17 +47,20 @@ namespace Peter::AI
     else if (context.extractionActive)
     {
       snapshot.currentState = "escort";
-      snapshot.lastAction = "cover_extraction";
-      snapshot.topReason = "Extraction is active.";
+      snapshot.lastAction = context.timedMissionPressure ? "cover_fast_extraction" : "cover_extraction";
+      snapshot.topReason = context.timedMissionPressure
+        ? "The mission timer is active, so the companion is prioritizing a quick exit."
+        : "Extraction is active and the companion is covering the route.";
       snapshot.influentialVariableA = "extraction_priority=high";
-      snapshot.influentialVariableB = "hold_position=false";
+      snapshot.influentialVariableB = context.timedMissionPressure ? "timer_pressure=true" : "timer_pressure=false";
     }
-    else if (context.rareLootVisible && context.distanceToPlayerMeters <= static_cast<int>(config.followDistanceMeters))
+    else if (context.rareLootVisible && context.lootPingUnlocked &&
+      context.distanceToPlayerMeters <= static_cast<int>(config.followDistanceMeters))
     {
       snapshot.currentState = "support_loot";
-      snapshot.lastAction = "mark_rare_loot";
-      snapshot.topReason = "Interesting salvage is nearby and the player is still within range.";
-      snapshot.influentialVariableA = "rare_loot_visible=true";
+      snapshot.lastAction = "ping_rare_loot";
+      snapshot.topReason = "A valuable pickup is nearby and the companion can call it out clearly.";
+      snapshot.influentialVariableA = "loot_ping_unlocked=true";
       snapshot.influentialVariableB =
         std::string("follow_distance=") + std::to_string(config.followDistanceMeters);
     }
@@ -98,6 +109,7 @@ namespace Peter::AI
   Peter::Core::StructuredFields ToSaveFields(const CompanionConfig& config)
   {
     return Peter::Core::StructuredFields{
+      {"schema_version", "2"},
       {"follow_distance_meters", std::to_string(config.followDistanceMeters)},
       {"hold_position", config.holdPosition ? "true" : "false"}
     };
@@ -133,6 +145,12 @@ namespace Peter::AI
     const EnemyVariant variant,
     const std::string_view roomId)
   {
-    return EnemyUnit{std::string(enemyId), variant, std::string(roomId), false, 20, true};
+    return EnemyUnit{
+      std::string(enemyId),
+      variant,
+      std::string(roomId),
+      false,
+      variant == EnemyVariant::MeleeChaser ? 24 : 18,
+      true};
   }
 } // namespace Peter::AI

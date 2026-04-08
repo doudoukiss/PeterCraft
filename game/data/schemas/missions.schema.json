@@ -6,28 +6,94 @@
   "required": ["kind", "schemaVersion", "missions"],
   "properties": {
     "kind": { "const": "missionCatalog" },
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "missions": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "template", "entryRoomId", "extractionRoomId", "lootTableId", "roomIds", "recommendedMinutes"],
+        "required": [
+          "id",
+          "template",
+          "zoneId",
+          "roomIds",
+          "recommendedMinutes",
+          "extractionCountdownSeconds",
+          "objectives",
+          "rewardBundle",
+          "failRuleId"
+        ],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
-          "template": { "type": "string", "enum": ["extract", "tutorial", "salvage_run"] },
-          "entryRoomId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
-          "extractionRoomId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
-          "lootTableId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "template": {
+            "type": "string",
+            "enum": [
+              "salvage_run",
+              "recover_artifact",
+              "activate_machine",
+              "escort_companion",
+              "timed_extraction"
+            ]
+          },
+          "zoneId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
           "roomIds": {
             "type": "array",
             "minItems": 2,
             "items": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
           },
           "recommendedMinutes": { "type": "integer", "minimum": 5, "maximum": 20 },
-          "tutorialId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
+          "extractionCountdownSeconds": { "type": "integer", "minimum": 3, "maximum": 12 },
+          "failRuleId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "objectives": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/objective" }
+          },
+          "sideObjectives": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/objective" }
+          },
+          "rewardBundle": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["guaranteedItems", "upgradeTrackId", "lessonTipId"],
+            "properties": {
+              "guaranteedItems": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["itemId", "quantity"],
+                  "properties": {
+                    "itemId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+                    "quantity": { "type": "integer", "minimum": 1, "maximum": 999 }
+                  }
+                }
+              },
+              "upgradeTrackId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+              "lessonTipId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
+            }
+          }
         }
+      }
+    }
+  },
+  "$defs": {
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "targetId", "description", "requiredCount", "optional"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+        "kind": {
+          "type": "string",
+          "enum": ["collect_item", "activate_target", "repair_target", "escort", "extract", "scan_loot"]
+        },
+        "targetId": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "requiredCount": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "optional": { "type": "boolean" }
       }
     }
   }

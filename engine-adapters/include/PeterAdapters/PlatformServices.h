@@ -27,6 +27,14 @@ namespace Peter::Adapters
     bool interact = false;
   };
 
+  struct ActionBinding
+  {
+    std::string actionId;
+    std::string primaryInput;
+    std::string secondaryInput;
+    bool remappable = true;
+  };
+
   struct CameraRigState
   {
     std::string mode = "third_person_ots";
@@ -35,12 +43,20 @@ namespace Peter::Adapters
     double pitchDegrees = 18.0;
   };
 
+  struct PresentationSettings
+  {
+    bool subtitlesEnabled = true;
+    int subtitleScalePercent = 100;
+    int textScalePercent = 100;
+  };
+
   class IInputAdapter
   {
   public:
     virtual ~IInputAdapter() = default;
     virtual std::string ActiveScheme() const = 0;
     virtual InputState SampleInput() const = 0;
+    virtual std::vector<ActionBinding> DefaultBindings() const = 0;
   };
 
   class ICameraAdapter
@@ -75,6 +91,7 @@ namespace Peter::Adapters
     virtual ~IAudioAdapter() = default;
     virtual void PostUiCue(std::string_view cueId) = 0;
     virtual void PostWorldCue(std::string_view cueId) = 0;
+    virtual void PostFeedbackCue(std::string_view cueFamily, std::string_view variantId) = 0;
   };
 
   class IUiAdapter
@@ -84,6 +101,7 @@ namespace Peter::Adapters
     virtual void PresentState(std::string_view stateId) = 0;
     virtual void PresentPrompt(std::string_view prompt) = 0;
     virtual void PresentPanel(std::string_view panelId, std::string_view body) = 0;
+    virtual void ApplyPresentationSettings(const PresentationSettings& settings) = 0;
   };
 
   struct PlatformServices

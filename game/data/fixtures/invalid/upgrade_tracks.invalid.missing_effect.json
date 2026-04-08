@@ -1,0 +1,22 @@
+{
+  "kind": "upgradeTrackCatalog",
+  "schemaVersion": 2,
+  "tracks": [
+    {
+      "id": "track.invalid.missing_effect",
+      "displayName": "Broken Track",
+      "summary": "Missing effect type should fail validation.",
+      "nodes": [
+        {
+          "id": "track.invalid.node",
+          "displayName": "Broken Node",
+          "description": "This node is invalid.",
+          "costItemId": "item.salvage.scrap_metal",
+          "prerequisiteNodeId": "",
+          "cost": 1,
+          "effectValue": 1
+        }
+      ]
+    }
+  ]
+}

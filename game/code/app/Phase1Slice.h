@@ -9,11 +9,13 @@
 #include "PeterInventory/InventoryState.h"
 #include "PeterProgression/Crafting.h"
 #include "PeterTraversal/TraversalProfile.h"
+#include "PeterUI/SlicePresentation.h"
 #include "PeterWorkshop/WorkshopTuning.h"
 #include "PeterWorld/SliceContent.h"
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace Peter::App
 {
@@ -22,6 +24,8 @@ namespace Peter::App
     GuidedFirstRun,
     HappyPath,
     FailurePath,
+    ArtifactRecovery,
+    EscortSupport,
     Smoke
   };
 
@@ -32,9 +36,11 @@ namespace Peter::App
   {
     bool success = false;
     std::string summary;
+    std::string missionId;
     Peter::AI::CompanionDecisionSnapshot lastCompanionDecision;
     Peter::Workshop::RuleEditPreview lastRuleEditPreview;
     Peter::Core::ExtractionResult extractionResult;
+    Peter::World::RaidSummary raidSummary;
   };
 
   class Phase1Slice
@@ -53,24 +59,33 @@ namespace Peter::App
     {
       Peter::Inventory::InventoryState inventory;
       Peter::Inventory::LoadoutState loadout;
+      Peter::Inventory::RecoveryState recovery;
       Peter::Progression::WorkshopState workshop;
       Peter::AI::CompanionConfig companionConfig;
+      Peter::UI::AccessibilitySettings accessibility;
+      std::vector<std::string> completedLessons;
       bool guidedFirstRunComplete = false;
       bool ruleEditComplete = false;
+      int tutorialHintLevel = 0;
       int completedRaids = 0;
       std::string lastRaidResult = "none";
+      std::string lastMissionId = "mission.salvage_run.machine_silo";
     };
 
     [[nodiscard]] PersistentState LoadPersistentState() const;
     void SavePersistentState(const PersistentState& state) const;
-    void PresentHomeBase() const;
+    void PresentHomeBase(const PersistentState& state) const;
     [[nodiscard]] const Peter::World::StationDefinition& FindStation(std::string_view stationId) const;
     void VisitStation(const Peter::World::StationDefinition& station) const;
     void EmitCompanionDecision(
       std::string_view roomId,
       const Peter::AI::CompanionDecisionSnapshot& snapshot) const;
-    [[nodiscard]] SliceRunReport RunSuccessSlice(PersistentState& state, bool guidedMode);
-    [[nodiscard]] SliceRunReport RunFailureSlice(PersistentState& state);
+    void RunLesson(PersistentState& state, std::string_view lessonId, bool replayed) const;
+    [[nodiscard]] SliceRunReport RunMissionScenario(
+      PersistentState& state,
+      std::string_view missionId,
+      bool expectSuccess,
+      bool guidedMode);
 
     Peter::Adapters::PlatformServices& m_platform;
     Peter::Core::EventBus& m_eventBus;

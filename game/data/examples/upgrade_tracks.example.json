@@ -1,0 +1,33 @@
+{
+  "kind": "upgradeTrackCatalog",
+  "schemaVersion": 2,
+  "tracks": [
+    {
+      "id": "track.inventory_capacity",
+      "displayName": "Inventory Capacity",
+      "summary": "Carry a little more each run without hidden stats.",
+      "nodes": [
+        {
+          "id": "track.inventory_capacity.salvage_pouch",
+          "displayName": "Salvage Pouch",
+          "description": "Gain one extra carry slot.",
+          "costItemId": "item.salvage.scrap_metal",
+          "prerequisiteNodeId": "",
+          "cost": 3,
+          "effectType": "carry_bonus",
+          "effectValue": 1
+        },
+        {
+          "id": "track.inventory_capacity.side_holster",
+          "displayName": "Side Holster",
+          "description": "Gain one more carry slot.",
+          "costItemId": "item.material.nanofiber",
+          "prerequisiteNodeId": "track.inventory_capacity.salvage_pouch",
+          "cost": 2,
+          "effectType": "carry_bonus",
+          "effectValue": 1
+        }
+      ]
+    }
+  ]
+}

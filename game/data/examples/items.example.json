@@ -1,20 +1,104 @@
 {
   "kind": "itemCatalog",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "items": [
     {
       "id": "item.salvage.scrap_metal",
       "displayName": "Scrap Metal",
       "category": "salvage",
+      "rarity": "common",
       "stackLimit": 50,
-      "description": "Foundation salvage used for placeholder crafting."
+      "description": "Reliable base salvage used for repairs and starter upgrades.",
+      "colorToken": "steel",
+      "audioCueFamily": "loot.common",
+      "countsTowardCarrySlots": true,
+      "lostOnFailure": true,
+      "repairable": false,
+      "maxDurability": 0
     },
     {
       "id": "item.salvage.power_cell",
       "displayName": "Power Cell",
       "category": "crafting_material",
+      "rarity": "rare",
       "stackLimit": 10,
-      "description": "Rare salvage found in the high-risk vault."
+      "description": "A high-output cell recovered from machine vaults.",
+      "colorToken": "amber",
+      "audioCueFamily": "loot.rare",
+      "countsTowardCarrySlots": true,
+      "lostOnFailure": true,
+      "repairable": false,
+      "maxDurability": 0
+    },
+    {
+      "id": "item.material.nanofiber",
+      "displayName": "Nanofiber Coil",
+      "category": "crafting_material",
+      "rarity": "uncommon",
+      "stackLimit": 12,
+      "description": "Flexible crafting material used for advanced upgrades.",
+      "colorToken": "teal",
+      "audioCueFamily": "loot.uncommon",
+      "countsTowardCarrySlots": true,
+      "lostOnFailure": true,
+      "repairable": false,
+      "maxDurability": 0
+    },
+    {
+      "id": "item.tool.field_wrench",
+      "displayName": "Field Wrench",
+      "category": "tool",
+      "rarity": "uncommon",
+      "stackLimit": 1,
+      "description": "Starter tool used to repair and activate old machines.",
+      "colorToken": "teal",
+      "audioCueFamily": "loot.uncommon",
+      "countsTowardCarrySlots": false,
+      "lostOnFailure": false,
+      "repairable": true,
+      "maxDurability": 100
+    },
+    {
+      "id": "item.gadget.burst_beacon",
+      "displayName": "Burst Beacon",
+      "category": "gadget",
+      "rarity": "rare",
+      "stackLimit": 1,
+      "description": "A compact gadget that helps mark threats and loot.",
+      "colorToken": "azure",
+      "audioCueFamily": "loot.rare",
+      "countsTowardCarrySlots": false,
+      "lostOnFailure": false,
+      "repairable": true,
+      "maxDurability": 100
+    },
+    {
+      "id": "item.companion_module.guard_chip",
+      "displayName": "Guard Chip",
+      "category": "companion_module",
+      "rarity": "uncommon",
+      "stackLimit": 1,
+      "description": "Starter companion module for safer support behavior.",
+      "colorToken": "teal",
+      "audioCueFamily": "loot.uncommon",
+      "countsTowardCarrySlots": false,
+      "lostOnFailure": false,
+      "repairable": true,
+      "maxDurability": 100
+    },
+    {
+      "id": "item.quest.artifact_seed",
+      "displayName": "Artifact Seed",
+      "category": "quest_item",
+      "rarity": "epic",
+      "stackLimit": 1,
+      "description": "A mission-critical relic that is preserved after failure.",
+      "colorToken": "sunrise",
+      "audioCueFamily": "loot.epic",
+      "countsTowardCarrySlots": false,
+      "lostOnFailure": false,
+      "repairable": false,
+      "maxDurability": 0
     }
   ]
 }
