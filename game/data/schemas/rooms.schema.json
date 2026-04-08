@@ -13,11 +13,19 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "theme", "connectorCount", "supportsExtraction"],
+        "required": ["id", "displayName", "theme", "roomType", "landmarkLabel", "exits", "supportsExtraction"],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "displayName": { "type": "string", "minLength": 1 },
           "theme": { "type": "string", "minLength": 1 },
-          "connectorCount": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "roomType": { "type": "string", "enum": ["entry", "corridor", "optional_loot", "combat", "reward", "connector", "extraction"] },
+          "landmarkLabel": { "type": "string", "minLength": 1 },
+          "exits": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
+          },
+          "optionalPath": { "type": "boolean" },
+          "highRiskReward": { "type": "boolean" },
           "supportsExtraction": { "type": "boolean" }
         }
       }

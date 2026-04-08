@@ -1,0 +1,12 @@
+{
+  "kind": "encounterCatalog",
+  "schemaVersion": 1,
+  "encounters": [
+    {
+      "id": "encounter.raid.guard_post",
+      "roomId": "room.foundation.entry_hall",
+      "enemyFamily": "machine_patrol",
+      "variants": ["melee_chaser", "alarm_support"]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ namespace Peter::Core
     std::string profileId;
     std::filesystem::path root;
     std::filesystem::path saveDataRoot;
+    std::filesystem::path backupRoot;
     std::filesystem::path userContentRoot;
   };
 

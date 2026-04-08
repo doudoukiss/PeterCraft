@@ -1,5 +1,6 @@
 param(
-  [string]$TestPreset = 'windows-vs2022-dev-debug'
+  [string]$ConfigurePreset = 'windows-vs2022-dev',
+  [string]$Configuration = 'Debug'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -9,7 +10,7 @@ $repoRoot = Get-RepoRoot
 Push-Location $repoRoot
 
 try {
-  ctest --preset $TestPreset
+  ctest -C $Configuration --output-on-failure --test-dir (Join-Path $repoRoot "out/build/$ConfigurePreset")
 } finally {
   Pop-Location
 }

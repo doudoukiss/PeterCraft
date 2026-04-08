@@ -1,10 +1,16 @@
 add_library(PeterTraversal STATIC
+  src/TraversalProfile.cpp
   src/TraversalModule.cpp
 )
 
 target_include_directories(PeterTraversal
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(PeterTraversal
+  PUBLIC
+    PeterAdapters
 )
 
 target_compile_features(PeterTraversal PUBLIC cxx_std_20)

@@ -7,7 +7,11 @@
       "chipName": "Stay Near Me",
       "priority": 50,
       "editableVariable": "follow_distance_meters",
-      "defaultValue": 6.0
+      "defaultValue": 6.0,
+      "minValue": 4.0,
+      "maxValue": 10.0,
+      "previewText": "Give the player a little more room before regrouping.",
+      "effectDescription": "A larger follow distance lets the companion keep helping while you explore nearby loot."
     }
   ]
 }

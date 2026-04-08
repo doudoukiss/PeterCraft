@@ -13,13 +13,20 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "template", "entryRoomId", "extractionRoomId", "lootTableId"],
+        "required": ["id", "template", "entryRoomId", "extractionRoomId", "lootTableId", "roomIds", "recommendedMinutes"],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
           "template": { "type": "string", "enum": ["extract", "tutorial", "salvage_run"] },
           "entryRoomId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
           "extractionRoomId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
-          "lootTableId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
+          "lootTableId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "roomIds": {
+            "type": "array",
+            "minItems": 2,
+            "items": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
+          },
+          "recommendedMinutes": { "type": "integer", "minimum": 5, "maximum": 20 },
+          "tutorialId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" }
         }
       }
     }

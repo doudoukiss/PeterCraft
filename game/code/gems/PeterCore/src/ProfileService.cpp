@@ -21,10 +21,12 @@ namespace Peter::Core
 
     const auto root = m_saveAdapter.ResolveProfileRoot() / profileId;
     const auto saveDataRoot = root / "SaveData";
+    const auto backupRoot = root / "Backups";
     const auto userContentRoot = root / "UserContent";
 
     m_saveAdapter.EnsureDirectory(root);
     m_saveAdapter.EnsureDirectory(saveDataRoot);
+    m_saveAdapter.EnsureDirectory(backupRoot);
     m_saveAdapter.EnsureDirectory(userContentRoot);
 
     m_eventBus.Emit(Event{
@@ -35,6 +37,6 @@ namespace Peter::Core
         {"root", root.string()}
       }});
 
-    return ProfileInfo{profileId, root, saveDataRoot, userContentRoot};
+    return ProfileInfo{profileId, root, saveDataRoot, backupRoot, userContentRoot};
   }
 } // namespace Peter::Core

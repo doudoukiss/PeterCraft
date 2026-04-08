@@ -4,14 +4,20 @@
   "rooms": [
     {
       "id": "room.foundation.entry_hall",
+      "displayName": "Entry Hall",
       "theme": "foundation",
-      "connectorCount": 2,
+      "roomType": "entry",
+      "landmarkLabel": "Blue floodlight",
+      "exits": ["room.foundation.exit_pad"],
       "supportsExtraction": false
     },
     {
       "id": "room.foundation.exit_pad",
+      "displayName": "Exit Pad",
       "theme": "foundation",
-      "connectorCount": 1,
+      "roomType": "extraction",
+      "landmarkLabel": "Amber beacon",
+      "exits": [],
       "supportsExtraction": true
     }
   ]

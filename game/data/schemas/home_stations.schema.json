@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Home Stations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "stations"],
+  "properties": {
+    "kind": { "const": "homeStationCatalog" },
+    "schemaVersion": { "const": 1 },
+    "stations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "sceneId", "displayName", "helpText", "panelId"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "sceneId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "helpText": { "type": "string", "minLength": 1 },
+          "panelId": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

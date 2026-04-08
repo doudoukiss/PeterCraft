@@ -1,15 +1,15 @@
 #pragma once
 
+#include "Phase1Slice.h"
+
 #include "PeterAdapters/PlatformServices.h"
 #include "PeterCore/EventBus.h"
 #include "PeterCore/FeatureRegistry.h"
 #include "PeterCore/ProfileService.h"
+#include "PeterCore/SaveDomainStore.h"
 #include "PeterDebug/DebugOverlay.h"
 #include "PeterTelemetry/JsonlTelemetrySink.h"
-#include "PeterTools/ScenarioHarness.h"
-#include "PeterUI/MenuModel.h"
 #include "PeterValidation/ValidationModule.h"
-#include "PeterWorld/SceneShell.h"
 
 #include <filesystem>
 #include <string>
@@ -22,7 +22,7 @@ namespace Peter::App
     bool smokeTest = false;
     bool visitSettings = true;
     std::string profileId = "player.default";
-    std::string sceneId = "scene.foundation.empty_shell";
+    std::string scenario = "guided_first_run";
   };
 
   class PeterCraftApp
@@ -32,7 +32,6 @@ namespace Peter::App
     int Run();
 
   private:
-    void EmitFoundationEvents();
     std::filesystem::path ResolveRepoRoot() const;
     std::filesystem::path ResolveUserRoot() const;
 

@@ -4,7 +4,12 @@ add_executable(PeterCoreUnitTests
 
 target_link_libraries(PeterCoreUnitTests
   PRIVATE
+    PeterAI
     PeterCore
+    PeterInventory
+    PeterProgression
+    PeterValidation
+    PeterWorkshop
 )
 
 target_include_directories(PeterCoreUnitTests
@@ -23,7 +28,10 @@ add_executable(PeterFoundationIntegrationTests
 target_link_libraries(PeterFoundationIntegrationTests
   PRIVATE
     PeterAdapters
+    PeterAI
     PeterCore
+    PeterInventory
+    PeterProgression
     PeterTelemetry
 )
 
@@ -42,6 +50,7 @@ add_executable(PeterScenarioTests
 
 target_link_libraries(PeterScenarioTests
   PRIVATE
+    PeterAI
     PeterTools
 )
 
@@ -55,6 +64,16 @@ peter_enable_strict_warnings(PeterScenarioTests)
 add_test(NAME scenario_deterministic_shell COMMAND PeterScenarioTests)
 
 add_test(
-  NAME smoke_boot_shell
-  COMMAND $<TARGET_FILE:PeterCraftApp> --smoke-test
+  NAME slice_happy_path
+  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario happy_path --profile-id player.test.happy --no-settings
+)
+
+add_test(
+  NAME slice_failure_path
+  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario failure_path --profile-id player.test.failure --no-settings
+)
+
+add_test(
+  NAME smoke_vertical_slice
+  COMMAND $<TARGET_FILE:PeterCraftApp> --smoke-test --profile-id player.test.smoke --no-settings
 )

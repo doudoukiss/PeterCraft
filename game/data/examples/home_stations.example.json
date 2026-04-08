@@ -1,0 +1,20 @@
+{
+  "kind": "homeStationCatalog",
+  "schemaVersion": 1,
+  "stations": [
+    {
+      "id": "station.home.stash",
+      "sceneId": "scene.home.workshop_yard",
+      "displayName": "Stash Terminal",
+      "helpText": "Deposit and review recovered salvage.",
+      "panelId": "ui.station.stash"
+    },
+    {
+      "id": "station.home.workbench",
+      "sceneId": "scene.home.workshop_yard",
+      "displayName": "Workbench",
+      "helpText": "Craft one small upgrade from extracted loot.",
+      "panelId": "ui.station.workbench"
+    }
+  ]
+}

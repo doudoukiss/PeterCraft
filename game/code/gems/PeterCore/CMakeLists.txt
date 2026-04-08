@@ -3,6 +3,7 @@ add_library(PeterCore STATIC
   src/EventBus.cpp
   src/FeatureRegistry.cpp
   src/ProfileService.cpp
+  src/SaveDomainStore.cpp
   src/StableId.cpp
 )
 

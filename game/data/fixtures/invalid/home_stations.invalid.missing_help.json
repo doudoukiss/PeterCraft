@@ -1,0 +1,12 @@
+{
+  "kind": "homeStationCatalog",
+  "schemaVersion": 1,
+  "stations": [
+    {
+      "id": "station.home.invalid",
+      "sceneId": "scene.home.workshop_yard",
+      "displayName": "Broken Station",
+      "panelId": "ui.station.invalid"
+    }
+  ]
+}

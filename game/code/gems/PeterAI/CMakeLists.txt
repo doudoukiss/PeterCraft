@@ -1,10 +1,16 @@
 add_library(PeterAI STATIC
+  src/CompanionAi.cpp
   src/AiModule.cpp
 )
 
 target_include_directories(PeterAI
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(PeterAI
+  PUBLIC
+    PeterCore
 )
 
 target_compile_features(PeterAI PUBLIC cxx_std_20)

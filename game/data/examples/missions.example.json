@@ -7,7 +7,10 @@
       "template": "tutorial",
       "entryRoomId": "room.foundation.entry_hall",
       "extractionRoomId": "room.foundation.exit_pad",
-      "lootTableId": "loot_table.foundation.entry_hall"
+      "lootTableId": "loot_table.foundation.entry_hall",
+      "roomIds": ["room.foundation.entry_hall", "room.foundation.exit_pad"],
+      "recommendedMinutes": 8,
+      "tutorialId": "tutorial.foundation.first_boot"
     }
   ]
 }

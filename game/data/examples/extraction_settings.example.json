@@ -1,0 +1,13 @@
+{
+  "kind": "extractionSettingsCatalog",
+  "schemaVersion": 1,
+  "settings": [
+    {
+      "id": "extraction.foundation.default",
+      "missionId": "mission.foundation.shell_boot",
+      "countdownSeconds": 5,
+      "successCueId": "world.extraction.begin",
+      "failCueId": "world.extraction.fail"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "encounterCatalog",
+  "schemaVersion": 1,
+  "encounters": [
+    {
+      "id": "encounter.raid.invalid_room",
+      "roomId": "room",
+      "enemyFamily": "machine_patrol",
+      "variants": ["melee_chaser"]
+    }
+  ]
+}

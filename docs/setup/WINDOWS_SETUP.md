@@ -20,5 +20,5 @@
 ## Notes
 
 - Phase 0 targets Windows only.
-- O3DE integration is intentionally behind adapter seams during this foundation pass.
+- The current slice keeps engine integration behind adapter seams while the portable gameplay loop remains buildable and testable locally.
 - GitHub Actions uses the same scripts as local development to reduce drift.

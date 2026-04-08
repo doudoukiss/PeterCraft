@@ -15,6 +15,30 @@ namespace Peter::Adapters
       {
         return "mouse_keyboard";
       }
+
+      InputState SampleInput() const override
+      {
+        return {};
+      }
+    };
+
+    class NullCameraAdapter final : public ICameraAdapter
+    {
+    public:
+      CameraRigState CurrentRig() const override
+      {
+        return m_state;
+      }
+
+      void ApplyRig(const CameraRigState& state) override
+      {
+        m_state = state;
+        std::cout << "[camera] mode=" << m_state.mode << " follow_distance="
+                  << m_state.followDistanceMeters << '\n';
+      }
+
+    private:
+      CameraRigState m_state;
     };
 
     class NullSaveAdapter final : public ISaveAdapter
@@ -46,6 +70,13 @@ namespace Peter::Adapters
       {
         return "null_navmesh";
       }
+
+      std::vector<std::string> ResolvePath(
+        const std::string_view fromNodeId,
+        const std::string_view toNodeId) const override
+      {
+        return {std::string(fromNodeId), std::string(toNodeId)};
+      }
     };
 
     class NullAudioAdapter final : public IAudioAdapter
@@ -54,6 +85,11 @@ namespace Peter::Adapters
       void PostUiCue(std::string_view cueId) override
       {
         std::cout << "[audio] " << cueId << '\n';
+      }
+
+      void PostWorldCue(std::string_view cueId) override
+      {
+        std::cout << "[world-audio] " << cueId << '\n';
       }
     };
 
@@ -64,6 +100,16 @@ namespace Peter::Adapters
       {
         std::cout << "[ui] " << stateId << '\n';
       }
+
+      void PresentPrompt(std::string_view prompt) override
+      {
+        std::cout << "[prompt] " << prompt << '\n';
+      }
+
+      void PresentPanel(std::string_view panelId, std::string_view body) override
+      {
+        std::cout << "[panel:" << panelId << "] " << body << '\n';
+      }
     };
   } // namespace
 
@@ -71,6 +117,7 @@ namespace Peter::Adapters
   {
     PlatformServices services;
     services.input = std::make_unique<NullInputAdapter>();
+    services.camera = std::make_unique<NullCameraAdapter>();
     services.save = std::make_unique<NullSaveAdapter>(bootConfig.userRoot);
     services.navigation = std::make_unique<NullNavigationAdapter>();
     services.audio = std::make_unique<NullAudioAdapter>();

@@ -5,6 +5,12 @@
 
 namespace Peter::Validation
 {
+  struct RuleValidationResult
+  {
+    bool valid = false;
+    std::string message;
+  };
+
   struct ValidationStatus
   {
     std::string status;
@@ -13,5 +19,7 @@ namespace Peter::Validation
     [[nodiscard]] static ValidationStatus PlaceholderHealthy();
   };
 
+  [[nodiscard]] RuleValidationResult ValidateFollowDistance(double followDistanceMeters);
+  [[nodiscard]] RuleValidationResult ValidateExtractionCountdown(int countdownSeconds);
   std::string_view GetModuleSummary();
 } // namespace Peter::Validation

@@ -1,0 +1,11 @@
+{
+  "kind": "carryCapacityCatalog",
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "capacity_profile.player.default",
+      "baseSlots": 2,
+      "allowedUpgradeIds": ["upgrade.salvage_pouch"]
+    }
+  ]
+}

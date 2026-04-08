@@ -1,5 +1,6 @@
 add_library(PeterWorld STATIC
   src/SceneShell.cpp
+  src/SliceContent.cpp
   src/WorldModule.cpp
 )
 
@@ -10,6 +11,7 @@ target_include_directories(PeterWorld
 
 target_link_libraries(PeterWorld
   PUBLIC
+    PeterAI
     PeterCore
 )
 

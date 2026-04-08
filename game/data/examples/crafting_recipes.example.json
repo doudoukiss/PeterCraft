@@ -1,0 +1,14 @@
+{
+  "kind": "craftingRecipeCatalog",
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "id": "recipe.upgrade.salvage_pouch",
+      "displayName": "Salvage Pouch",
+      "inputItemId": "item.salvage.scrap_metal",
+      "inputCount": 3,
+      "upgradeId": "upgrade.salvage_pouch",
+      "capacityBonus": 1
+    }
+  ]
+}

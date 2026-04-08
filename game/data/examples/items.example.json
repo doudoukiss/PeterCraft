@@ -8,6 +8,13 @@
       "category": "salvage",
       "stackLimit": 50,
       "description": "Foundation salvage used for placeholder crafting."
+    },
+    {
+      "id": "item.salvage.power_cell",
+      "displayName": "Power Cell",
+      "category": "crafting_material",
+      "stackLimit": 10,
+      "description": "Rare salvage found in the high-risk vault."
     }
   ]
 }

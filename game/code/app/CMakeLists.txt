@@ -1,4 +1,5 @@
 add_executable(PeterCraftApp
+  Phase1Slice.cpp
   PeterCraftApp.cpp
   main.cpp
 )
@@ -12,12 +13,17 @@ target_link_libraries(PeterCraftApp
   PRIVATE
     PeterAdapters
     PeterAI
+    PeterCombat
     PeterCore
     PeterDebug
+    PeterInventory
+    PeterProgression
     PeterTelemetry
     PeterTools
+    PeterTraversal
     PeterUI
     PeterValidation
+    PeterWorkshop
     PeterWorld
 )
 

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace Peter::Adapters
 {
@@ -14,11 +15,40 @@ namespace Peter::Adapters
     bool developmentMode = true;
   };
 
+  struct InputState
+  {
+    bool moveForward = false;
+    bool moveBackward = false;
+    bool moveLeft = false;
+    bool moveRight = false;
+    bool sprint = false;
+    bool jump = false;
+    bool crouch = false;
+    bool interact = false;
+  };
+
+  struct CameraRigState
+  {
+    std::string mode = "third_person_ots";
+    double shoulderOffsetMeters = 0.75;
+    double followDistanceMeters = 4.5;
+    double pitchDegrees = 18.0;
+  };
+
   class IInputAdapter
   {
   public:
     virtual ~IInputAdapter() = default;
     virtual std::string ActiveScheme() const = 0;
+    virtual InputState SampleInput() const = 0;
+  };
+
+  class ICameraAdapter
+  {
+  public:
+    virtual ~ICameraAdapter() = default;
+    virtual CameraRigState CurrentRig() const = 0;
+    virtual void ApplyRig(const CameraRigState& state) = 0;
   };
 
   class ISaveAdapter
@@ -34,6 +64,9 @@ namespace Peter::Adapters
   public:
     virtual ~INavigationAdapter() = default;
     virtual std::string BackendName() const = 0;
+    virtual std::vector<std::string> ResolvePath(
+      std::string_view fromNodeId,
+      std::string_view toNodeId) const = 0;
   };
 
   class IAudioAdapter
@@ -41,6 +74,7 @@ namespace Peter::Adapters
   public:
     virtual ~IAudioAdapter() = default;
     virtual void PostUiCue(std::string_view cueId) = 0;
+    virtual void PostWorldCue(std::string_view cueId) = 0;
   };
 
   class IUiAdapter
@@ -48,11 +82,14 @@ namespace Peter::Adapters
   public:
     virtual ~IUiAdapter() = default;
     virtual void PresentState(std::string_view stateId) = 0;
+    virtual void PresentPrompt(std::string_view prompt) = 0;
+    virtual void PresentPanel(std::string_view panelId, std::string_view body) = 0;
   };
 
   struct PlatformServices
   {
     std::unique_ptr<IInputAdapter> input;
+    std::unique_ptr<ICameraAdapter> camera;
     std::unique_ptr<ISaveAdapter> save;
     std::unique_ptr<INavigationAdapter> navigation;
     std::unique_ptr<IAudioAdapter> audio;

@@ -1,0 +1,13 @@
+{
+  "kind": "extractionSettingsCatalog",
+  "schemaVersion": 1,
+  "settings": [
+    {
+      "id": "extraction.raid.invalid",
+      "missionId": "mission.foundation.shell_boot",
+      "countdownSeconds": 99,
+      "successCueId": "world.extraction.begin",
+      "failCueId": "world.extraction.fail"
+    }
+  ]
+}

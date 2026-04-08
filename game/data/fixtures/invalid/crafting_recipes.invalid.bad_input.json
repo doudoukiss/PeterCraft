@@ -1,0 +1,14 @@
+{
+  "kind": "craftingRecipeCatalog",
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "id": "recipe.upgrade.bad",
+      "displayName": "Broken Recipe",
+      "inputItemId": "item.salvage.scrap_metal",
+      "inputCount": 0,
+      "upgradeId": "upgrade.salvage_pouch",
+      "capacityBonus": 1
+    }
+  ]
+}

@@ -15,6 +15,7 @@ namespace
       if (argument == "--smoke-test")
       {
         options.smokeTest = true;
+        options.scenario = "smoke";
       }
       else if (argument == "--development")
       {
@@ -27,6 +28,14 @@ namespace
       else if (argument == "--release-mode")
       {
         options.developmentMode = false;
+      }
+      else if (argument == "--scenario" && index + 1 < argc)
+      {
+        options.scenario = argv[++index];
+      }
+      else if (argument == "--profile-id" && index + 1 < argc)
+      {
+        options.profileId = argv[++index];
       }
     }
 

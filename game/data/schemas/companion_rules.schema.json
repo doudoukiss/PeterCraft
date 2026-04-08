@@ -13,13 +13,17 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "chipName", "priority", "editableVariable", "defaultValue"],
+        "required": ["id", "chipName", "priority", "editableVariable", "defaultValue", "minValue", "maxValue", "previewText", "effectDescription"],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
           "chipName": { "type": "string", "minLength": 1 },
           "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
           "editableVariable": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-          "defaultValue": { "type": "number", "minimum": 0 }
+          "defaultValue": { "type": "number", "minimum": 4, "maximum": 10 },
+          "minValue": { "type": "number", "minimum": 4, "maximum": 10 },
+          "maxValue": { "type": "number", "minimum": 4, "maximum": 10 },
+          "previewText": { "type": "string", "minLength": 1 },
+          "effectDescription": { "type": "string", "minLength": 1 }
         }
       }
     }

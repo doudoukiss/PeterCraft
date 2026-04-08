@@ -1,11 +1,18 @@
 add_library(PeterUI STATIC
   src/MenuModel.cpp
+  src/SlicePresentation.cpp
   src/UiModule.cpp
 )
 
 target_include_directories(PeterUI
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(PeterUI
+  PUBLIC
+    PeterAI
+    PeterWorld
 )
 
 target_compile_features(PeterUI PUBLIC cxx_std_20)
