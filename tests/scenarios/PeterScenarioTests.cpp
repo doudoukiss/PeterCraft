@@ -58,9 +58,10 @@ PETER_TEST_MAIN({
   PETER_ASSERT_TRUE(ambushScenario != nullptr);
   PETER_ASSERT_EQ(std::string("attack"), ambushScenario->steps.back().expectedActionId);
 
-  const auto escortMission = Peter::World::FindMissionTemplate("mission.escort_companion.machine_silo");
+  const auto escortMission = Peter::World::FindMissionTemplate("mission.escort_companion.relay_tunnels");
   PETER_ASSERT_TRUE(escortMission != nullptr);
   PETER_ASSERT_EQ(std::string("escort_companion"), escortMission->templateType);
+  PETER_ASSERT_EQ(6, static_cast<int>(Peter::World::BuildPhase5MissionBlueprints().size()));
 
   Peter::Inventory::InventoryState inventory;
   Peter::Inventory::LoadoutState loadout;

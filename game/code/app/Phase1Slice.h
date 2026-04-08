@@ -76,6 +76,7 @@ namespace Peter::App
       int completedRaids = 0;
       std::string lastRaidResult = "none";
       std::string lastMissionId = "mission.salvage_run.machine_silo";
+      std::string lastSceneId = "scene.raid.machine_silo";
     };
 
     [[nodiscard]] PersistentState LoadPersistentState() const;

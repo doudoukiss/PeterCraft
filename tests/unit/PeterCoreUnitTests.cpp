@@ -231,4 +231,23 @@ PETER_TEST_MAIN({
   const auto validMission = Peter::Validation::ValidateMissionTemplate(
     Peter::World::BuildPhase2MissionTemplates().front());
   PETER_ASSERT_TRUE(validMission.valid);
+  PETER_ASSERT_TRUE(!Peter::World::BuildPhase5RoomKits().empty());
+  PETER_ASSERT_TRUE(!Peter::World::BuildPhase5RoomVariants().empty());
+  PETER_ASSERT_TRUE(!Peter::World::BuildPhase5MissionBlueprints().empty());
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateRoomKitDefinition(
+    Peter::World::BuildPhase5RoomKits().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateRoomVariantDefinition(
+    Peter::World::BuildPhase5RoomVariants().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateEncounterPatternDefinition(
+    Peter::World::BuildPhase5EncounterPatterns().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateMissionBlueprintDefinition(
+    Peter::World::BuildPhase5MissionBlueprints().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateFeedbackTagDefinition(
+    Peter::World::BuildPhase5FeedbackTags().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateWorldStyleProfileDefinition(
+    Peter::World::BuildPhase5StyleProfiles().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateShippableContentManifest(
+    Peter::World::BuildPhase5ShippableContentManifest()).valid);
+  const auto roomMetrics = Peter::World::BuildRoomMetricsSummary("room_variant.machine_silo.patrol_hall");
+  PETER_ASSERT_EQ(std::string("linear"), roomMetrics.connectorClass);
 })

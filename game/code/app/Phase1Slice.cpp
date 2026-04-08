@@ -407,7 +407,9 @@ namespace Peter::App
     {
       const auto fields = m_saveDomainStore.ReadDomain(std::string(kMissionDomain));
       const auto lastMission = fields.find("last_mission_id");
+      const auto lastScene = fields.find("last_scene_id");
       state.lastMissionId = lastMission == fields.end() ? state.lastMissionId : lastMission->second;
+      state.lastSceneId = lastScene == fields.end() ? state.lastSceneId : lastScene->second;
     }
 
     if (m_saveDomainStore.DomainExists(kTutorialDomain))
@@ -494,7 +496,7 @@ namespace Peter::App
       Peter::Core::StructuredFields{
         {"schema_version", "2"},
         {"last_mission_id", state.lastMissionId},
-        {"last_scene_id", m_raidZone.sceneId},
+        {"last_scene_id", state.lastSceneId},
         {"last_result", state.lastRaidResult}
       });
     m_saveDomainStore.WriteDomain(
@@ -859,9 +861,9 @@ namespace Peter::App
       case SliceScenario::FailurePath:
         return RunMissionScenario(state, "mission.timed_extraction.machine_silo", false, false);
       case SliceScenario::ArtifactRecovery:
-        return RunMissionScenario(state, "mission.recover_artifact.machine_silo", true, false);
+        return RunMissionScenario(state, "mission.recover_artifact.sky_docks", true, false);
       case SliceScenario::EscortSupport:
-        return RunMissionScenario(state, "mission.escort_companion.machine_silo", true, false);
+        return RunMissionScenario(state, "mission.escort_companion.relay_tunnels", true, false);
     }
 
     return RunMissionScenario(state, "mission.salvage_run.machine_silo", true, false);
@@ -882,6 +884,8 @@ namespace Peter::App
     {
       throw std::runtime_error("Missing mission template.");
     }
+    const auto raidZone = Peter::World::BuildRaidZoneForMission(mission->id);
+    const auto* missionBlueprint = Peter::World::FindMissionBlueprint(mission->id);
 
     VisitStation(FindStation("station.home.mission_board"));
     m_platform.ui->PresentPanel(
@@ -922,16 +926,31 @@ namespace Peter::App
       RunLesson(state, "lesson.phase2.mission_choice", false);
     }
 
-    const auto raidScene = sceneShell.LoadRaidZone(m_raidZone);
+    const auto raidScene = sceneShell.LoadRaidZone(raidZone);
     (void)raidScene;
     m_platform.ui->PresentState("ui.raid_hud");
-    m_platform.ui->PresentPanel("raid.overview", Peter::UI::RenderRaidZoneOverview(m_raidZone, *mission));
+    m_platform.ui->PresentPanel("raid.overview", Peter::UI::RenderRaidZoneOverview(raidZone, *mission));
+    if (missionBlueprint != nullptr)
+    {
+      m_platform.ui->PresentPanel(
+        "content.preview.mission_graph",
+        Peter::UI::RenderMissionBlueprintPreview(*missionBlueprint, raidZone));
+      if (!missionBlueprint->encounterPatternIds.empty())
+      {
+        if (const auto* encounter = Peter::World::FindEncounterPattern(missionBlueprint->encounterPatternIds.front()))
+        {
+          m_platform.ui->PresentPanel(
+            "content.preview.encounter",
+            Peter::UI::RenderEncounterPatternPreview(*encounter));
+        }
+      }
+    }
 
     Peter::Core::RaidSessionState raid;
     raid.missionId = mission->id;
     raid.missionTemplateId = mission->templateType;
-    raid.sceneId = m_raidZone.sceneId;
-    raid.currentRoomId = m_raidZone.entryRoomId;
+    raid.sceneId = raidZone.sceneId;
+    raid.currentRoomId = raidZone.entryRoomId;
     raid.playerHealth = expectSuccess ? 100 : 26;
     raid.reducedTimePressure = state.accessibility.reducedTimePressure;
     raid.timeline.push_back("Mission selected: " + mission->displayName);
@@ -962,6 +981,12 @@ namespace Peter::App
       }});
 
     Peter::AI::CompanionWorldContext combatContext;
+    const std::string firstEncounterRoomId = raidZone.encounters.empty()
+      ? raidZone.entryRoomId
+      : raidZone.encounters.front().roomId;
+    const std::string secondEncounterRoomId = raidZone.encounters.size() > 1
+      ? raidZone.encounters.at(1).roomId
+      : firstEncounterRoomId;
     combatContext.threatVisible = true;
     combatContext.sameTargetMarked = true;
     combatContext.playerLowHealth = !expectSuccess;
@@ -975,22 +1000,22 @@ namespace Peter::App
     combatContext.distanceToThreatMeters = mission->templateType == "timed_extraction" ? 7 : 4;
     combatContext.companionHealthPercent = expectSuccess ? 92 : 41;
     combatContext.urgencyLevel = mission->templateType == "timed_extraction" ? 3 : 2;
-    combatContext.roomNodeId = "room.raid.patrol_hall";
-    combatContext.routeNodeId = "route.machine_silo.entry_loop";
+    combatContext.roomNodeId = firstEncounterRoomId;
+    combatContext.routeNodeId = raidZone.sceneId + ".entry_loop";
     combatContext.currentGoal = mission->templateType == "recover_artifact"
       ? "goal.recover_artifact_objective"
       : (mission->templateType == "escort_companion" ? "goal.defend_player" : "goal.follow_player");
     combatContext.currentTargetId = "player";
-    combatContext.visibleThreatId = m_raidZone.encounters.at(0).enemies.front().enemyId;
-    combatContext.lastKnownThreatPositionToken = "room.raid.patrol_hall";
+    combatContext.visibleThreatId = raidZone.encounters.at(0).enemies.front().enemyId;
+    combatContext.lastKnownThreatPositionToken = firstEncounterRoomId;
     combatContext.interestMarkerActive = combatContext.rareLootVisible;
-    combatContext.interestMarkerId = combatContext.rareLootVisible ? "marker.rare_loot.vault_cache" : "";
+    combatContext.interestMarkerId = combatContext.rareLootVisible ? ("marker.rare_loot." + firstEncounterRoomId) : "";
 
     auto companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
-    EmitCompanionDecision("room.raid.patrol_hall", companionDecision);
+    EmitCompanionDecision(firstEncounterRoomId, companionDecision);
 
     Peter::Combat::EncounterRequest encounterRequest{
-      m_raidZone.encounters.at(0).enemies,
+      raidZone.encounters.at(0).enemies,
       companionDecision,
       false,
       mission->templateType == "recover_artifact" || mission->templateType == "timed_extraction",
@@ -1011,16 +1036,16 @@ namespace Peter::App
         HasNode(state.workshop, "track.companion_capabilities.repair_pulse");
       combatContext.distanceToPlayerMeters = 3;
       combatContext.distanceToThreatMeters = mission->templateType == "timed_extraction" ? 6 : 4;
-      combatContext.roomNodeId = "room.raid.guard_post";
-      combatContext.routeNodeId = "route.machine_silo.vault_watch";
+      combatContext.roomNodeId = secondEncounterRoomId;
+      combatContext.routeNodeId = raidZone.sceneId + ".mid_path";
       combatContext.currentGoal = mission->templateType == "escort_companion"
         ? "goal.defend_player"
         : "goal.scout_path";
-      combatContext.visibleThreatId = m_raidZone.encounters.at(1).enemies.front().enemyId;
-      combatContext.lastKnownThreatPositionToken = "room.raid.guard_post";
+      combatContext.visibleThreatId = raidZone.encounters.at(1).enemies.front().enemyId;
+      combatContext.lastKnownThreatPositionToken = secondEncounterRoomId;
       companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
-      EmitCompanionDecision("room.raid.guard_post", companionDecision);
-      encounterRequest.enemies = m_raidZone.encounters.at(1).enemies;
+      EmitCompanionDecision(secondEncounterRoomId, companionDecision);
+      encounterRequest.enemies = raidZone.encounters.at(1).enemies;
       encounterRequest.companionDecision = companionDecision;
       encounterRequest.playerHealth = raid.playerHealth;
       encounterRequest.playerChoosesStealth = mission->templateType == "timed_extraction";
@@ -1143,7 +1168,7 @@ namespace Peter::App
       combatContext.distanceToPlayerMeters = 2;
       combatContext.distanceToThreatMeters = 8;
       combatContext.extractionUrgency = state.accessibility.reducedTimePressure ? 2 : 3;
-      combatContext.roomNodeId = m_raidZone.extractionRoomId;
+      combatContext.roomNodeId = raidZone.extractionRoomId;
       combatContext.routeNodeId = "route.machine_silo.vault_watch";
       combatContext.currentGoal = "goal.reach_extraction";
       combatContext.visibleThreatId = "enemy.none";
@@ -1151,9 +1176,9 @@ namespace Peter::App
       combatContext.interestMarkerActive = true;
       combatContext.interestMarkerId = "marker.extraction.pad";
       companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
-      EmitCompanionDecision(m_raidZone.extractionRoomId, companionDecision);
+      EmitCompanionDecision(raidZone.extractionRoomId, companionDecision);
 
-      m_platform.audio->PostWorldCue(m_raidZone.extraction.successCueId);
+      m_platform.audio->PostWorldCue(raidZone.extraction.successCueId);
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
         "gameplay.extraction.success",
@@ -1364,6 +1389,7 @@ namespace Peter::App
       state.completedRaids += 1;
       state.lastRaidResult = "success";
       state.lastMissionId = mission->id;
+      state.lastSceneId = raidZone.sceneId;
       const auto resultsScene = sceneShell.LoadRaidResults(raid.missionId, true);
       (void)resultsScene;
     }
@@ -1392,7 +1418,7 @@ namespace Peter::App
       raidSummary.lostItems = Peter::Inventory::SummarizeLedger(lostLoot);
       raidSummary.brokenItems = Peter::Inventory::SummarizeLedger(recoveryResolution.brokenItems);
 
-      m_platform.audio->PostWorldCue(m_raidZone.extraction.failCueId);
+      m_platform.audio->PostWorldCue(raidZone.extraction.failCueId);
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
         "gameplay.extraction.failure",
@@ -1430,6 +1456,7 @@ namespace Peter::App
       RunLesson(state, "lesson.phase2.first_repair", true);
       state.lastRaidResult = "failure";
       state.lastMissionId = mission->id;
+      state.lastSceneId = raidZone.sceneId;
       const auto resultsScene = sceneShell.LoadRaidResults(raid.missionId, false);
       (void)resultsScene;
     }
@@ -1456,8 +1483,8 @@ namespace Peter::App
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 4 creator workshop loop: safe value/rule/script edits, replay-backed comparisons, mentor summaries, and local mini-mission scaffolding."
-        : "Completed the Phase 4 failure-and-recovery loop: authored play stayed stable while creator content remained isolated and reversible.",
+        ? "Completed the Phase 5 content beta loop: runtime-loaded missions, author previews, and reviewable content catalogs are active."
+        : "Completed the Phase 5 failure-and-recovery loop: authored content remained valid, reviewable, and isolated from creator-local edits.",
       mission->id,
       companionDecision,
       Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),

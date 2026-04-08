@@ -1,6 +1,6 @@
 # PeterWorld
 
 - Owner: `TBD`
-- Responsibilities: empty scene shell, future room and mission runtime seams
+- Responsibilities: scene shell, runtime-loaded content catalogs, room/mission assembly seams
 - Dependencies: `PeterCore`
-- Public surface: `SceneShell`, world module summary
+- Public surface: `SceneShell`, `SliceContent`, Phase 5 content catalog accessors

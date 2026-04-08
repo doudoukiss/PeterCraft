@@ -1,0 +1,23 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "room_id", "display_name", "kit_id", "style_profile_id", "room_type", "landmark_label", "exit_room_ids", "tutorial_anchor_ids", "companion_hint_anchor_ids", "feedback_tag_ids", "optional_path", "high_risk_reward", "extraction_point", "review_record_id"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "room_id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "kit_id": {"type": "string", "minLength": 1},
+    "style_profile_id": {"type": "string", "minLength": 1},
+    "room_type": {"type": "string", "minLength": 1},
+    "landmark_label": {"type": "string", "minLength": 1},
+    "exit_room_ids": {"type": "string"},
+    "tutorial_anchor_ids": {"type": "string"},
+    "companion_hint_anchor_ids": {"type": "string"},
+    "feedback_tag_ids": {"type": "string"},
+    "optional_path": {"type": "string", "enum": ["true", "false"]},
+    "high_risk_reward": {"type": "string", "enum": ["true", "false"]},
+    "extraction_point": {"type": "string", "enum": ["true", "false"]},
+    "review_record_id": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

@@ -139,6 +139,14 @@ PETER_TEST_MAIN({
     Peter::Workshop::FindTinyScriptTemplate("script.template.priority_hint"));
   PETER_ASSERT_TRUE(creatorPanel.find("Creator Workshop") != std::string::npos);
 
+  const auto contentRoot = Peter::World::ResolveContentRoot();
+  PETER_ASSERT_TRUE(std::filesystem::exists(contentRoot / "mission-blueprints"));
+  const auto* missionBlueprint = Peter::World::FindMissionBlueprint("mission.recover_artifact.sky_docks");
+  PETER_ASSERT_TRUE(missionBlueprint != nullptr);
+  const auto raidZone = Peter::World::BuildRaidZoneForMission("mission.recover_artifact.sky_docks");
+  const auto missionPreview = Peter::UI::RenderMissionBlueprintPreview(*missionBlueprint, raidZone);
+  PETER_ASSERT_TRUE(missionPreview.find("Sky Docks") != std::string::npos);
+
   platform.ui->PresentCompanionFeedback(afterExplain.calloutToken, afterExplain.gestureToken);
   platform.ui->PresentDebugMarkers({"room.raid.extraction_pad", afterExplain.blackboard.routeNodeId});
   eventBus.Emit({Peter::Core::EventCategory::AI, "ai.decision.selected", {{"action", afterExplain.lastAction}}});

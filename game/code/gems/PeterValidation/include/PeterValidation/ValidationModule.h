@@ -29,8 +29,21 @@ namespace Peter::Validation
 
   [[nodiscard]] RuleValidationResult ValidateFollowDistance(double followDistanceMeters);
   [[nodiscard]] RuleValidationResult ValidateExtractionCountdown(int countdownSeconds);
+  [[nodiscard]] RuleValidationResult ValidateRoomKitDefinition(const Peter::World::RoomKitDefinition& roomKit);
+  [[nodiscard]] RuleValidationResult ValidateRoomVariantDefinition(
+    const Peter::World::RoomVariantDefinition& roomVariant);
+  [[nodiscard]] RuleValidationResult ValidateEncounterPatternDefinition(
+    const Peter::World::EncounterPatternDefinition& encounterPattern);
   [[nodiscard]] RuleValidationResult ValidateItemDefinition(const Peter::Inventory::ItemDefinition& definition);
   [[nodiscard]] RuleValidationResult ValidateMissionTemplate(const Peter::World::MissionTemplateDefinition& mission);
+  [[nodiscard]] RuleValidationResult ValidateMissionBlueprintDefinition(
+    const Peter::World::MissionBlueprintDefinition& missionBlueprint);
+  [[nodiscard]] RuleValidationResult ValidateFeedbackTagDefinition(
+    const Peter::World::FeedbackTagDefinition& feedbackTag);
+  [[nodiscard]] RuleValidationResult ValidateWorldStyleProfileDefinition(
+    const Peter::World::WorldStyleProfileDefinition& styleProfile);
+  [[nodiscard]] RuleValidationResult ValidateShippableContentManifest(
+    const Peter::World::ShippableContentManifest& manifest);
   [[nodiscard]] RuleValidationResult ValidateTutorialLesson(const Peter::World::TutorialLessonDefinition& lesson);
   [[nodiscard]] RuleValidationResult ValidateCompanionConfig(const Peter::AI::CompanionConfig& config);
   [[nodiscard]] RuleValidationResult ValidateBehaviorChipDefinition(const Peter::AI::BehaviorChipDefinition& chip);

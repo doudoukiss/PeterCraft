@@ -30,6 +30,11 @@ namespace Peter::UI
   [[nodiscard]] std::string RenderMissionBoard(
     const std::vector<Peter::World::MissionTemplateDefinition>& missions,
     std::string_view selectedMissionId);
+  [[nodiscard]] std::string RenderMissionBlueprintPreview(
+    const Peter::World::MissionBlueprintDefinition& blueprint,
+    const Peter::World::RaidZoneDefinition& raidZone);
+  [[nodiscard]] std::string RenderEncounterPatternPreview(
+    const Peter::World::EncounterPatternDefinition& encounter);
   [[nodiscard]] std::string RenderRaidZoneOverview(
     const Peter::World::RaidZoneDefinition& raidZone,
     const Peter::World::MissionTemplateDefinition& mission);

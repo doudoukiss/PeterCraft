@@ -1,0 +1,27 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "display_name", "template_family_id", "zone_id", "scene_id", "zone_display_name", "room_variant_ids", "encounter_pattern_ids", "objectives", "side_objectives", "reward_items", "upgrade_track_id", "lesson_tip_id", "fail_rule_id", "recommended_minutes", "extraction_countdown_seconds", "feedback_tag_ids", "tutorial_hook_ids", "review_record_id"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "template_family_id": {"type": "string", "minLength": 1},
+    "zone_id": {"type": "string", "minLength": 1},
+    "scene_id": {"type": "string", "minLength": 1},
+    "zone_display_name": {"type": "string", "minLength": 1},
+    "room_variant_ids": {"type": "string", "minLength": 1},
+    "encounter_pattern_ids": {"type": "string"},
+    "objectives": {"type": "string", "minLength": 1},
+    "side_objectives": {"type": "string"},
+    "reward_items": {"type": "string", "minLength": 1},
+    "upgrade_track_id": {"type": "string", "minLength": 1},
+    "lesson_tip_id": {"type": "string", "minLength": 1},
+    "fail_rule_id": {"type": "string", "minLength": 1},
+    "recommended_minutes": {"type": "string", "pattern": "^[0-9]+$"},
+    "extraction_countdown_seconds": {"type": "string", "pattern": "^[0-9]+$"},
+    "feedback_tag_ids": {"type": "string", "minLength": 1},
+    "tutorial_hook_ids": {"type": "string"},
+    "review_record_id": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

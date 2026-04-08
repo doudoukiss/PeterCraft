@@ -22,3 +22,18 @@
 - validation results
 - telemetry or debug proof where applicable
 - docs or README updates for new contracts
+
+## Phase 5 Content Record
+
+- content_id:
+- content_kind:
+- readability:
+- pacing:
+- child_suitability:
+- learning_opportunity:
+- performance_cost:
+- accessibility_concerns:
+- world_style_alignment:
+- feedback_tags_checked:
+- reviewer:
+- status:

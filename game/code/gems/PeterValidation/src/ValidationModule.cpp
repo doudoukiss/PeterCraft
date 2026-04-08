@@ -6,7 +6,7 @@ namespace Peter::Validation
 {
   ValidationStatus ValidationStatus::PlaceholderHealthy()
   {
-    return ValidationStatus{"ok", "phase 3 validation, AI authoring checks, migrations, and deterministic scenario guards are active"};
+    return ValidationStatus{"ok", "phase 5 validation, content catalogs, authoring checks, migrations, and deterministic scenario guards are active"};
   }
 
   RuleValidationResult ValidateFollowDistance(const double followDistanceMeters)
@@ -32,6 +32,67 @@ namespace Peter::Validation
     }
 
     return RuleValidationResult{true, "Extraction countdown is valid."};
+  }
+
+  RuleValidationResult ValidateRoomKitDefinition(const Peter::World::RoomKitDefinition& roomKit)
+  {
+    if (roomKit.id.empty() || roomKit.displayName.empty() || roomKit.archetype.empty() ||
+      roomKit.connectorClass.empty())
+    {
+      return RuleValidationResult{false, "Room kits need id, display name, archetype, and connector class."};
+    }
+
+    if (roomKit.widthMeters < 4 || roomKit.depthMeters < 4 || roomKit.heightMeters < 3)
+    {
+      return RuleValidationResult{false, "Room kit metrics must stay above the minimum shell size."};
+    }
+
+    return RuleValidationResult{true, "Room kit definition is valid."};
+  }
+
+  RuleValidationResult ValidateRoomVariantDefinition(const Peter::World::RoomVariantDefinition& roomVariant)
+  {
+    if (roomVariant.id.empty() || roomVariant.roomId.empty() || roomVariant.displayName.empty() ||
+      roomVariant.kitId.empty() || roomVariant.styleProfileId.empty())
+    {
+      return RuleValidationResult{false, "Room variants need id, room id, display name, kit id, and style profile id."};
+    }
+
+    if (Peter::World::FindRoomKit(roomVariant.kitId) == nullptr)
+    {
+      return RuleValidationResult{false, "Room variants must reference a known room kit."};
+    }
+
+    if (Peter::World::FindWorldStyleProfile(roomVariant.styleProfileId) == nullptr)
+    {
+      return RuleValidationResult{false, "Room variants must reference a known style profile."};
+    }
+
+    return RuleValidationResult{true, "Room variant definition is valid."};
+  }
+
+  RuleValidationResult ValidateEncounterPatternDefinition(
+    const Peter::World::EncounterPatternDefinition& encounterPattern)
+  {
+    if (encounterPattern.id.empty() || encounterPattern.displayName.empty() || encounterPattern.roomId.empty())
+    {
+      return RuleValidationResult{false, "Encounter patterns need id, display name, and room id."};
+    }
+
+    if (encounterPattern.enemies.empty())
+    {
+      return RuleValidationResult{false, "Encounter patterns need at least one enemy unit."};
+    }
+
+    for (const auto& feedbackTagId : encounterPattern.feedbackTagIds)
+    {
+      if (Peter::World::FindFeedbackTag(feedbackTagId) == nullptr)
+      {
+        return RuleValidationResult{false, "Encounter patterns must reference known feedback tags."};
+      }
+    }
+
+    return RuleValidationResult{true, "Encounter pattern definition is valid."};
   }
 
   RuleValidationResult ValidateItemDefinition(const Peter::Inventory::ItemDefinition& definition)
@@ -93,6 +154,77 @@ namespace Peter::Validation
     }
 
     return RuleValidationResult{true, "Mission template is valid."};
+  }
+
+  RuleValidationResult ValidateMissionBlueprintDefinition(
+    const Peter::World::MissionBlueprintDefinition& missionBlueprint)
+  {
+    if (missionBlueprint.id.empty() || missionBlueprint.displayName.empty() ||
+      missionBlueprint.templateFamilyId.empty() || missionBlueprint.sceneId.empty())
+    {
+      return RuleValidationResult{false, "Mission blueprints need id, display name, template family, and scene id."};
+    }
+
+    if (missionBlueprint.roomVariantIds.size() < 2)
+    {
+      return RuleValidationResult{false, "Mission blueprints need at least two room variants."};
+    }
+
+    for (const auto& roomVariantId : missionBlueprint.roomVariantIds)
+    {
+      if (Peter::World::FindRoomVariant(roomVariantId) == nullptr)
+      {
+        return RuleValidationResult{false, "Mission blueprints must reference known room variants."};
+      }
+    }
+
+    for (const auto& encounterPatternId : missionBlueprint.encounterPatternIds)
+    {
+      if (Peter::World::FindEncounterPattern(encounterPatternId) == nullptr)
+      {
+        return RuleValidationResult{false, "Mission blueprints must reference known encounter patterns."};
+      }
+    }
+
+    if (missionBlueprint.feedbackTagIds.empty())
+    {
+      return RuleValidationResult{false, "Mission blueprints need at least one feedback tag."};
+    }
+
+    return RuleValidationResult{true, "Mission blueprint definition is valid."};
+  }
+
+  RuleValidationResult ValidateFeedbackTagDefinition(const Peter::World::FeedbackTagDefinition& feedbackTag)
+  {
+    if (feedbackTag.id.empty() || feedbackTag.displayName.empty() || feedbackTag.category.empty() ||
+      feedbackTag.cueFamily.empty())
+    {
+      return RuleValidationResult{false, "Feedback tags need id, display name, category, and cue family."};
+    }
+
+    return RuleValidationResult{true, "Feedback tag definition is valid."};
+  }
+
+  RuleValidationResult ValidateWorldStyleProfileDefinition(
+    const Peter::World::WorldStyleProfileDefinition& styleProfile)
+  {
+    if (styleProfile.id.empty() || styleProfile.displayName.empty() || styleProfile.visualMotif.empty() ||
+      styleProfile.signageGrammar.empty())
+    {
+      return RuleValidationResult{false, "Style profiles need id, display name, visual motif, and signage grammar."};
+    }
+
+    return RuleValidationResult{true, "World style profile definition is valid."};
+  }
+
+  RuleValidationResult ValidateShippableContentManifest(const Peter::World::ShippableContentManifest& manifest)
+  {
+    if (manifest.id.empty() || manifest.roomVariantIds.empty() || manifest.missionBlueprintIds.empty())
+    {
+      return RuleValidationResult{false, "Shippable content manifests need id, room variants, and mission blueprints."};
+    }
+
+    return RuleValidationResult{true, "Shippable content manifest is valid."};
   }
 
   RuleValidationResult ValidateTutorialLesson(const Peter::World::TutorialLessonDefinition& lesson)
@@ -457,6 +589,6 @@ namespace Peter::Validation
 
   std::string_view GetModuleSummary()
   {
-    return "Runtime validation hooks, save migrations, mission checks, and authored safety boundaries including AI contracts.";
+    return "Runtime validation hooks, save migrations, content catalog checks, mission checks, and authored safety boundaries including AI contracts.";
   }
 } // namespace Peter::Validation

@@ -1,0 +1,15 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "display_name", "visual_motif", "prop_language", "color_hierarchy", "signage_grammar", "faction_style"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "visual_motif": {"type": "string", "minLength": 1},
+    "prop_language": {"type": "string", "minLength": 1},
+    "color_hierarchy": {"type": "string", "minLength": 1},
+    "signage_grammar": {"type": "string", "minLength": 1},
+    "faction_style": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

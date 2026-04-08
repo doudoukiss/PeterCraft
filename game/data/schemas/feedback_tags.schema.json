@@ -1,0 +1,14 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "display_name", "category", "cue_family", "cue_variant", "summary"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "category": {"type": "string", "minLength": 1},
+    "cue_family": {"type": "string", "minLength": 1},
+    "cue_variant": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

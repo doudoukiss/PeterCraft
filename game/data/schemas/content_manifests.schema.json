@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "room_variant_ids", "encounter_pattern_ids", "mission_blueprint_ids", "style_profile_ids"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "room_variant_ids": {"type": "string", "minLength": 1},
+    "encounter_pattern_ids": {"type": "string", "minLength": 1},
+    "mission_blueprint_ids": {"type": "string", "minLength": 1},
+    "style_profile_ids": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

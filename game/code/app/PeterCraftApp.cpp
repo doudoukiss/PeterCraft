@@ -47,7 +47,7 @@ namespace Peter::App
     JsonlTelemetrySink telemetrySink(logRoot / "petercraft-events.jsonl");
     eventBus.RegisterSink(&telemetrySink);
 
-    FeatureRegistry features(VersionInfo{"0.4.0", "phase3"});
+    FeatureRegistry features(VersionInfo{"0.5.0", "phase5"});
     features.SetFlag("feature.vertical_slice", true);
     features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
@@ -55,6 +55,8 @@ namespace Peter::App
     features.SetFlag("feature.recovery_state", true);
     features.SetFlag("feature.ai_alpha", true);
     features.SetFlag("feature.behavior_chips", true);
+    features.SetFlag("feature.content_beta", true);
+    features.SetFlag("feature.content_catalogs", true);
 
     ProfileService profileService(*platform.save, eventBus);
     const auto profile = profileService.EnsureProfile(m_options.profileId);
@@ -84,7 +86,7 @@ namespace Peter::App
     const auto validationStatus = ValidationStatus::PlaceholderHealthy();
     eventBus.Emit(Event{
       EventCategory::Validation,
-      "validation.runtime.phase3_ready",
+      "validation.runtime.phase5_ready",
       {{"summary", validationStatus.summary}, {"status", validationStatus.status}}});
 
     Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
@@ -110,7 +112,7 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 4 Creator Workshop Alpha\n";
+    std::cout << "PeterCraft Phase 5 Content Beta\n";
     std::cout << runReport.summary << "\n";
     std::cout << overlay.Render() << '\n';
 

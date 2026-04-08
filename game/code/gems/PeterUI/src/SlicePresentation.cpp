@@ -86,6 +86,50 @@ namespace Peter::UI
     return output.str();
   }
 
+  std::string RenderMissionBlueprintPreview(
+    const Peter::World::MissionBlueprintDefinition& blueprint,
+    const Peter::World::RaidZoneDefinition& raidZone)
+  {
+    std::ostringstream output;
+    output << "Mission graph\n"
+           << blueprint.displayName << " [" << blueprint.templateFamilyId << "]\n"
+           << "Zone: " << blueprint.zoneDisplayName << " scene=" << blueprint.sceneId
+           << "\nRooms:";
+    for (const auto& room : raidZone.rooms)
+    {
+      output << "\n- " << room.id << " -> exits=" << room.exits.size();
+    }
+    output << "\nFeedback tags:";
+    for (const auto& tagId : blueprint.feedbackTagIds)
+    {
+      output << "\n- " << tagId;
+    }
+    return output.str();
+  }
+
+  std::string RenderEncounterPatternPreview(const Peter::World::EncounterPatternDefinition& encounter)
+  {
+    std::ostringstream output;
+    output << "Encounter preview\n"
+           << encounter.displayName << " room=" << encounter.roomId
+           << "\nEnemies:";
+    for (const auto& enemy : encounter.enemies)
+    {
+      output << "\n- " << enemy.enemyId;
+    }
+    output << "\nLoot anchors:";
+    for (const auto& lootId : encounter.lootItemIds)
+    {
+      output << "\n- " << lootId;
+    }
+    output << "\nFeedback tags:";
+    for (const auto& tagId : encounter.feedbackTagIds)
+    {
+      output << "\n- " << tagId;
+    }
+    return output.str();
+  }
+
   std::string RenderRaidZoneOverview(
     const Peter::World::RaidZoneDefinition& raidZone,
     const Peter::World::MissionTemplateDefinition& mission)

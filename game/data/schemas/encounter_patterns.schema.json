@@ -1,0 +1,21 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "display_name", "room_id", "enemy_units", "loot_item_ids", "hazard_ids", "landmark_ids", "companion_hint_ids", "tutorial_hook_ids", "feedback_tag_ids", "pressure_beat_id", "optional", "review_record_id"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "room_id": {"type": "string", "minLength": 1},
+    "enemy_units": {"type": "string", "minLength": 1},
+    "loot_item_ids": {"type": "string"},
+    "hazard_ids": {"type": "string"},
+    "landmark_ids": {"type": "string"},
+    "companion_hint_ids": {"type": "string"},
+    "tutorial_hook_ids": {"type": "string"},
+    "feedback_tag_ids": {"type": "string"},
+    "pressure_beat_id": {"type": "string", "minLength": 1},
+    "optional": {"type": "string", "enum": ["true", "false"]},
+    "review_record_id": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}
