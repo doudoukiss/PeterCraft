@@ -1,0 +1,13 @@
+{
+  "kind": "logicRulesCatalog",
+  "schemaVersion": 4,
+  "rulesets": [
+    {
+      "id": "logic.template.bad",
+      "displayName": "Bad Logic",
+      "cards": [
+        { "id": "logic.card.bad", "conditionId": "rare_loot_visible", "actionId": "spawn_robot", "scoreDelta": 50.0 }
+      ]
+    }
+  ]
+}

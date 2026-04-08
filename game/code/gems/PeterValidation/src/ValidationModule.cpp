@@ -251,6 +251,175 @@ namespace Peter::Validation
     return RuleValidationResult{true, "AI scenario definition is valid."};
   }
 
+  RuleValidationResult ValidateTinkerVariableDefinition(
+    const Peter::Workshop::TinkerVariableDefinition& variable)
+  {
+    if (variable.id.empty() || variable.displayName.empty() || variable.groupId.empty())
+    {
+      return RuleValidationResult{false, "Tinker variables need id, display name, and group id."};
+    }
+    if (variable.minValue > variable.maxValue ||
+      variable.defaultValue < variable.minValue ||
+      variable.defaultValue > variable.maxValue)
+    {
+      return RuleValidationResult{false, "Tinker variable ranges must be safe and internally consistent."};
+    }
+    return RuleValidationResult{true, "Tinker variable definition is valid."};
+  }
+
+  RuleValidationResult ValidateTinkerPresetDefinition(
+    const Peter::Workshop::TinkerPresetDefinition& preset)
+  {
+    if (preset.id.empty() || preset.displayName.empty() || preset.values.empty())
+    {
+      return RuleValidationResult{false, "Tinker presets need id, display name, and at least one value."};
+    }
+    for (const auto& [variableId, value] : preset.values)
+    {
+      const auto* variable = Peter::Workshop::FindTinkerVariable(variableId);
+      if (variable == nullptr)
+      {
+        return RuleValidationResult{false, "Tinker presets must reference known variables."};
+      }
+      if (value < variable->minValue || value > variable->maxValue)
+      {
+        return RuleValidationResult{false, "Tinker preset values must stay inside the variable's safe range."};
+      }
+    }
+    return RuleValidationResult{true, "Tinker preset definition is valid."};
+  }
+
+  RuleValidationResult ValidateLogicRulesetDefinition(
+    const Peter::Workshop::LogicRulesetDefinition& ruleset)
+  {
+    if (ruleset.id.empty() || ruleset.displayName.empty())
+    {
+      return RuleValidationResult{false, "Logic rulesets need id and display name."};
+    }
+    if (ruleset.cards.empty() || ruleset.cards.size() > 5)
+    {
+      return RuleValidationResult{false, "Logic rulesets need between one and five ordered cards."};
+    }
+
+    const std::set<std::string, std::less<>> validConditions = {
+      "player_health_low",
+      "player_needs_revive",
+      "rare_loot_visible",
+      "extraction_active",
+      "companion_health_low",
+      "timed_pressure_high"
+    };
+    const std::set<std::string, std::less<>> validActions = {
+      "prioritize_help",
+      "prioritize_cover",
+      "mark_rare_loot",
+      "retreat_regroup",
+      "hold_position",
+      "favor_extraction"
+    };
+
+    std::set<std::string, std::less<>> uniqueCardIds;
+    for (const auto& card : ruleset.cards)
+    {
+      if (card.id.empty() || card.displayName.empty() || card.summary.empty())
+      {
+        return RuleValidationResult{false, "Logic cards need id, display name, and summary text."};
+      }
+      if (!uniqueCardIds.insert(card.id).second)
+      {
+        return RuleValidationResult{false, "Logic card IDs must be unique."};
+      }
+      if (!validConditions.contains(card.conditionId))
+      {
+        return RuleValidationResult{false, "Logic cards must use the locked Phase 4 condition vocabulary."};
+      }
+      if (!validActions.contains(card.actionId))
+      {
+        return RuleValidationResult{false, "Logic cards must use the locked Phase 4 action vocabulary."};
+      }
+      if (card.scoreDelta < -20.0 || card.scoreDelta > 20.0)
+      {
+        return RuleValidationResult{false, "Logic cards must stay inside the bounded score range."};
+      }
+    }
+    return RuleValidationResult{true, "Logic ruleset definition is valid."};
+  }
+
+  RuleValidationResult ValidateTinyScriptDefinition(
+    const Peter::Workshop::TinyScriptDefinition& script)
+  {
+    if (script.id.empty() || script.displayName.empty() || script.body.empty())
+    {
+      return RuleValidationResult{false, "Tiny scripts need id, display name, and body text."};
+    }
+
+    const auto validation = Peter::Workshop::ValidateTinyScript(script);
+    if (!validation.valid)
+    {
+      return RuleValidationResult{false, validation.error};
+    }
+
+    if (script.hookKind == Peter::Workshop::TinyScriptHookKind::CompanionPriorityHint &&
+      script.targetActionId.empty())
+    {
+      return RuleValidationResult{false, "Companion priority hint scripts need a target action id."};
+    }
+
+    return RuleValidationResult{true, "Tiny script definition is valid."};
+  }
+
+  RuleValidationResult ValidateMiniMissionDraftDefinition(
+    const Peter::Workshop::MiniMissionDraftDefinition& draft)
+  {
+    if (draft.id.empty() || draft.displayName.empty())
+    {
+      return RuleValidationResult{false, "Mini mission drafts need id and display name."};
+    }
+    if (Peter::World::FindMiniMissionRoomBundle(draft.roomBundleId) == nullptr)
+    {
+      return RuleValidationResult{false, "Mini missions must reference a known room bundle."};
+    }
+    if (Peter::World::FindMiniMissionEnemyGroup(draft.enemyGroupId) == nullptr)
+    {
+      return RuleValidationResult{false, "Mini missions must reference a known enemy group."};
+    }
+    if (Peter::World::FindMiniMissionReward(draft.rewardBundleId) == nullptr)
+    {
+      return RuleValidationResult{false, "Mini missions must reference a known reward bundle."};
+    }
+    if (draft.revision < 1)
+    {
+      return RuleValidationResult{false, "Mini mission revisions must be positive."};
+    }
+    return RuleValidationResult{true, "Mini mission draft definition is valid."};
+  }
+
+  RuleValidationResult ValidateCreatorManifest(const Peter::Workshop::CreatorManifest& manifest)
+  {
+    for (const auto& [kindId, contentId] : manifest.activeDraftIds)
+    {
+      if (kindId.empty() || contentId.empty())
+      {
+        return RuleValidationResult{false, "Creator manifest active draft entries must be complete."};
+      }
+    }
+    for (const auto& [key, revision] : manifest.lastKnownGoodRevisions)
+    {
+      if (key.empty() || revision < 0)
+      {
+        return RuleValidationResult{false, "Creator manifest revisions must be non-negative."};
+      }
+    }
+    for (const auto& [key, revision] : manifest.rollbackTargets)
+    {
+      if (key.empty() || revision < 0)
+      {
+        return RuleValidationResult{false, "Creator manifest rollback targets must be non-negative."};
+      }
+    }
+    return RuleValidationResult{true, "Creator manifest is valid."};
+  }
+
   RuleValidationResult ValidateFavoriteItemReference(
     const std::string_view favoriteItemId,
     const Peter::Inventory::InventoryState& inventory)

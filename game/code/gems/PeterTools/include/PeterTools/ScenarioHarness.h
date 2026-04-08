@@ -17,11 +17,22 @@ namespace Peter::Tools
     std::vector<std::string> actualStatePath;
   };
 
+  struct ScenarioCompareReport
+  {
+    std::string scenarioId;
+    bool changed = false;
+    std::vector<std::string> beforeActionPath;
+    std::vector<std::string> afterActionPath;
+  };
+
   class DeterministicScenarioHarness
   {
   public:
     explicit DeterministicScenarioHarness(std::string scenarioId);
     [[nodiscard]] ScenarioReport Run() const;
+    [[nodiscard]] ScenarioCompareReport Compare(
+      const Peter::AI::CompanionConfig& beforeConfig,
+      const Peter::AI::CompanionConfig& afterConfig) const;
 
   private:
     std::string m_scenarioId;

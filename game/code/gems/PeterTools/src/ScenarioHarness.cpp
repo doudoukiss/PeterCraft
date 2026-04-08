@@ -50,4 +50,37 @@ namespace Peter::Tools
 
     return report;
   }
+
+  ScenarioCompareReport DeterministicScenarioHarness::Compare(
+    const Peter::AI::CompanionConfig& beforeConfig,
+    const Peter::AI::CompanionConfig& afterConfig) const
+  {
+    ScenarioCompareReport report;
+    report.scenarioId = m_scenarioId;
+
+    const auto* scenario = Peter::AI::FindAiScenario(m_scenarioId);
+    if (scenario == nullptr)
+    {
+      return report;
+    }
+
+    for (const auto& step : scenario->steps)
+    {
+      if (step.useEnemy)
+      {
+        continue;
+      }
+
+      const auto beforeSnapshot = Peter::AI::EvaluateCompanion(beforeConfig, step.worldContext);
+      const auto afterSnapshot = Peter::AI::EvaluateCompanion(afterConfig, step.worldContext);
+      report.beforeActionPath.push_back(beforeSnapshot.lastAction);
+      report.afterActionPath.push_back(afterSnapshot.lastAction);
+      if (beforeSnapshot.lastAction != afterSnapshot.lastAction)
+      {
+        report.changed = true;
+      }
+    }
+
+    return report;
+  }
 } // namespace Peter::Tools

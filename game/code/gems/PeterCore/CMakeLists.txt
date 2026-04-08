@@ -1,4 +1,5 @@
 add_library(PeterCore STATIC
+  src/CreatorContentStore.cpp
   src/CoreModule.cpp
   src/EventBus.cpp
   src/FeatureRegistry.cpp

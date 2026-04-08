@@ -225,6 +225,67 @@ namespace Peter::UI
     return Peter::Progression::RenderTrackSummary(tracks, workshopState);
   }
 
+  std::string RenderCreatorPanel(
+    const std::map<std::string, double, std::less<>>& tinkerValues,
+    const Peter::Workshop::LogicRulesetDefinition* activeRuleset,
+    const Peter::Workshop::TinyScriptDefinition* activeScript)
+  {
+    std::ostringstream output;
+    output << "Creator Workshop";
+    output << "\nTinker values:";
+    for (const auto& [variableId, value] : tinkerValues)
+    {
+      output << "\n- " << variableId << "=" << value;
+    }
+    output << "\nLogic ruleset: " << (activeRuleset == nullptr ? "none" : activeRuleset->displayName);
+    output << "\nTiny script: " << (activeScript == nullptr ? "none" : activeScript->displayName);
+    return output.str();
+  }
+
+  std::string RenderTinyScriptEditor(const Peter::Workshop::TinyScriptDefinition& script)
+  {
+    std::ostringstream output;
+    output << "Tiny Script Editor\n"
+           << "Hook: " << Peter::Workshop::ToString(script.hookKind) << "\n"
+           << "Target action: " << (script.targetActionId.empty() ? "n/a" : script.targetActionId) << "\n"
+           << script.body;
+    return output.str();
+  }
+
+  std::string RenderReplaySnippet(const Peter::Workshop::CreatorReplaySnippet& snippet)
+  {
+    std::ostringstream output;
+    output << "Creator Replay\n"
+           << "Scenario: " << snippet.scenarioId << "\n"
+           << "Before: " << snippet.beforeSummary << "\n"
+           << "After: " << snippet.afterSummary << "\n"
+           << "Change: " << snippet.changeSummary;
+    for (const auto& entry : snippet.timeline)
+    {
+      output << "\n- " << entry;
+    }
+    return output.str();
+  }
+
+  std::string RenderMentorSummary(
+    const Peter::Workshop::CreatorManifest& manifest,
+    const Peter::Workshop::CreatorProgressState& progress,
+    const Peter::AI::AgentExplainSnapshot& snapshot)
+  {
+    std::ostringstream output;
+    output << "Mentor View\n"
+           << "Active drafts:";
+    for (const auto& [kindId, contentId] : manifest.activeDraftIds)
+    {
+      output << "\n- " << kindId << "=" << contentId;
+    }
+    output << "\nCompleted creator lessons=" << progress.completedCreatorLessons.size()
+           << "\nMentor unlocked=" << (progress.mentorViewUnlocked ? "true" : "false")
+           << "\nCurrent goal=" << snapshot.currentGoal
+           << "\nTop reason=" << snapshot.topReason;
+    return output.str();
+  }
+
   Peter::Core::StructuredFields ToSaveFields(const AccessibilitySettings& settings)
   {
     return Peter::Core::StructuredFields{

@@ -1,4 +1,5 @@
 add_library(PeterWorkshop STATIC
+  src/CreatorWorkshop.cpp
   src/WorkshopTuning.cpp
   src/WorkshopModule.cpp
 )
@@ -11,7 +12,7 @@ target_include_directories(PeterWorkshop
 target_link_libraries(PeterWorkshop
   PUBLIC
     PeterAI
-    PeterValidation
+    PeterCore
 )
 
 target_compile_features(PeterWorkshop PUBLIC cxx_std_20)

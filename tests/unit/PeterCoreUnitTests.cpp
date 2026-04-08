@@ -9,6 +9,7 @@
 #include "PeterTest/TestMacros.h"
 #include "PeterUI/SlicePresentation.h"
 #include "PeterValidation/ValidationModule.h"
+#include "PeterWorkshop/CreatorWorkshop.h"
 #include "PeterWorkshop/WorkshopTuning.h"
 #include "PeterWorld/SliceContent.h"
 
@@ -108,6 +109,29 @@ PETER_TEST_MAIN({
     Peter::AI::DefaultCompanionConfig(),
     previewConfig);
   PETER_ASSERT_TRUE(preview.valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateTinkerVariableDefinition(
+    Peter::Workshop::BuildPhase4TinkerVariables().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateTinkerPresetDefinition(
+    Peter::Workshop::BuildPhase4TinkerPresets().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateLogicRulesetDefinition(
+    Peter::Workshop::BuildPhase4LogicTemplates().front()).valid);
+  const auto scriptValidation = Peter::Workshop::ValidateTinyScript(
+    Peter::Workshop::BuildPhase4TinyScriptTemplates().front());
+  PETER_ASSERT_TRUE(scriptValidation.valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateTinyScriptDefinition(
+    Peter::Workshop::BuildPhase4TinyScriptTemplates().front()).valid);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateMiniMissionDraftDefinition(
+    Peter::Workshop::MiniMissionDraftDefinition{
+      "mini_mission.creator.machine_silo_intro",
+      "Machine Silo Creator Run",
+      "Profile-local mini mission.",
+      "bundle.machine_silo.entry_lane",
+      "item.salvage.scrap_metal",
+      "enemy_group.machine_silo.patrol_pair",
+      "room.raid.extraction_pad",
+      "reward.creator.scrap_bundle",
+      true,
+      1}).valid);
 
   const auto configValidation = Peter::Validation::ValidateCompanionConfig(previewConfig);
   PETER_ASSERT_TRUE(configValidation.valid);
@@ -189,6 +213,20 @@ PETER_TEST_MAIN({
       Peter::Adapters::ActionBinding{"action.interact", "E", "X", true}
     });
   PETER_ASSERT_EQ(100, loadedSettings.textScalePercent);
+
+  Peter::Workshop::CreatorManifest creatorManifest;
+  const auto activation = Peter::Workshop::ActivateCreatorArtifact(
+    creatorManifest,
+    "logic",
+    "logic.template.protect_player",
+    1,
+    true);
+  PETER_ASSERT_TRUE(activation.success);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateCreatorManifest(creatorManifest).valid);
+
+  const auto creatorFields = Peter::Workshop::ToSaveFields(creatorManifest);
+  const auto reloadedManifest = Peter::Workshop::CreatorManifestFromSaveFields(creatorFields);
+  PETER_ASSERT_EQ(std::string("logic.template.protect_player"), reloadedManifest.activeDraftIds.at("logic"));
 
   const auto validMission = Peter::Validation::ValidateMissionTemplate(
     Peter::World::BuildPhase2MissionTemplates().front());

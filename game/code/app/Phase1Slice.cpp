@@ -1,6 +1,7 @@
 #include "Phase1Slice.h"
 
 #include "PeterCombat/EncounterSimulator.h"
+#include "PeterTools/ScenarioHarness.h"
 #include "PeterValidation/ValidationModule.h"
 #include "PeterWorld/SceneShell.h"
 
@@ -20,6 +21,9 @@ namespace Peter::App
     constexpr std::string_view kTutorialDomain = "save_domain.tutorial_progress";
     constexpr std::string_view kCompanionDomain = "save_domain.companion_config";
     constexpr std::string_view kAccessibilityDomain = "save_domain.settings_accessibility";
+    constexpr std::string_view kCreatorManifestDomain = "save_domain.creator_manifest";
+    constexpr std::string_view kCreatorProgressDomain = "save_domain.creator_progress";
+    constexpr std::string_view kCreatorSettingsDomain = "save_domain.creator_settings";
 
     Peter::Core::SliceItemLedger ToSliceLedger(const Peter::Inventory::ItemLedger& ledger)
     {
@@ -139,6 +143,120 @@ namespace Peter::App
       context.currentTargetId = "player";
       return context;
     }
+
+    Peter::Workshop::TinyScriptHookKind HookKindFromString(const std::string_view hookId)
+    {
+      if (hookId == "mission.score_bonus")
+      {
+        return Peter::Workshop::TinyScriptHookKind::MissionScoreBonus;
+      }
+      if (hookId == "tutorial.message_override")
+      {
+        return Peter::Workshop::TinyScriptHookKind::TutorialMessageOverride;
+      }
+      if (hookId == "loot.rarity_reaction")
+      {
+        return Peter::Workshop::TinyScriptHookKind::LootRarityReaction;
+      }
+      return Peter::Workshop::TinyScriptHookKind::CompanionPriorityHint;
+    }
+
+    std::map<std::string, double, std::less<>> LoadActiveTinkerValues(
+      const Peter::Core::CreatorContentStore& store,
+      const Peter::Workshop::CreatorManifest& manifest)
+    {
+      auto values = Peter::Workshop::DefaultTinkerValues();
+      const auto activeId = manifest.activeDraftIds.find("tinker");
+      if (activeId == manifest.activeDraftIds.end())
+      {
+        return values;
+      }
+
+      const auto fields = store.ReadArtifact(Peter::Core::CreatorContentKind::TinkerPreset, activeId->second);
+      for (const auto& variable : Peter::Workshop::BuildPhase4TinkerVariables())
+      {
+        const auto iterator = fields.find(variable.id);
+        if (iterator != fields.end())
+        {
+          values[variable.id] = std::stod(iterator->second);
+        }
+      }
+      return values;
+    }
+
+    const Peter::Workshop::LogicRulesetDefinition* LoadActiveLogicRuleset(
+      const Peter::Core::CreatorContentStore& store,
+      const Peter::Workshop::CreatorManifest& manifest)
+    {
+      const auto activeId = manifest.activeDraftIds.find("logic");
+      if (activeId == manifest.activeDraftIds.end())
+      {
+        return nullptr;
+      }
+
+      const auto fields = store.ReadArtifact(Peter::Core::CreatorContentKind::LogicRules, activeId->second);
+      const auto templateId = fields.find("logic_template_id");
+      if (templateId != fields.end())
+      {
+        return Peter::Workshop::FindLogicTemplate(templateId->second);
+      }
+      return Peter::Workshop::FindLogicTemplate(activeId->second);
+    }
+
+    Peter::Workshop::TinyScriptDefinition LoadActiveTinyScript(
+      const Peter::Core::CreatorContentStore& store,
+      const Peter::Workshop::CreatorManifest& manifest)
+    {
+      const auto activeId = manifest.activeDraftIds.find("script");
+      if (activeId == manifest.activeDraftIds.end())
+      {
+        return {};
+      }
+
+      const auto fields = store.ReadArtifact(Peter::Core::CreatorContentKind::TinyScript, activeId->second);
+      Peter::Workshop::TinyScriptDefinition script;
+      script.id = activeId->second;
+      script.displayName = fields.contains("display_name") ? fields.at("display_name") : activeId->second;
+      script.summary = fields.contains("summary") ? fields.at("summary") : "Creator-authored tiny script.";
+      script.body = fields.contains("body") ? fields.at("body") : "";
+      script.targetActionId = fields.contains("target_action_id") ? fields.at("target_action_id") : "";
+      script.hookKind = fields.contains("hook_kind")
+        ? HookKindFromString(fields.at("hook_kind"))
+        : Peter::Workshop::TinyScriptHookKind::CompanionPriorityHint;
+      if (script.body.empty())
+      {
+        if (const auto* templateScript = Peter::Workshop::FindTinyScriptTemplate(activeId->second))
+        {
+          return *templateScript;
+        }
+      }
+      return script;
+    }
+
+    Peter::Workshop::MiniMissionDraftDefinition LoadActiveMiniMission(
+      const Peter::Core::CreatorContentStore& store,
+      const Peter::Workshop::CreatorManifest& manifest)
+    {
+      const auto activeId = manifest.activeDraftIds.find("mini_mission");
+      if (activeId == manifest.activeDraftIds.end())
+      {
+        return {};
+      }
+
+      const auto fields = store.ReadArtifact(Peter::Core::CreatorContentKind::MiniMission, activeId->second);
+      Peter::Workshop::MiniMissionDraftDefinition draft;
+      draft.id = activeId->second;
+      draft.displayName = fields.contains("display_name") ? fields.at("display_name") : activeId->second;
+      draft.summary = fields.contains("summary") ? fields.at("summary") : "Creator-authored mini mission.";
+      draft.roomBundleId = fields.contains("room_bundle_id") ? fields.at("room_bundle_id") : "";
+      draft.lootGoalItemId = fields.contains("loot_goal_item_id") ? fields.at("loot_goal_item_id") : "";
+      draft.enemyGroupId = fields.contains("enemy_group_id") ? fields.at("enemy_group_id") : "";
+      draft.extractionPointId = fields.contains("extraction_point_id") ? fields.at("extraction_point_id") : "";
+      draft.rewardBundleId = fields.contains("reward_bundle_id") ? fields.at("reward_bundle_id") : "";
+      draft.active = true;
+      draft.revision = fields.contains("revision") ? std::stoi(fields.at("revision")) : 1;
+      return draft;
+    }
   } // namespace
 
   SliceScenario ParseScenario(const std::string_view scenarioName)
@@ -196,6 +314,7 @@ namespace Peter::App
     , m_eventBus(eventBus)
     , m_profile(std::move(profile))
     , m_saveDomainStore(saveDomainStore)
+    , m_creatorContentStore(m_profile, m_eventBus)
     , m_homeBase(Peter::World::BuildPhase1HomeBase())
     , m_raidZone(Peter::World::BuildPhase1RaidZone())
     , m_traversal(Peter::Traversal::BuildPhase1TraversalProfile())
@@ -205,6 +324,7 @@ namespace Peter::App
   Phase1Slice::PersistentState Phase1Slice::LoadPersistentState() const
   {
     PersistentState state;
+    m_creatorContentStore.EnsureLayout();
     const auto defaultBindings = m_platform.input->DefaultBindings();
     state.accessibility = Peter::UI::AccessibilitySettingsFromSaveFields({}, defaultBindings);
 
@@ -304,6 +424,27 @@ namespace Peter::App
         completedLessons == fields.end() ? std::vector<std::string>{} : SplitStrings(completedLessons->second);
     }
 
+    if (m_saveDomainStore.DomainExists(kCreatorManifestDomain))
+    {
+      state.creatorManifest = Peter::Workshop::CreatorManifestFromSaveFields(
+        m_saveDomainStore.ReadDomain(std::string(kCreatorManifestDomain)));
+    }
+
+    if (m_saveDomainStore.DomainExists(kCreatorProgressDomain))
+    {
+      state.creatorProgress = Peter::Workshop::CreatorProgressStateFromSaveFields(
+        m_saveDomainStore.ReadDomain(std::string(kCreatorProgressDomain)));
+    }
+
+    if (m_saveDomainStore.DomainExists(kCreatorSettingsDomain))
+    {
+      state.creatorSettings = Peter::Workshop::CreatorSettingsFromSaveFields(
+        m_saveDomainStore.ReadDomain(std::string(kCreatorSettingsDomain)));
+    }
+
+    state.tinkerValues = LoadActiveTinkerValues(m_creatorContentStore, state.creatorManifest);
+    state.companionConfig = Peter::Workshop::ApplyTinkerValues(state.companionConfig, state.tinkerValues, false);
+
     const auto favoriteValidation =
       Peter::Validation::ValidateFavoriteItemReference(state.loadout.favoriteItemId, state.inventory);
     if (!favoriteValidation.valid || state.loadout.favoriteItemId.empty())
@@ -356,6 +497,15 @@ namespace Peter::App
         {"last_scene_id", m_raidZone.sceneId},
         {"last_result", state.lastRaidResult}
       });
+    m_saveDomainStore.WriteDomain(
+      std::string(kCreatorManifestDomain),
+      Peter::Workshop::ToSaveFields(state.creatorManifest));
+    m_saveDomainStore.WriteDomain(
+      std::string(kCreatorProgressDomain),
+      Peter::Workshop::ToSaveFields(state.creatorProgress));
+    m_saveDomainStore.WriteDomain(
+      std::string(kCreatorSettingsDomain),
+      Peter::Workshop::ToSaveFields(state.creatorSettings));
   }
 
   void Phase1Slice::PresentHomeBase(const PersistentState& state) const
@@ -374,6 +524,27 @@ namespace Peter::App
     m_platform.ui->PresentPanel(
       "home_base.accessibility",
       Peter::UI::RenderAccessibilitySettings(state.accessibility, m_platform.input->DefaultBindings()));
+    const auto* activeRuleset = LoadActiveLogicRuleset(m_creatorContentStore, state.creatorManifest);
+    const auto activeScript = LoadActiveTinyScript(m_creatorContentStore, state.creatorManifest);
+    m_platform.ui->PresentCreatorPanel(
+      "home_base.creator_panel",
+      Peter::UI::RenderCreatorPanel(
+        state.tinkerValues,
+        activeRuleset,
+        activeScript.id.empty() ? nullptr : &activeScript));
+
+    if (state.creatorProgress.mentorViewUnlocked || Peter::Progression::HasUnlockedNode(
+      state.workshop,
+      "track.creator_unlocks.mentor_view"))
+    {
+      const auto previewContext = BuildExplainPreviewContext(state.workshop);
+      const auto previewDecision = Peter::AI::EvaluateCompanion(state.companionConfig, previewContext);
+      const auto mentorPanel = Peter::UI::RenderMentorSummary(
+        state.creatorManifest,
+        state.creatorProgress,
+        Peter::AI::BuildExplainSnapshot(previewDecision));
+      m_platform.ui->PresentPanel("home_base.mentor_summary", mentorPanel);
+    }
     m_eventBus.Emit(Peter::Core::Event{
       Peter::Core::EventCategory::Gameplay,
       "gameplay.traversal.ready",
@@ -508,6 +679,148 @@ namespace Peter::App
           {{"hint_level", std::to_string(state.tutorialHintLevel)}, {"lesson_id", std::string(lessonId)}}});
       }
 
+      if (step.action == "open_creator_panel")
+      {
+        const auto* activeRuleset = LoadActiveLogicRuleset(m_creatorContentStore, state.creatorManifest);
+        const auto activeScript = LoadActiveTinyScript(m_creatorContentStore, state.creatorManifest);
+        m_platform.ui->PresentCreatorPanel(
+          "creator.lesson.panel",
+          Peter::UI::RenderCreatorPanel(
+            state.tinkerValues,
+            activeRuleset,
+            activeScript.id.empty() ? nullptr : &activeScript));
+      }
+      else if (step.action == "apply_tinker_preset")
+      {
+        if (const auto* preset = Peter::Workshop::FindTinkerPreset(step.targetId); preset != nullptr)
+        {
+          for (const auto& [variableId, value] : preset->values)
+          {
+            state.tinkerValues[variableId] = value;
+          }
+          state.companionConfig = Peter::Workshop::ApplyTinkerValues(state.companionConfig, state.tinkerValues, false);
+          Peter::Core::StructuredFields fields;
+          fields["display_name"] = preset->displayName;
+          fields["summary"] = preset->summary;
+          for (const auto& [variableId, value] : state.tinkerValues)
+          {
+            fields[variableId] = std::to_string(value);
+          }
+          const int revision = m_creatorContentStore.WriteArtifact(
+            Peter::Core::CreatorContentKind::TinkerPreset,
+            preset->id,
+            fields);
+          const auto activation = Peter::Workshop::ActivateCreatorArtifact(
+            state.creatorManifest,
+            "tinker",
+            preset->id,
+            revision,
+            true);
+          m_eventBus.Emit(Peter::Core::Event{
+            Peter::Core::EventCategory::CreatorTools,
+            "creator_tools.tinker.applied",
+            {{"preset_id", preset->id}, {"success", activation.success ? "true" : "false"}}});
+        }
+      }
+      else if (step.action == "apply_logic_template")
+      {
+        if (const auto* ruleset = Peter::Workshop::FindLogicTemplate(step.targetId); ruleset != nullptr)
+        {
+          const int revision = m_creatorContentStore.WriteArtifact(
+            Peter::Core::CreatorContentKind::LogicRules,
+            ruleset->id,
+            Peter::Core::StructuredFields{
+              {"display_name", ruleset->displayName},
+              {"logic_template_id", ruleset->id},
+              {"summary", ruleset->summary}});
+          const auto validation = Peter::Validation::ValidateLogicRulesetDefinition(*ruleset);
+          const auto activation = Peter::Workshop::ActivateCreatorArtifact(
+            state.creatorManifest,
+            "logic",
+            ruleset->id,
+            revision,
+            validation.valid);
+          m_eventBus.Emit(Peter::Core::Event{
+            Peter::Core::EventCategory::CreatorTools,
+            "creator_tools.logic.applied",
+            {{"ruleset_id", ruleset->id}, {"success", activation.success ? "true" : "false"}}});
+        }
+      }
+      else if (step.action == "edit_script" || step.action == "run_script_validation")
+      {
+        const auto* templateScript = Peter::Workshop::FindTinyScriptTemplate(step.targetId);
+        if (templateScript != nullptr)
+        {
+          m_platform.ui->PresentTextEditor(
+            "creator.lesson.script_editor",
+            Peter::UI::RenderTinyScriptEditor(*templateScript));
+          const auto validation = Peter::Workshop::ValidateTinyScript(*templateScript);
+          const int revision = m_creatorContentStore.WriteArtifact(
+            Peter::Core::CreatorContentKind::TinyScript,
+            templateScript->id,
+            Peter::Core::StructuredFields{
+              {"body", templateScript->body},
+              {"display_name", templateScript->displayName},
+              {"hook_kind", std::string(Peter::Workshop::ToString(templateScript->hookKind))},
+              {"summary", templateScript->summary},
+              {"target_action_id", templateScript->targetActionId}});
+          (void)Peter::Workshop::ActivateCreatorArtifact(
+            state.creatorManifest,
+            "script",
+            templateScript->id,
+            revision,
+            validation.valid);
+          m_eventBus.Emit(Peter::Core::Event{
+            Peter::Core::EventCategory::CreatorTools,
+            "creator_tools.script.validated",
+            {{"script_id", templateScript->id}, {"valid", validation.valid ? "true" : "false"}}});
+        }
+      }
+      else if (step.action == "show_replay")
+      {
+        Peter::Tools::DeterministicScenarioHarness harness(step.targetId.empty() ? "scenario.ai.follow_corridor.v1" : step.targetId);
+        const auto compare = harness.Compare(Peter::AI::DefaultCompanionConfig(), state.companionConfig);
+        const auto snippet = Peter::Workshop::BuildCreatorReplaySnippet(
+          compare.scenarioId,
+          compare.beforeActionPath,
+          compare.afterActionPath,
+          "Your creator change changed the deterministic path.");
+        m_platform.ui->PresentReplayTimeline("creator.lesson.replay", Peter::UI::RenderReplaySnippet(snippet));
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::CreatorTools,
+          "creator_tools.replay.opened",
+          {{"changed", compare.changed ? "true" : "false"}, {"scenario_id", compare.scenarioId}}});
+      }
+      else if (step.action == "launch_creator_mission")
+      {
+        const auto draft = LoadActiveMiniMission(m_creatorContentStore, state.creatorManifest);
+        if (!draft.id.empty())
+        {
+          const auto mission = Peter::World::BuildMissionFromMiniMissionDraft(draft);
+          m_platform.ui->PresentPanel("creator.lesson.mini_mission", Peter::UI::RenderMissionBoard({mission}, mission.id));
+        }
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::CreatorTools,
+          "creator_tools.mini_mission.launched",
+          {{"draft_id", step.targetId}}});
+      }
+      else if (step.action == "reset_creator_content")
+      {
+        state.tinkerValues = Peter::Workshop::DefaultTinkerValues();
+        state.creatorManifest.activeDraftIds.clear();
+        state.creatorManifest.disabledContent.clear();
+        state.creatorManifest.lastKnownGoodRevisions.clear();
+        state.creatorManifest.rollbackTargets.clear();
+        state.companionConfig = Peter::Workshop::ApplyTinkerValues(
+          Peter::AI::DefaultCompanionConfig(),
+          state.tinkerValues,
+          false);
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::CreatorTools,
+          "creator_tools.reset",
+          {{"lesson_id", std::string(lessonId)}}});
+      }
+
       m_platform.ui->PresentPrompt(step.prompt);
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
@@ -523,6 +836,11 @@ namespace Peter::App
     if (!HasLesson(state.completedLessons, lessonId))
     {
       state.completedLessons.push_back(std::string(lessonId));
+    }
+    if (std::string(lessonId).starts_with("lesson.phase4.") &&
+      !HasLesson(state.creatorProgress.completedCreatorLessons, lessonId))
+    {
+      state.creatorProgress.completedCreatorLessons.push_back(std::string(lessonId));
     }
   }
 
@@ -943,6 +1261,99 @@ namespace Peter::App
             {"before_state", beforePreview.currentState}
           }});
         state.ruleEditComplete = preview.valid;
+
+        RunLesson(state, "lesson.phase4.change_value", false);
+        RunLesson(state, "lesson.phase4.change_rule", false);
+        RunLesson(state, "lesson.phase4.read_explanation", false);
+        RunLesson(state, "lesson.phase4.first_script", false);
+
+        const Peter::Workshop::MiniMissionDraftDefinition miniMissionDraft{
+          "mini_mission.creator.machine_silo_intro",
+          "Machine Silo Creator Run",
+          "A profile-local mini mission built from safe Machine Silo bundles.",
+          "bundle.machine_silo.entry_lane",
+          "item.salvage.scrap_metal",
+          "enemy_group.machine_silo.patrol_pair",
+          "room.raid.extraction_pad",
+          "reward.creator.scrap_bundle",
+          true,
+          1};
+        const auto miniMissionValidation = Peter::Validation::ValidateMiniMissionDraftDefinition(miniMissionDraft);
+        const int miniMissionRevision = m_creatorContentStore.WriteArtifact(
+          Peter::Core::CreatorContentKind::MiniMission,
+          miniMissionDraft.id,
+          Peter::Core::StructuredFields{
+            {"display_name", miniMissionDraft.displayName},
+            {"enemy_group_id", miniMissionDraft.enemyGroupId},
+            {"extraction_point_id", miniMissionDraft.extractionPointId},
+            {"loot_goal_item_id", miniMissionDraft.lootGoalItemId},
+            {"reward_bundle_id", miniMissionDraft.rewardBundleId},
+            {"room_bundle_id", miniMissionDraft.roomBundleId},
+            {"summary", miniMissionDraft.summary}});
+        (void)Peter::Workshop::ActivateCreatorArtifact(
+          state.creatorManifest,
+          "mini_mission",
+          miniMissionDraft.id,
+          miniMissionRevision,
+          miniMissionValidation.valid);
+        RunLesson(state, "lesson.phase4.build_mini_mission", false);
+
+        state.creatorProgress.safeSimulationRuns += 1;
+        state.creatorProgress.mentorViewUnlocked = Peter::Progression::HasUnlockedNode(
+          state.workshop,
+          "track.creator_unlocks.mentor_view");
+
+        const auto creatorContext = BuildExplainPreviewContext(state.workshop);
+        const auto* creatorRuleset = LoadActiveLogicRuleset(m_creatorContentStore, state.creatorManifest);
+        const auto creatorScript = LoadActiveTinyScript(m_creatorContentStore, state.creatorManifest);
+        const auto creatorConfig = Peter::Workshop::ApplyTinkerValues(previousConfig, state.tinkerValues, true);
+        auto creatorOverrides = Peter::Workshop::BuildTinkerBehaviorOverrides(state.tinkerValues, true);
+        if (creatorRuleset != nullptr)
+        {
+          const auto logicOverrides = Peter::Workshop::CompileLogicRuleset(*creatorRuleset, creatorContext);
+          creatorOverrides.overrides.insert(
+            creatorOverrides.overrides.end(),
+            logicOverrides.overrides.begin(),
+            logicOverrides.overrides.end());
+        }
+        if (!creatorScript.id.empty())
+        {
+          const auto scriptOverrides = Peter::Workshop::BuildScriptBehaviorOverrides(creatorScript, creatorContext);
+          creatorOverrides.overrides.insert(
+            creatorOverrides.overrides.end(),
+            scriptOverrides.overrides.begin(),
+            scriptOverrides.overrides.end());
+        }
+        const auto creatorBefore = Peter::AI::EvaluateCompanion(previousConfig, creatorContext);
+        const auto creatorAfter = Peter::AI::EvaluateCompanion(creatorConfig, creatorContext, creatorOverrides);
+        m_platform.ui->PresentPanel(
+          "creator.safe_simulation.compare",
+          Peter::UI::RenderCompanionCompareView(
+            creatorBefore,
+            creatorAfter,
+            "Safe simulation after tinker, logic, and tiny script changes."));
+        Peter::Tools::DeterministicScenarioHarness creatorHarness("scenario.ai.loot_vs_safety.v1");
+        const auto creatorCompare = creatorHarness.Compare(previousConfig, creatorConfig);
+        const auto creatorReplay = Peter::Workshop::BuildCreatorReplaySnippet(
+          creatorCompare.scenarioId,
+          creatorCompare.beforeActionPath,
+          creatorCompare.afterActionPath,
+          "Your creator changes produced a new explainable behavior path.");
+        m_platform.ui->PresentReplayTimeline(
+          "creator.safe_simulation.replay",
+          Peter::UI::RenderReplaySnippet(creatorReplay));
+        const auto mentorPanel = Peter::UI::RenderMentorSummary(
+          state.creatorManifest,
+          state.creatorProgress,
+          Peter::AI::BuildExplainSnapshot(creatorAfter));
+        const auto mentorPath = m_creatorContentStore.WriteMentorSummary(
+          "mentor.phase4.creator_summary",
+          mentorPanel);
+        m_platform.ui->PresentMentorSummaryPrompt(mentorPath.string(), mentorPanel);
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::CreatorTools,
+          "creator_tools.mentor_view.opened",
+          {{"export_path", mentorPath.string()}, {"safe_sim_runs", std::to_string(state.creatorProgress.safeSimulationRuns)}}});
       }
 
       if (guidedMode)
@@ -1045,8 +1456,8 @@ namespace Peter::App
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 3 AI alpha loop: deterministic companion tuning, readable combat support, explainability, and post-raid clarity."
-        : "Completed the Phase 3 failure-and-recovery loop: loss was explained, durability stayed fair, and AI guidance remained readable.",
+        ? "Completed the Phase 4 creator workshop loop: safe value/rule/script edits, replay-backed comparisons, mentor summaries, and local mini-mission scaffolding."
+        : "Completed the Phase 4 failure-and-recovery loop: authored play stayed stable while creator content remained isolated and reversible.",
       mission->id,
       companionDecision,
       Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),

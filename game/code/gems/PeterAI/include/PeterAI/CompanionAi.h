@@ -141,6 +141,21 @@ namespace Peter::AI
     std::vector<DecisionBreakdown> breakdowns;
   };
 
+  struct CandidateOverride
+  {
+    std::string sourceId;
+    std::string actionId;
+    double scoreDelta = 0.0;
+    bool gateAction = false;
+    std::string explanation;
+  };
+
+  struct BehaviorOverrideSet
+  {
+    std::vector<CandidateOverride> overrides;
+    std::string summary;
+  };
+
   struct ActionPlan
   {
     std::string actionId;
@@ -322,6 +337,10 @@ namespace Peter::AI
   [[nodiscard]] CompanionDecisionSnapshot EvaluateCompanion(
     const CompanionConfig& config,
     const CompanionWorldContext& context);
+  [[nodiscard]] CompanionDecisionSnapshot EvaluateCompanion(
+    const CompanionConfig& config,
+    const CompanionWorldContext& context,
+    const BehaviorOverrideSet& overrides);
   [[nodiscard]] EnemyDecisionSnapshot EvaluateEnemy(
     const EnemyUnit& enemy,
     const CompanionWorldContext& context);

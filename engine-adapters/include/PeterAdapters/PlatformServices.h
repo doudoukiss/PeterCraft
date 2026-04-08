@@ -101,6 +101,10 @@ namespace Peter::Adapters
     virtual void PresentState(std::string_view stateId) = 0;
     virtual void PresentPrompt(std::string_view prompt) = 0;
     virtual void PresentPanel(std::string_view panelId, std::string_view body) = 0;
+    virtual void PresentCreatorPanel(std::string_view panelId, std::string_view body) = 0;
+    virtual void PresentTextEditor(std::string_view panelId, std::string_view body) = 0;
+    virtual void PresentReplayTimeline(std::string_view panelId, std::string_view body) = 0;
+    virtual void PresentMentorSummaryPrompt(std::string_view exportPath, std::string_view body) = 0;
     virtual void ApplyPresentationSettings(const PresentationSettings& settings) = 0;
     virtual void PresentDebugMarkers(const std::vector<std::string>& markerIds) = 0;
     virtual void PresentCompanionFeedback(

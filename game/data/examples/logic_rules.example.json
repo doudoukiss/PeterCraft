@@ -1,0 +1,14 @@
+{
+  "kind": "logicRulesCatalog",
+  "schemaVersion": 4,
+  "rulesets": [
+    {
+      "id": "logic.template.protect_player",
+      "displayName": "Protect Player",
+      "cards": [
+        { "id": "logic.card.protect_player.revive", "conditionId": "player_needs_revive", "actionId": "prioritize_help", "scoreDelta": 18.0 },
+        { "id": "logic.card.protect_player.low_health", "conditionId": "player_health_low", "actionId": "prioritize_cover", "scoreDelta": 12.0 }
+      ]
+    }
+  ]
+}

@@ -45,6 +45,14 @@
                     "grant_temp_item",
                     "launch_lesson_mission",
                     "show_why_panel",
+                    "open_creator_panel",
+                    "apply_tinker_preset",
+                    "apply_logic_template",
+                    "edit_script",
+                    "run_script_validation",
+                    "launch_creator_mission",
+                    "show_replay",
+                    "reset_creator_content",
                     "complete_lesson"
                   ]
                 },

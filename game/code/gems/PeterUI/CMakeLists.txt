@@ -15,6 +15,7 @@ target_link_libraries(PeterUI
     PeterAI
     PeterCore
     PeterProgression
+    PeterWorkshop
     PeterWorld
 )
 

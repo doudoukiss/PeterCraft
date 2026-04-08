@@ -110,11 +110,13 @@ namespace Peter::Progression
       UpgradeTrackDefinition{
         "track.creator_unlocks",
         "Creator Unlocks",
-        "Earn safer workshop depth through play.",
+        "Earn safer workshop depth through play and guided creation.",
         {
-          {"track.creator_unlocks.lesson_archive", "Lesson Archive", "Replay guided workshop lessons from home.", "item.salvage.scrap_metal", "", "lesson_replay", 2, 1},
-          {"track.creator_unlocks.safe_simulation", "Safe Simulation", "Unlock a no-penalty workshop simulation option.", "item.material.nanofiber", "track.creator_unlocks.lesson_archive", "safe_mode", 2, 1},
-          {"track.creator_unlocks.mission_choice_console", "Mission Choice Console", "Unlock wider mission selection in the workshop yard.", "item.salvage.power_cell", "track.creator_unlocks.safe_simulation", "mission_choice", 1, 1}
+          {"track.creator_unlocks.tinker_intro", "Tinker Intro", "Unlock safe value tuning in the workshop terminal.", "item.salvage.scrap_metal", "", "creator_tinker", 2, 1},
+          {"track.creator_unlocks.logic_intro", "Logic Intro", "Unlock ordered card rules for the companion.", "item.material.nanofiber", "track.creator_unlocks.tinker_intro", "creator_logic", 1, 1},
+          {"track.creator_unlocks.code_intro", "Code Intro", "Unlock the tiny script editor with validation.", "item.material.nanofiber", "track.creator_unlocks.logic_intro", "creator_code", 1, 1},
+          {"track.creator_unlocks.mini_mission_builder", "Mini Mission Builder", "Unlock local mini mission assembly from safe bundles.", "item.salvage.power_cell", "track.creator_unlocks.code_intro", "creator_mission_builder", 1, 1},
+          {"track.creator_unlocks.mentor_view", "Mentor View", "Unlock the hidden mentor summary and restore tools.", "item.salvage.power_cell", "track.creator_unlocks.mini_mission_builder", "creator_mentor", 1, 1}
         }}
     };
 

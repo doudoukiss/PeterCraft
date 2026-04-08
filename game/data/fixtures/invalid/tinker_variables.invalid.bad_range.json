@@ -1,0 +1,11 @@
+{
+  "kind": "tinkerVariableCatalog",
+  "schemaVersion": 4,
+  "variables": [
+    { "id": "companion.follow_distance_meters", "displayName": "Follow Distance", "groupId": "group.companion", "defaultValue": "unsafe", "minValue": 4.0, "maxValue": 10.0, "creatorOnly": false },
+    { "id": "companion.rare_loot_bias", "displayName": "Rare Loot Focus", "groupId": "group.companion", "defaultValue": 0.0, "minValue": 0.0, "maxValue": 1.0, "creatorOnly": true },
+    { "id": "creator.lesson_timer_seconds", "displayName": "Lesson Timer", "groupId": "group.creator", "defaultValue": 60.0, "minValue": 30.0, "maxValue": 120.0, "creatorOnly": true },
+    { "id": "creator.extraction_countdown_seconds", "displayName": "Extraction Countdown", "groupId": "group.creator", "defaultValue": 6.0, "minValue": 4.0, "maxValue": 12.0, "creatorOnly": true },
+    { "id": "creator.learning_enemy_alert_delay_seconds", "displayName": "Enemy Alert Delay", "groupId": "group.creator", "defaultValue": 3.0, "minValue": 0.0, "maxValue": 8.0, "creatorOnly": true }
+  ]
+}

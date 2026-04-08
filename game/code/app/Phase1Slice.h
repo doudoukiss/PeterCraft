@@ -2,6 +2,7 @@
 
 #include "PeterAI/CompanionAi.h"
 #include "PeterAdapters/PlatformServices.h"
+#include "PeterCore/CreatorContentStore.h"
 #include "PeterCore/EventBus.h"
 #include "PeterCore/ProfileService.h"
 #include "PeterCore/SaveDomainStore.h"
@@ -10,6 +11,7 @@
 #include "PeterProgression/Crafting.h"
 #include "PeterTraversal/TraversalProfile.h"
 #include "PeterUI/SlicePresentation.h"
+#include "PeterWorkshop/CreatorWorkshop.h"
 #include "PeterWorkshop/WorkshopTuning.h"
 #include "PeterWorld/SliceContent.h"
 
@@ -63,6 +65,10 @@ namespace Peter::App
       Peter::Progression::WorkshopState workshop;
       Peter::AI::CompanionConfig companionConfig;
       Peter::UI::AccessibilitySettings accessibility;
+      Peter::Workshop::CreatorManifest creatorManifest;
+      Peter::Workshop::CreatorProgressState creatorProgress;
+      Peter::Workshop::CreatorSettings creatorSettings;
+      std::map<std::string, double, std::less<>> tinkerValues = Peter::Workshop::DefaultTinkerValues();
       std::vector<std::string> completedLessons;
       bool guidedFirstRunComplete = false;
       bool ruleEditComplete = false;
@@ -91,6 +97,7 @@ namespace Peter::App
     Peter::Core::EventBus& m_eventBus;
     Peter::Core::ProfileInfo m_profile;
     Peter::Core::SaveDomainStore& m_saveDomainStore;
+    Peter::Core::CreatorContentStore m_creatorContentStore;
     Peter::World::HomeBaseDefinition m_homeBase;
     Peter::World::RaidZoneDefinition m_raidZone;
     Peter::Traversal::TraversalProfile m_traversal;

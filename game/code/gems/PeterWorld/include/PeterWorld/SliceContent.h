@@ -7,6 +7,11 @@
 #include <string_view>
 #include <vector>
 
+namespace Peter::Workshop
+{
+  struct MiniMissionDraftDefinition;
+}
+
 namespace Peter::World
 {
   struct StationDefinition
@@ -130,10 +135,41 @@ namespace Peter::World
     ExtractionSettings extraction;
   };
 
+  struct MiniMissionRoomBundleDefinition
+  {
+    std::string id;
+    std::string displayName;
+    std::string entryRoomId;
+    std::string extractionRoomId;
+    std::vector<std::string> roomIds;
+  };
+
+  struct MiniMissionEnemyGroupDefinition
+  {
+    std::string id;
+    std::string displayName;
+    std::vector<Peter::AI::EnemyUnit> enemies;
+  };
+
+  struct MiniMissionRewardDefinition
+  {
+    std::string id;
+    std::string displayName;
+    RewardBundleDefinition rewardBundle;
+  };
+
   [[nodiscard]] HomeBaseDefinition BuildPhase1HomeBase();
   [[nodiscard]] RaidZoneDefinition BuildPhase1RaidZone();
   [[nodiscard]] const std::vector<MissionTemplateDefinition>& BuildPhase2MissionTemplates();
   [[nodiscard]] const MissionTemplateDefinition* FindMissionTemplate(std::string_view missionId);
   [[nodiscard]] const std::vector<TutorialLessonDefinition>& BuildPhase2TutorialLessons();
   [[nodiscard]] const TutorialLessonDefinition* FindTutorialLesson(std::string_view lessonId);
+  [[nodiscard]] const std::vector<MiniMissionRoomBundleDefinition>& BuildPhase4MiniMissionRoomBundles();
+  [[nodiscard]] const MiniMissionRoomBundleDefinition* FindMiniMissionRoomBundle(std::string_view bundleId);
+  [[nodiscard]] const std::vector<MiniMissionEnemyGroupDefinition>& BuildPhase4MiniMissionEnemyGroups();
+  [[nodiscard]] const MiniMissionEnemyGroupDefinition* FindMiniMissionEnemyGroup(std::string_view enemyGroupId);
+  [[nodiscard]] const std::vector<MiniMissionRewardDefinition>& BuildPhase4MiniMissionRewards();
+  [[nodiscard]] const MiniMissionRewardDefinition* FindMiniMissionReward(std::string_view rewardId);
+  [[nodiscard]] MissionTemplateDefinition BuildMissionFromMiniMissionDraft(
+    const Peter::Workshop::MiniMissionDraftDefinition& draft);
 } // namespace Peter::World

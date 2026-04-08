@@ -4,6 +4,7 @@
 #include "PeterAdapters/PlatformServices.h"
 #include "PeterCore/EventBus.h"
 #include "PeterProgression/Crafting.h"
+#include "PeterWorkshop/CreatorWorkshop.h"
 #include "PeterWorld/SliceContent.h"
 
 #include <map>
@@ -49,6 +50,16 @@ namespace Peter::UI
   [[nodiscard]] std::string RenderWorkshopTracks(
     const std::vector<Peter::Progression::UpgradeTrackDefinition>& tracks,
     const Peter::Progression::WorkshopState& workshopState);
+  [[nodiscard]] std::string RenderCreatorPanel(
+    const std::map<std::string, double, std::less<>>& tinkerValues,
+    const Peter::Workshop::LogicRulesetDefinition* activeRuleset,
+    const Peter::Workshop::TinyScriptDefinition* activeScript);
+  [[nodiscard]] std::string RenderTinyScriptEditor(const Peter::Workshop::TinyScriptDefinition& script);
+  [[nodiscard]] std::string RenderReplaySnippet(const Peter::Workshop::CreatorReplaySnippet& snippet);
+  [[nodiscard]] std::string RenderMentorSummary(
+    const Peter::Workshop::CreatorManifest& manifest,
+    const Peter::Workshop::CreatorProgressState& progress,
+    const Peter::AI::AgentExplainSnapshot& snapshot);
   [[nodiscard]] Peter::Core::StructuredFields ToSaveFields(const AccessibilitySettings& settings);
   [[nodiscard]] AccessibilitySettings AccessibilitySettingsFromSaveFields(
     const Peter::Core::StructuredFields& fields,

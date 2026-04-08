@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Creator Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "activeDraftIds", "lastKnownGoodRevisions", "disabledContent", "rollbackTargets"],
+  "properties": {
+    "kind": { "const": "creatorManifest" },
+    "schemaVersion": { "const": 4 },
+    "activeDraftIds": { "type": "object", "additionalProperties": { "type": "string" } },
+    "lastKnownGoodRevisions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "disabledContent": { "type": "object", "additionalProperties": { "type": "boolean" } },
+    "rollbackTargets": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+  }
+}

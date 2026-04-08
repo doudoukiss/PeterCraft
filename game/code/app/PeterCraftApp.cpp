@@ -110,7 +110,7 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 3 AI and Companions Alpha\n";
+    std::cout << "PeterCraft Phase 4 Creator Workshop Alpha\n";
     std::cout << runReport.summary << "\n";
     std::cout << overlay.Render() << '\n';
 

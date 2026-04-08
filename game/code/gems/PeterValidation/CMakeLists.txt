@@ -13,6 +13,7 @@ target_link_libraries(PeterValidation
     PeterAI
     PeterInventory
     PeterUI
+    PeterWorkshop
     PeterWorld
 )
 

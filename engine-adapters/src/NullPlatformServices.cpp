@@ -127,6 +127,26 @@ namespace Peter::Adapters
         std::cout << "[panel:" << panelId << "] " << body << '\n';
       }
 
+      void PresentCreatorPanel(std::string_view panelId, std::string_view body) override
+      {
+        std::cout << "[creator-panel:" << panelId << "] " << body << '\n';
+      }
+
+      void PresentTextEditor(std::string_view panelId, std::string_view body) override
+      {
+        std::cout << "[text-editor:" << panelId << "] " << body << '\n';
+      }
+
+      void PresentReplayTimeline(std::string_view panelId, std::string_view body) override
+      {
+        std::cout << "[replay:" << panelId << "] " << body << '\n';
+      }
+
+      void PresentMentorSummaryPrompt(std::string_view exportPath, std::string_view body) override
+      {
+        std::cout << "[mentor-summary] path=" << exportPath << ' ' << body << '\n';
+      }
+
       void ApplyPresentationSettings(const PresentationSettings& settings) override
       {
         std::cout << "[ui-settings] subtitles=" << (settings.subtitlesEnabled ? "on" : "off")

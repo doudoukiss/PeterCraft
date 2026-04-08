@@ -1,5 +1,6 @@
 #include "PeterAdapters/PlatformServices.h"
 #include "PeterAI/CompanionAi.h"
+#include "PeterCore/CreatorContentStore.h"
 #include "PeterCore/EventBus.h"
 #include "PeterCore/ProfileService.h"
 #include "PeterCore/SaveDomainStore.h"
@@ -8,6 +9,7 @@
 #include "PeterTest/TestMacros.h"
 #include "PeterUI/SlicePresentation.h"
 #include "PeterValidation/ValidationModule.h"
+#include "PeterWorkshop/CreatorWorkshop.h"
 #include "PeterWorkshop/WorkshopTuning.h"
 
 #include <filesystem>
@@ -56,6 +58,46 @@ PETER_TEST_MAIN({
   const auto preview = Peter::Workshop::BuildCompanionBehaviorPreview(migratedConfig, previewConfig);
   PETER_ASSERT_TRUE(preview.valid);
 
+  Peter::Core::CreatorContentStore creatorContentStore(profile, eventBus);
+  creatorContentStore.EnsureLayout();
+  const int presetRevision = creatorContentStore.WriteArtifact(
+    Peter::Core::CreatorContentKind::TinkerPreset,
+    "preset.tinker.companion_close_guard",
+    Peter::Core::StructuredFields{
+      {"display_name", "Close Guard"},
+      {"companion.follow_distance_meters", "4.0"},
+      {"companion.rare_loot_bias", "0.1"}});
+  PETER_ASSERT_EQ(1, presetRevision);
+
+  Peter::Workshop::CreatorManifest creatorManifest;
+  const auto activation = Peter::Workshop::ActivateCreatorArtifact(
+    creatorManifest,
+    "tinker",
+    "preset.tinker.companion_close_guard",
+    presetRevision,
+    true);
+  PETER_ASSERT_TRUE(activation.success);
+  saveDomainStore.WriteDomain(
+    "save_domain.creator_manifest",
+    Peter::Workshop::ToSaveFields(creatorManifest));
+  saveDomainStore.WriteDomain(
+    "save_domain.creator_progress",
+    Peter::Workshop::ToSaveFields(Peter::Workshop::CreatorProgressState{{"lesson.phase4.change_value"}, true, 1}));
+  saveDomainStore.WriteDomain(
+    "save_domain.creator_settings",
+    Peter::Workshop::ToSaveFields(Peter::Workshop::CreatorSettings{true, true, true}));
+
+  const auto reloadedManifest = Peter::Workshop::CreatorManifestFromSaveFields(
+    saveDomainStore.ReadDomain("save_domain.creator_manifest"));
+  PETER_ASSERT_EQ(
+    std::string("preset.tinker.companion_close_guard"),
+    reloadedManifest.activeDraftIds.at("tinker"));
+
+  const auto storedPreset = creatorContentStore.ReadArtifact(
+    Peter::Core::CreatorContentKind::TinkerPreset,
+    "preset.tinker.companion_close_guard");
+  PETER_ASSERT_EQ(std::string("4.0"), storedPreset.at("companion.follow_distance_meters"));
+
   saveDomainStore.WriteDomain(
     "save_domain.companion_config",
     Peter::AI::ToSaveFields(previewConfig));
@@ -90,6 +132,12 @@ PETER_TEST_MAIN({
   const auto debugPanel = Peter::UI::RenderAiDebugPanel(Peter::AI::BuildExplainSnapshot(afterExplain));
   PETER_ASSERT_TRUE(explainPanel.find("Goal:") != std::string::npos);
   PETER_ASSERT_TRUE(debugPanel.find("Top actions:") != std::string::npos);
+
+  const auto creatorPanel = Peter::UI::RenderCreatorPanel(
+    Peter::Workshop::DefaultTinkerValues(),
+    Peter::Workshop::FindLogicTemplate("logic.template.protect_player"),
+    Peter::Workshop::FindTinyScriptTemplate("script.template.priority_hint"));
+  PETER_ASSERT_TRUE(creatorPanel.find("Creator Workshop") != std::string::npos);
 
   platform.ui->PresentCompanionFeedback(afterExplain.calloutToken, afterExplain.gestureToken);
   platform.ui->PresentDebugMarkers({"room.raid.extraction_pad", afterExplain.blackboard.routeNodeId});

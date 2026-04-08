@@ -1,0 +1,20 @@
+{
+  "kind": "creatorManifest",
+  "schemaVersion": 4,
+  "activeDraftIds": {
+    "tinker": "preset.tinker.companion_close_guard",
+    "logic": "logic.template.protect_player",
+    "script": "script.template.priority_hint",
+    "mini_mission": "mini_mission.creator.machine_silo_intro"
+  },
+  "lastKnownGoodRevisions": {
+    "tinker:preset.tinker.companion_close_guard": 1,
+    "logic:logic.template.protect_player": 1
+  },
+  "disabledContent": {
+    "script:script.template.priority_hint": false
+  },
+  "rollbackTargets": {
+    "logic:logic.template.protect_player": 1
+  }
+}

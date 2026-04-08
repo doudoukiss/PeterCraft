@@ -1,0 +1,13 @@
+{
+  "kind": "tinyScriptCatalog",
+  "schemaVersion": 4,
+  "scripts": [
+    {
+      "id": "script.template.bad",
+      "displayName": "Bad Script",
+      "hookKind": "companion.priority_hint",
+      "body": "",
+      "targetActionId": "revive"
+    }
+  ]
+}

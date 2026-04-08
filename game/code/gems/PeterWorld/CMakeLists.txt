@@ -14,6 +14,7 @@ target_link_libraries(PeterWorld
     PeterAI
     PeterCore
     PeterInventory
+    PeterWorkshop
 )
 
 target_compile_features(PeterWorld PUBLIC cxx_std_20)

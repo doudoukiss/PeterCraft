@@ -1,5 +1,7 @@
 #include "PeterWorld/SliceContent.h"
 
+#include "PeterWorkshop/CreatorWorkshop.h"
+
 namespace Peter::World
 {
   HomeBaseDefinition BuildPhase1HomeBase()
@@ -223,6 +225,60 @@ namespace Peter::World
           {"lesson.phase2.mission_choice.open_panel", "open_panel", "Open the mission comparison panel.", "gameplay.mission.selected", "", "ui.mission_choice", 0},
           {"lesson.phase2.mission_choice.wait", "wait_for_event", "Choose a mission template to continue.", "gameplay.mission.selected", "gameplay.mission.selected", "", 1},
           {"lesson.phase2.mission_choice.done", "complete_lesson", "Mission choice lesson complete.", "gameplay.mission.selected", "gameplay.mission.selected", "", 0}
+        }},
+      TutorialLessonDefinition{
+        "lesson.phase4.change_value",
+        "Change A Value",
+        "Teach the player how Tinker Mode changes one safe number.",
+        true,
+        {
+          {"lesson.phase4.change_value.open", "open_creator_panel", "Open the creator panel from the workshop terminal.", "creator_tools.station.opened", "", "station.home.workbench", 0},
+          {"lesson.phase4.change_value.apply", "apply_tinker_preset", "Apply a close-guard preset and preview the difference.", "creator_tools.station.opened", "creator_tools.tinker.applied", "preset.tinker.companion_close_guard", 0},
+          {"lesson.phase4.change_value.replay", "show_replay", "Open the replay to see what your change caused.", "creator_tools.replay.opened", "creator_tools.replay.opened", "scenario.ai.follow_corridor.v1", 0},
+          {"lesson.phase4.change_value.done", "complete_lesson", "Value lesson complete.", "creator_tools.tinker.applied", "creator_tools.tinker.applied", "", 0}
+        }},
+      TutorialLessonDefinition{
+        "lesson.phase4.change_rule",
+        "Change A Rule",
+        "Teach the player how ordered logic cards change companion choices.",
+        true,
+        {
+          {"lesson.phase4.change_rule.open", "open_creator_panel", "Open Logic Mode from the creator panel.", "creator_tools.station.opened", "", "station.home.companion", 0},
+          {"lesson.phase4.change_rule.apply", "apply_logic_template", "Apply a starter rule template.", "creator_tools.station.opened", "creator_tools.logic.applied", "logic.template.protect_player", 0},
+          {"lesson.phase4.change_rule.why", "show_why_panel", "Read why the companion changed its choice.", "creator_tools.explain_panel.opened", "creator_tools.explain_panel.opened", "", 0},
+          {"lesson.phase4.change_rule.done", "complete_lesson", "Rule lesson complete.", "creator_tools.logic.applied", "creator_tools.logic.applied", "", 0}
+        }},
+      TutorialLessonDefinition{
+        "lesson.phase4.read_explanation",
+        "Read The Explanation",
+        "Teach the player how to compare before and after behavior safely.",
+        true,
+        {
+          {"lesson.phase4.read_explanation.replay", "show_replay", "Open the replay comparison view.", "creator_tools.replay.opened", "creator_tools.replay.opened", "scenario.ai.loot_vs_safety.v1", 0},
+          {"lesson.phase4.read_explanation.panel", "open_panel", "Open the explanation panel and read the top reasons.", "creator_tools.explain_panel.opened", "creator_tools.explain_panel.opened", "ui.creator.explain", 0},
+          {"lesson.phase4.read_explanation.done", "complete_lesson", "Explanation lesson complete.", "creator_tools.replay.opened", "creator_tools.replay.opened", "", 0}
+        }},
+      TutorialLessonDefinition{
+        "lesson.phase4.first_script",
+        "Write Your First Tiny Script",
+        "Teach the player how to validate and run a tiny script safely.",
+        true,
+        {
+          {"lesson.phase4.first_script.open", "open_creator_panel", "Open Code Mode from the creator panel.", "creator_tools.station.opened", "", "station.home.workbench", 0},
+          {"lesson.phase4.first_script.edit", "edit_script", "Write or load a tiny script template.", "creator_tools.station.opened", "creator_tools.script.validated", "script.template.priority_hint", 0},
+          {"lesson.phase4.first_script.validate", "run_script_validation", "Validate the script before activation.", "creator_tools.script.validated", "creator_tools.script.validated", "script.template.priority_hint", 0},
+          {"lesson.phase4.first_script.done", "complete_lesson", "Script lesson complete.", "creator_tools.script.validated", "creator_tools.script.validated", "", 0}
+        }},
+      TutorialLessonDefinition{
+        "lesson.phase4.build_mini_mission",
+        "Build A Mini Mission",
+        "Teach the player how to assemble and launch a local mini mission.",
+        true,
+        {
+          {"lesson.phase4.build_mini_mission.open", "open_creator_panel", "Open Build Mode from the workshop terminal.", "creator_tools.station.opened", "", "station.home.workbench", 0},
+          {"lesson.phase4.build_mini_mission.launch", "launch_creator_mission", "Launch a local mini mission from your saved draft.", "creator_tools.mini_mission.launched", "creator_tools.mini_mission.launched", "mini_mission.creator.machine_silo_intro", 0},
+          {"lesson.phase4.build_mini_mission.reset", "reset_creator_content", "Reset creator content to compare with the baseline again.", "creator_tools.reset", "creator_tools.reset", "", 0},
+          {"lesson.phase4.build_mini_mission.done", "complete_lesson", "Mini mission lesson complete.", "creator_tools.mini_mission.launched", "creator_tools.mini_mission.launched", "", 0}
         }}
     };
 
@@ -239,5 +295,90 @@ namespace Peter::World
       }
     }
     return nullptr;
+  }
+
+  const std::vector<MiniMissionRoomBundleDefinition>& BuildPhase4MiniMissionRoomBundles()
+  {
+    static const std::vector<MiniMissionRoomBundleDefinition> bundles = {
+      {"bundle.machine_silo.entry_lane", "Entry Lane", "room.raid.entry_platform", "room.raid.extraction_pad", {"room.raid.entry_platform", "room.raid.patrol_hall", "room.raid.guard_post", "room.raid.extraction_pad"}},
+      {"bundle.machine_silo.vault_loop", "Vault Loop", "room.raid.entry_platform", "room.raid.extraction_pad", {"room.raid.entry_platform", "room.raid.guard_post", "room.raid.high_risk_vault", "room.raid.extraction_pad"}}
+    };
+    return bundles;
+  }
+
+  const MiniMissionRoomBundleDefinition* FindMiniMissionRoomBundle(const std::string_view bundleId)
+  {
+    for (const auto& bundle : BuildPhase4MiniMissionRoomBundles())
+    {
+      if (bundle.id == bundleId)
+      {
+        return &bundle;
+      }
+    }
+    return nullptr;
+  }
+
+  const std::vector<MiniMissionEnemyGroupDefinition>& BuildPhase4MiniMissionEnemyGroups()
+  {
+    static const std::vector<MiniMissionEnemyGroupDefinition> groups = {
+      {"enemy_group.machine_silo.patrol_pair", "Patrol Pair", {Peter::AI::BuildEnemyUnit("enemy.machine_patrol.chaser_creator", Peter::AI::EnemyVariant::MeleeChaser, "room.raid.patrol_hall"), Peter::AI::BuildEnemyUnit("enemy.machine_patrol.support_creator", Peter::AI::EnemyVariant::AlarmSupport, "room.raid.guard_post")}},
+      {"enemy_group.machine_silo.ambush_watch", "Ambush Watch", {Peter::AI::BuildEnemyUnit("enemy.machine_patrol.support_watch", Peter::AI::EnemyVariant::AlarmSupport, "room.raid.guard_post")}}
+    };
+    return groups;
+  }
+
+  const MiniMissionEnemyGroupDefinition* FindMiniMissionEnemyGroup(const std::string_view enemyGroupId)
+  {
+    for (const auto& group : BuildPhase4MiniMissionEnemyGroups())
+    {
+      if (group.id == enemyGroupId)
+      {
+        return &group;
+      }
+    }
+    return nullptr;
+  }
+
+  const std::vector<MiniMissionRewardDefinition>& BuildPhase4MiniMissionRewards()
+  {
+    static const std::vector<MiniMissionRewardDefinition> rewards = {
+      {"reward.creator.scrap_bundle", "Scrap Bundle", RewardBundleDefinition{{{"item.salvage.scrap_metal", 2}}, "track.creator_unlocks", "tip.creator.keep_changes_local"}},
+      {"reward.creator.nanofiber_bundle", "Nanofiber Bundle", RewardBundleDefinition{{{"item.material.nanofiber", 1}}, "track.creator_unlocks", "tip.creator.logic_cards_are_safe"}}
+    };
+    return rewards;
+  }
+
+  const MiniMissionRewardDefinition* FindMiniMissionReward(const std::string_view rewardId)
+  {
+    for (const auto& reward : BuildPhase4MiniMissionRewards())
+    {
+      if (reward.id == rewardId)
+      {
+        return &reward;
+      }
+    }
+    return nullptr;
+  }
+
+  MissionTemplateDefinition BuildMissionFromMiniMissionDraft(const Peter::Workshop::MiniMissionDraftDefinition& draft)
+  {
+    const auto* bundle = FindMiniMissionRoomBundle(draft.roomBundleId);
+    const auto* reward = FindMiniMissionReward(draft.rewardBundleId);
+
+    MissionTemplateDefinition mission;
+    mission.id = draft.id;
+    mission.displayName = draft.displayName;
+    mission.templateType = "creator_mini_mission";
+    mission.zoneId = "scene.raid.machine_silo";
+    mission.roomIds = bundle == nullptr ? std::vector<std::string>{} : bundle->roomIds;
+    mission.objectives = {
+      {"objective.creator.collect_goal", "collect_item", draft.lootGoalItemId, "Collect the creator-selected goal item.", 1, false},
+      {"objective.creator.extract", "extract", draft.extractionPointId, "Extract from the chosen creator pad.", 1, false}
+    };
+    mission.rewardBundle = reward == nullptr ? RewardBundleDefinition{} : reward->rewardBundle;
+    mission.failRuleId = "fail_rule.standard_extraction";
+    mission.recommendedMinutes = 5;
+    mission.extractionCountdownSeconds = 6;
+    return mission;
   }
 } // namespace Peter::World

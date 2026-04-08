@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Tiny Script Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "scripts"],
+  "properties": {
+    "kind": { "const": "tinyScriptCatalog" },
+    "schemaVersion": { "const": 4 },
+    "scripts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "hookKind", "body"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "hookKind": { "enum": ["mission.score_bonus", "companion.priority_hint", "tutorial.message_override", "loot.rarity_reaction"] },
+          "body": { "type": "string", "minLength": 1, "maxLength": 800 },
+          "targetActionId": { "type": "string" }
+        }
+      }
+    }
+  }
+}

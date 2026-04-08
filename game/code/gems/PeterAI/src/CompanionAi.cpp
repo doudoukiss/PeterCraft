@@ -493,6 +493,44 @@ namespace Peter::AI
       }
     }
 
+    void ApplyOverrides(
+      std::vector<DecisionCandidate>& candidates,
+      const BehaviorOverrideSet& overrides)
+    {
+      for (const auto& entry : overrides.overrides)
+      {
+        auto iterator = std::find_if(
+          candidates.begin(),
+          candidates.end(),
+          [&entry](const DecisionCandidate& candidate) {
+            return candidate.actionId == entry.actionId;
+          });
+        if (iterator == candidates.end())
+        {
+          continue;
+        }
+
+        const double boundedDelta = std::clamp(entry.scoreDelta, -20.0, 20.0);
+        if (entry.gateAction)
+        {
+          AddReason(
+            *iterator,
+            entry.sourceId.empty() ? "creator_gate" : entry.sourceId,
+            -100.0,
+            entry.explanation.empty() ? "Creator logic blocked this action for safety." : entry.explanation);
+        }
+
+        if (boundedDelta != 0.0)
+        {
+          AddReason(
+            *iterator,
+            entry.sourceId.empty() ? "creator_hint" : entry.sourceId,
+            boundedDelta,
+            entry.explanation.empty() ? "Creator logic adjusted this action." : entry.explanation);
+        }
+      }
+    }
+
     AgentBlackboardState BuildBlackboard(
       const CompanionConfig& config,
       const CompanionWorldContext& context,
@@ -1032,10 +1070,20 @@ namespace Peter::AI
 
   CompanionDecisionSnapshot EvaluateCompanion(const CompanionConfig& rawConfig, const CompanionWorldContext& context)
   {
+    return EvaluateCompanion(rawConfig, context, BehaviorOverrideSet{});
+  }
+
+  CompanionDecisionSnapshot EvaluateCompanion(
+    const CompanionConfig& rawConfig,
+    const CompanionWorldContext& context,
+    const BehaviorOverrideSet& overrides)
+  {
     const auto config = NormalizeConfig(rawConfig);
     const auto perception = BuildPerceptionSnapshot(context, "agent.companion.default");
     const auto blackboard = BuildBlackboard(config, context, perception);
     auto candidates = BuildCompanionCandidates(config, context, perception, blackboard);
+    ApplyOverrides(candidates, overrides);
+    SortCandidates(candidates);
     const auto& chosen = candidates.front();
     const auto [calloutToken, gestureToken] = FeedbackTokens(chosen.actionId);
 

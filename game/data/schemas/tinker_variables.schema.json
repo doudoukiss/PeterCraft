@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PeterCraft Tinker Variable Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "variables"],
+  "properties": {
+    "kind": { "const": "tinkerVariableCatalog" },
+    "schemaVersion": { "const": 4 },
+    "variables": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "groupId", "defaultValue", "minValue", "maxValue", "creatorOnly"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "groupId": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$" },
+          "defaultValue": { "type": "number" },
+          "minValue": { "type": "number" },
+          "maxValue": { "type": "number" },
+          "creatorOnly": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

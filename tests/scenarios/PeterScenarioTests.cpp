@@ -4,6 +4,7 @@
 #include "PeterTest/TestMacros.h"
 #include "PeterTools/ScenarioHarness.h"
 #include "PeterValidation/ValidationModule.h"
+#include "PeterWorkshop/CreatorWorkshop.h"
 #include "PeterWorld/SliceContent.h"
 
 PETER_TEST_MAIN({
@@ -27,6 +28,27 @@ PETER_TEST_MAIN({
     PETER_ASSERT_EQ(report.stepCount, static_cast<int>(report.actualActionPath.size()));
     PETER_ASSERT_EQ(report.stepCount, static_cast<int>(report.actualStatePath.size()));
   }
+
+  Peter::Tools::DeterministicScenarioHarness compareHarness("scenario.ai.follow_corridor.v1");
+  const auto compareReport = compareHarness.Compare(
+    Peter::AI::DefaultCompanionConfig(),
+    Peter::AI::CompanionConfig{
+      6.0,
+      true,
+      "stance.cautious",
+      {"chip.stay_near_me"},
+      {{"chip.stay_near_me", 4.0}}});
+  PETER_ASSERT_EQ(std::string("scenario.ai.follow_corridor.v1"), compareReport.scenarioId);
+  PETER_ASSERT_TRUE(!compareReport.beforeActionPath.empty());
+  PETER_ASSERT_EQ(
+    static_cast<int>(compareReport.beforeActionPath.size()),
+    static_cast<int>(compareReport.afterActionPath.size()));
+  const auto replaySnippet = Peter::Workshop::BuildCreatorReplaySnippet(
+    compareReport.scenarioId,
+    compareReport.beforeActionPath,
+    compareReport.afterActionPath,
+    "Creator compare replay");
+  PETER_ASSERT_TRUE(!replaySnippet.timeline.empty());
 
   const auto* followScenario = Peter::AI::FindAiScenario("scenario.ai.follow_corridor.v1");
   PETER_ASSERT_TRUE(followScenario != nullptr);
@@ -78,6 +100,16 @@ PETER_TEST_MAIN({
     extractionContext);
   PETER_ASSERT_EQ(std::string("extract"), extractionDecision.lastAction);
   PETER_ASSERT_EQ(std::string("extract_assist"), extractionDecision.currentState);
+
+  const auto* ruleset = Peter::Workshop::FindLogicTemplate("logic.template.protect_player");
+  PETER_ASSERT_TRUE(ruleset != nullptr);
+  const auto logicOverrides = Peter::Workshop::CompileLogicRuleset(*ruleset, extractionContext);
+  PETER_ASSERT_TRUE(!logicOverrides.overrides.empty());
+
+  const auto scriptResult = Peter::Workshop::RunTinyScript(
+    Peter::Workshop::BuildPhase4TinyScriptTemplates().front(),
+    extractionContext);
+  PETER_ASSERT_TRUE(scriptResult.valid);
 
   Peter::Combat::EncounterRequest encounterRequest{
     {Peter::AI::BuildEnemyUnit("enemy.machine_patrol.support_01", Peter::AI::EnemyVariant::AlarmSupport, "room.raid.guard_post")},

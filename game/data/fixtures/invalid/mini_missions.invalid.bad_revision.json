@@ -1,0 +1,16 @@
+{
+  "kind": "miniMissionCatalog",
+  "schemaVersion": 4,
+  "miniMissions": [
+    {
+      "id": "mini_mission.creator.bad",
+      "displayName": "Bad Mini Mission",
+      "roomBundleId": "bundle.machine_silo.entry_lane",
+      "lootGoalItemId": "item.salvage.scrap_metal",
+      "enemyGroupId": "enemy_group.machine_silo.patrol_pair",
+      "extractionPointId": "room.raid.extraction_pad",
+      "rewardBundleId": "reward.creator.scrap_bundle",
+      "revision": 0
+    }
+  ]
+}

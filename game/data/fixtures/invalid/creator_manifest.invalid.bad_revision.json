@@ -1,0 +1,16 @@
+{
+  "kind": "creatorManifest",
+  "schemaVersion": 4,
+  "activeDraftIds": {
+    "tinker": "preset.tinker.companion_close_guard"
+  },
+  "lastKnownGoodRevisions": {
+    "tinker:preset.tinker.companion_close_guard": -1
+  },
+  "disabledContent": {
+    "tinker:preset.tinker.companion_close_guard": false
+  },
+  "rollbackTargets": {
+    "tinker:preset.tinker.companion_close_guard": 0
+  }
+}

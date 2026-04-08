@@ -1,0 +1,13 @@
+{
+  "kind": "tinyScriptCatalog",
+  "schemaVersion": 4,
+  "scripts": [
+    {
+      "id": "script.template.priority_hint",
+      "displayName": "Priority Hint",
+      "hookKind": "companion.priority_hint",
+      "body": "if player_needs_revive return clamp(16, -20, 20)\nreturn 0",
+      "targetActionId": "revive"
+    }
+  ]
+}
