@@ -6,7 +6,7 @@ namespace Peter::Validation
 {
   ValidationStatus ValidationStatus::PlaceholderHealthy()
   {
-    return ValidationStatus{"ok", "phase 5 validation, content catalogs, authoring checks, migrations, and deterministic scenario guards are active"};
+    return ValidationStatus{"ok", "phase 6 validation, quality profiles, content catalogs, save hardening checks, authoring checks, migrations, and deterministic scenario guards are active"};
   }
 
   RuleValidationResult ValidateFollowDistance(const double followDistanceMeters)
@@ -587,8 +587,55 @@ namespace Peter::Validation
     return RuleValidationResult{true, "Input bindings are conflict-free."};
   }
 
+  RuleValidationResult ValidateAccessibilitySettings(
+    const Peter::UI::AccessibilitySettings& settings,
+    const Peter::Core::Phase6QualityProfile& qualityProfile)
+  {
+    if (settings.textScalePercent < 90 || settings.textScalePercent > 200)
+    {
+      return RuleValidationResult{false, "Text scale must stay inside the supported 90% to 200% range."};
+    }
+    if (settings.subtitleScalePercent < 90 || settings.subtitleScalePercent > 180)
+    {
+      return RuleValidationResult{false, "Subtitle scale must stay inside the supported 90% to 180% range."};
+    }
+    if (qualityProfile.subtitleBackgroundRequired && !settings.subtitleBackgroundEnabled)
+    {
+      return RuleValidationResult{false, "Subtitle background must remain available in the Phase 6 shell."};
+    }
+    if (qualityProfile.iconRedundancyRequired && !settings.iconRedundancyEnabled)
+    {
+      return RuleValidationResult{false, "Critical prompts cannot disable icon redundancy completely."};
+    }
+    return RuleValidationResult{true, "Accessibility settings are valid."};
+  }
+
+  RuleValidationResult ValidatePhase6QualityProfile(const Peter::Core::Phase6QualityProfile& profile)
+  {
+    if (profile.id.empty() || profile.displayName.empty() || profile.targetHardware.id.empty())
+    {
+      return RuleValidationResult{false, "Phase 6 quality profile needs id, display name, and target hardware."};
+    }
+    if (profile.budgets.fpsTarget < 30 || profile.budgets.frameTimeP95Ms <= 0.0)
+    {
+      return RuleValidationResult{false, "Performance budgets must be positive and realistic."};
+    }
+    if (profile.feedback.requiredCueFamilies.empty())
+    {
+      return RuleValidationResult{false, "Feedback profile must list required cue families."};
+    }
+    for (const auto& family : profile.feedback.requiredCueFamilies)
+    {
+      if (!profile.feedback.cuePriorityByFamily.contains(family))
+      {
+        return RuleValidationResult{false, "Every required cue family needs a priority mapping."};
+      }
+    }
+    return RuleValidationResult{true, "Phase 6 quality profile is valid."};
+  }
+
   std::string_view GetModuleSummary()
   {
-    return "Runtime validation hooks, save migrations, content catalog checks, mission checks, and authored safety boundaries including AI contracts.";
+    return "Runtime validation hooks, save migrations, content catalog checks, quality profile validation, mission checks, and authored safety boundaries including AI contracts.";
   }
 } // namespace Peter::Validation

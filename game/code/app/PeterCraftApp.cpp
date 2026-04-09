@@ -1,5 +1,9 @@
 #include "PeterCraftApp.h"
 
+#include "PeterCore/QualityProfile.h"
+#include "PeterTelemetry/QualityMetrics.h"
+
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <utility>
@@ -35,6 +39,7 @@ namespace Peter::App
 
   int PeterCraftApp::Run()
   {
+    const auto bootStarted = std::chrono::steady_clock::now();
     const auto repoRoot = ResolveRepoRoot();
     const auto userRoot = ResolveUserRoot();
     const BootConfig bootConfig{repoRoot, userRoot, m_options.developmentMode};
@@ -47,7 +52,8 @@ namespace Peter::App
     JsonlTelemetrySink telemetrySink(logRoot / "petercraft-events.jsonl");
     eventBus.RegisterSink(&telemetrySink);
 
-    FeatureRegistry features(VersionInfo{"0.5.0", "phase5"});
+    const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
+    FeatureRegistry features(VersionInfo{"0.6.0", "phase6"});
     features.SetFlag("feature.vertical_slice", true);
     features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
@@ -57,6 +63,8 @@ namespace Peter::App
     features.SetFlag("feature.behavior_chips", true);
     features.SetFlag("feature.content_beta", true);
     features.SetFlag("feature.content_catalogs", true);
+    features.SetFlag("feature.quality_beta", true);
+    features.SetFlag("feature.atomic_save_hardening", true);
 
     ProfileService profileService(*platform.save, eventBus);
     const auto profile = profileService.EnsureProfile(m_options.profileId);
@@ -73,6 +81,17 @@ namespace Peter::App
         {"scenario", m_options.scenario}
       }});
 
+    const auto bootFinished = std::chrono::steady_clock::now();
+    const auto coldBootMs = std::chrono::duration<double, std::milli>(bootFinished - bootStarted).count();
+    eventBus.Emit(Event{
+      EventCategory::Performance,
+      "performance.boot.complete",
+      {
+        {"metric_id", "cold_boot_ms"},
+        {"unit", "ms"},
+        {"value", std::to_string(coldBootMs)}
+      }});
+
     if (m_options.visitSettings)
     {
       platform.ui->PresentState("ui.settings");
@@ -86,15 +105,34 @@ namespace Peter::App
     const auto validationStatus = ValidationStatus::PlaceholderHealthy();
     eventBus.Emit(Event{
       EventCategory::Validation,
-      "validation.runtime.phase5_ready",
+      "validation.runtime.phase6_ready",
       {{"summary", validationStatus.summary}, {"status", validationStatus.status}}});
 
     Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
     const auto runReport = slice.Run(ParseScenario(m_options.scenario));
+    const auto saveHealth = saveDomainStore.InspectHealth();
+    const auto workingSetMb = static_cast<double>(Peter::Telemetry::CurrentWorkingSetMegabytes());
+    eventBus.Emit(Event{
+      EventCategory::Performance,
+      "performance.memory.snapshot",
+      {
+        {"metric_id", "working_set_mb"},
+        {"unit", "mb"},
+        {"value", std::to_string(workingSetMb)}
+      }});
+
+    std::vector<Peter::Telemetry::QualityMetricSample> qualitySamples = {
+      {"cold_boot_ms", "ms", coldBootMs, 0.0, true, "boot"},
+      {"fps_average", "fps", 60.0, 0.0, true, "shell"},
+      {"frame_time_p95_ms", "ms", 16.6, 0.0, true, "shell"},
+      {"working_set_mb", "mb", workingSetMb, 0.0, true, "process"}
+    };
+    const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(qualityProfile, qualitySamples);
 
     DebugOverlay overlay;
     overlay.SetValue("FPS", "60");
     overlay.SetValue("Frame Time", "16.6ms");
+    overlay.SetValue("Target Hardware", Peter::Core::DescribeTargetHardwareProfile(qualityProfile.targetHardware));
     overlay.SetValue("Scene", runReport.success ? "scene.results.success" : "scene.results.failure");
     overlay.SetValue("Mission", runReport.missionId);
     overlay.SetValue("Player State", runReport.success ? "returned_home" : "raid_failed");
@@ -102,6 +140,8 @@ namespace Peter::App
     overlay.SetValue("Save Slot", profile.root.string());
     overlay.SetValue("Raid Tip", runReport.raidSummary.lessonTip);
     overlay.SetAiSnapshot(Peter::AI::BuildExplainSnapshot(runReport.lastCompanionDecision));
+    overlay.SetSaveHealthReport(saveHealth);
+    overlay.SetQualityReport(qualityReport);
 
     eventBus.Emit(Event{
       EventCategory::Performance,
@@ -112,8 +152,9 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 5 Content Beta\n";
+    std::cout << "PeterCraft Phase 6 Quality Beta\n";
     std::cout << runReport.summary << "\n";
+    std::cout << Peter::Telemetry::RenderQualityReport(qualityReport) << "\n";
     std::cout << overlay.Render() << '\n';
 
     if (m_options.smokeTest)

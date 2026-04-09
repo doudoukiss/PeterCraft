@@ -1,143 +1,14 @@
 #include "PeterCore/CreatorContentStore.h"
 
+#include "PeterCore/StructuredStore.h"
+
+#include <algorithm>
 #include <fstream>
-#include <iterator>
 #include <set>
-#include <sstream>
 #include <utility>
 
 namespace Peter::Core
 {
-  namespace
-  {
-    std::string EscapeJson(const std::string_view value)
-    {
-      std::string escaped;
-      escaped.reserve(value.size());
-
-      for (const char character : value)
-      {
-        switch (character)
-        {
-          case '\\':
-            escaped += "\\\\";
-            break;
-          case '"':
-            escaped += "\\\"";
-            break;
-          case '\n':
-            escaped += "\\n";
-            break;
-          default:
-            escaped += character;
-            break;
-        }
-      }
-
-      return escaped;
-    }
-
-    std::string UnescapeJson(const std::string_view value)
-    {
-      std::string unescaped;
-      unescaped.reserve(value.size());
-
-      bool escaping = false;
-      for (const char character : value)
-      {
-        if (!escaping)
-        {
-          if (character == '\\')
-          {
-            escaping = true;
-          }
-          else
-          {
-            unescaped += character;
-          }
-          continue;
-        }
-
-        switch (character)
-        {
-          case 'n':
-            unescaped += '\n';
-            break;
-          case '\\':
-            unescaped += '\\';
-            break;
-          case '"':
-            unescaped += '"';
-            break;
-          default:
-            unescaped += character;
-            break;
-        }
-        escaping = false;
-      }
-
-      return unescaped;
-    }
-
-    StructuredFields ParseFields(const std::filesystem::path& path)
-    {
-      StructuredFields fields;
-      if (!std::filesystem::exists(path))
-      {
-        return fields;
-      }
-
-      std::ifstream input(path);
-      const std::string content(
-        (std::istreambuf_iterator<char>(input)),
-        std::istreambuf_iterator<char>());
-
-      std::size_t cursor = 0;
-      while (true)
-      {
-        const auto keyStart = content.find('"', cursor);
-        if (keyStart == std::string::npos)
-        {
-          break;
-        }
-
-        const auto keyEnd = content.find('"', keyStart + 1);
-        const auto valueStart = content.find('"', keyEnd + 1);
-        const auto valueEnd = content.find('"', valueStart + 1);
-        if (keyEnd == std::string::npos || valueStart == std::string::npos || valueEnd == std::string::npos)
-        {
-          break;
-        }
-
-        const auto key = UnescapeJson(std::string_view(content).substr(keyStart + 1, keyEnd - keyStart - 1));
-        const auto value =
-          UnescapeJson(std::string_view(content).substr(valueStart + 1, valueEnd - valueStart - 1));
-        fields[key] = value;
-        cursor = valueEnd + 1;
-      }
-
-      return fields;
-    }
-
-    void WriteFields(const std::filesystem::path& path, const StructuredFields& fields)
-    {
-      std::filesystem::create_directories(path.parent_path());
-      std::ofstream output(path, std::ios::trunc);
-      output << "{";
-      bool first = true;
-      for (const auto& [key, value] : fields)
-      {
-        if (!first)
-        {
-          output << ",";
-        }
-        output << '"' << EscapeJson(key) << "\":\"" << EscapeJson(value) << '"';
-        first = false;
-      }
-      output << "}\n";
-    }
-  } // namespace
-
   std::string_view ToString(const CreatorContentKind kind)
   {
     switch (kind)
@@ -196,20 +67,27 @@ namespace Peter::Core
     return std::filesystem::exists(ArtifactPath(kind, contentId, resolvedRevision));
   }
 
-  StructuredFields CreatorContentStore::ReadArtifact(
+  CreatorArtifactReadResult CreatorContentStore::ReadArtifactChecked(
     const CreatorContentKind kind,
     const std::string& contentId,
     const int revision) const
   {
-    const int resolvedRevision = revision < 0 ? ResolveLatestRevision(kind, contentId) : revision;
-    if (resolvedRevision <= 0)
+    CreatorArtifactReadResult result;
+    result.revision = revision < 0 ? ResolveLatestRevision(kind, contentId) : revision;
+    if (result.revision <= 0)
     {
-      return {};
+      result.valid = true;
+      result.message = "Artifact does not exist yet.";
+      return result;
     }
 
-    const auto path = ArtifactPath(kind, contentId, resolvedRevision);
-    auto fields = ParseFields(path);
-    if (!fields.empty())
+    result.sourcePath = ArtifactPath(kind, contentId, result.revision);
+    const auto parseResult = ParseStructuredFieldsFile(result.sourcePath);
+    result.valid = parseResult.valid;
+    result.fields = parseResult.fields;
+    result.message = parseResult.valid ? "Artifact loaded successfully." : parseResult.error;
+
+    if (!result.fields.empty())
     {
       m_eventBus.Emit(Event{
         EventCategory::CreatorTools,
@@ -217,14 +95,24 @@ namespace Peter::Core
         {
           {"content_id", contentId},
           {"kind", std::string(ToString(kind))},
-          {"path", path.string()},
-          {"revision", std::to_string(resolvedRevision)}
+          {"path", result.sourcePath.string()},
+          {"revision", std::to_string(result.revision)},
+          {"valid", result.valid ? "true" : "false"}
         }});
     }
-    return fields;
+
+    return result;
   }
 
-  int CreatorContentStore::WriteArtifact(
+  StructuredFields CreatorContentStore::ReadArtifact(
+    const CreatorContentKind kind,
+    const std::string& contentId,
+    const int revision) const
+  {
+    return ReadArtifactChecked(kind, contentId, revision).fields;
+  }
+
+  CreatorArtifactWriteResult CreatorContentStore::WriteArtifactWithResult(
     const CreatorContentKind kind,
     const std::string& contentId,
     const StructuredFields& inputFields,
@@ -239,8 +127,7 @@ namespace Peter::Core
     fields["revision"] = std::to_string(resolvedRevision);
 
     const auto path = ArtifactPath(kind, contentId, resolvedRevision);
-    WriteFields(path, fields);
-
+    const auto writeResult = WriteStructuredFieldsFileAtomic(path, fields, {}, {});
     m_eventBus.Emit(Event{
       EventCategory::CreatorTools,
       "creator_tools.content.write",
@@ -248,9 +135,26 @@ namespace Peter::Core
         {"content_id", contentId},
         {"kind", std::string(ToString(kind))},
         {"path", path.string()},
-        {"revision", std::to_string(resolvedRevision)}
+        {"revision", std::to_string(resolvedRevision)},
+        {"success", writeResult.success ? "true" : "false"}
       }});
-    return resolvedRevision;
+
+    return CreatorArtifactWriteResult{
+      writeResult.success,
+      resolvedRevision,
+      writeResult.durationMs,
+      writeResult.bytesWritten,
+      writeResult.message,
+      path};
+  }
+
+  int CreatorContentStore::WriteArtifact(
+    const CreatorContentKind kind,
+    const std::string& contentId,
+    const StructuredFields& fields,
+    const int revision) const
+  {
+    return WriteArtifactWithResult(kind, contentId, fields, revision).revision;
   }
 
   std::vector<std::string> CreatorContentStore::ListArtifactIds(const CreatorContentKind kind) const
@@ -279,6 +183,67 @@ namespace Peter::Core
     }
 
     return {ids.begin(), ids.end()};
+  }
+
+  CreatorArtifactRestoreResult CreatorContentStore::RestoreArtifactRevision(
+    const CreatorContentKind kind,
+    const std::string_view contentId,
+    const int revision) const
+  {
+    CreatorArtifactRestoreResult result;
+    result.restoredRevision = revision;
+    if (revision <= 0 || !ArtifactExists(kind, contentId, revision))
+    {
+      result.message = "Revision does not exist.";
+      return result;
+    }
+
+    const auto fields = ReadArtifact(kind, std::string(contentId), revision);
+    const auto writeResult = WriteArtifactWithResult(kind, std::string(contentId), fields);
+    result.success = writeResult.success;
+    result.newRevision = writeResult.revision;
+    result.message = writeResult.success ? "Artifact restored into a new revision." : writeResult.message;
+    result.sourcePath = ArtifactPath(kind, contentId, revision);
+    result.restoredPath = writeResult.path;
+    return result;
+  }
+
+  CreatorContentHealthReport CreatorContentStore::InspectHealth() const
+  {
+    CreatorContentHealthReport report;
+    for (const auto kind : {
+           CreatorContentKind::TinkerPreset,
+           CreatorContentKind::LogicRules,
+           CreatorContentKind::TinyScript,
+           CreatorContentKind::MiniMission})
+    {
+      const auto root = KindRoot(kind);
+      if (!std::filesystem::exists(root))
+      {
+        continue;
+      }
+
+      for (const auto& entry : std::filesystem::directory_iterator(root))
+      {
+        if (!entry.is_regular_file() || entry.path().extension() != ".json")
+        {
+          continue;
+        }
+
+        ++report.checkedArtifacts;
+        const auto parseResult = ParseStructuredFieldsFile(entry.path());
+        if (!parseResult.valid)
+        {
+          report.healthy = false;
+          report.invalidArtifactIds.push_back(entry.path().stem().string());
+        }
+      }
+    }
+
+    report.summary = report.healthy
+      ? "All creator artifacts parsed successfully."
+      : "One or more creator artifacts are invalid.";
+    return report;
   }
 
   std::filesystem::path CreatorContentStore::WriteMentorSummary(

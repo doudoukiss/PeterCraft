@@ -3,6 +3,7 @@
 #include "PeterCore/CreatorContentStore.h"
 #include "PeterCore/EventBus.h"
 #include "PeterCore/ProfileService.h"
+#include "PeterCore/QualityProfile.h"
 #include "PeterCore/SaveDomainStore.h"
 #include "PeterInventory/InventoryState.h"
 #include "PeterTelemetry/JsonlTelemetrySink.h"
@@ -19,7 +20,7 @@
 
 PETER_TEST_MAIN({
   const auto root = std::filesystem::temp_directory_path() / "PeterCraftPhase3Integration";
-  std::filesystem::remove_all(root);
+  [[maybe_unused]] const auto removedEntries = std::filesystem::remove_all(root);
 
   const Peter::Adapters::BootConfig bootConfig{
     std::filesystem::current_path(),
@@ -36,13 +37,14 @@ PETER_TEST_MAIN({
   const auto profile = profileService.EnsureProfile("player.integration");
   Peter::Core::SaveDomainStore saveDomainStore(profile, eventBus);
 
-  saveDomainStore.WriteDomain(
+  const auto migratedWrite = saveDomainStore.WriteDomain(
     "save_domain.companion_config",
     Peter::Core::StructuredFields{
       {"schema_version", "2"},
       {"follow_distance_meters", "9.0"},
       {"hold_position", "true"}
     });
+  PETER_ASSERT_TRUE(migratedWrite.success);
 
   const auto migratedConfig = Peter::AI::CompanionConfigFromSaveFields(
     saveDomainStore.ReadDomain("save_domain.companion_config"));
@@ -77,15 +79,18 @@ PETER_TEST_MAIN({
     presetRevision,
     true);
   PETER_ASSERT_TRUE(activation.success);
-  saveDomainStore.WriteDomain(
+  const auto manifestWrite = saveDomainStore.WriteDomain(
     "save_domain.creator_manifest",
     Peter::Workshop::ToSaveFields(creatorManifest));
-  saveDomainStore.WriteDomain(
+  PETER_ASSERT_TRUE(manifestWrite.success);
+  const auto progressWrite = saveDomainStore.WriteDomain(
     "save_domain.creator_progress",
     Peter::Workshop::ToSaveFields(Peter::Workshop::CreatorProgressState{{"lesson.phase4.change_value"}, true, 1}));
-  saveDomainStore.WriteDomain(
+  PETER_ASSERT_TRUE(progressWrite.success);
+  const auto creatorSettingsWrite = saveDomainStore.WriteDomain(
     "save_domain.creator_settings",
     Peter::Workshop::ToSaveFields(Peter::Workshop::CreatorSettings{true, true, true}));
+  PETER_ASSERT_TRUE(creatorSettingsWrite.success);
 
   const auto reloadedManifest = Peter::Workshop::CreatorManifestFromSaveFields(
     saveDomainStore.ReadDomain("save_domain.creator_manifest"));
@@ -98,9 +103,13 @@ PETER_TEST_MAIN({
     "preset.tinker.companion_close_guard");
   PETER_ASSERT_EQ(std::string("4.0"), storedPreset.at("companion.follow_distance_meters"));
 
-  saveDomainStore.WriteDomain(
+  const auto storeHealth = creatorContentStore.InspectHealth();
+  PETER_ASSERT_TRUE(storeHealth.healthy);
+
+  const auto previewWrite = saveDomainStore.WriteDomain(
     "save_domain.companion_config",
     Peter::AI::ToSaveFields(previewConfig));
+  PETER_ASSERT_TRUE(previewWrite.success);
   const auto reloadedConfig = Peter::AI::CompanionConfigFromSaveFields(
     saveDomainStore.ReadDomain("save_domain.companion_config"));
   PETER_ASSERT_EQ(std::string("stance.guardian"), reloadedConfig.stanceId);
@@ -152,6 +161,20 @@ PETER_TEST_MAIN({
   eventBus.Emit({Peter::Core::EventCategory::AI, "ai.decision.selected", {{"action", afterExplain.lastAction}}});
 
   PETER_ASSERT_TRUE(Peter::Validation::ValidateCompanionConfig(reloadedConfig).valid);
+
+  const auto saveHealth = saveDomainStore.InspectHealth();
+  PETER_ASSERT_TRUE(saveHealth.healthy);
+  const auto restoreResult = saveDomainStore.RestoreDomain("save_domain.companion_config");
+  PETER_ASSERT_TRUE(restoreResult.success);
+
+  const auto restoredArtifact = creatorContentStore.RestoreArtifactRevision(
+    Peter::Core::CreatorContentKind::TinkerPreset,
+    "preset.tinker.companion_close_guard",
+    1);
+  PETER_ASSERT_TRUE(restoredArtifact.success);
+
+  const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
+  PETER_ASSERT_TRUE(Peter::Validation::ValidatePhase6QualityProfile(qualityProfile).valid);
 
   const auto logPath = root / "Logs" / "integration-events.jsonl";
   PETER_ASSERT_TRUE(std::filesystem::exists(logPath));

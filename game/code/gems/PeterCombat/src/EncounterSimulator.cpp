@@ -90,6 +90,17 @@ namespace Peter::Combat
     return "direct_hit";
   }
 
+  std::string DescribeCombatReadability(const Peter::Core::CombatReadabilityProfile& profile)
+  {
+    std::ostringstream output;
+    output << "telegraph=" << profile.telegraphWindowMilliseconds << "ms"
+           << ", hit_stop=" << profile.hitStopMilliseconds << "ms"
+           << ", low_health=" << profile.lowHealthThreshold
+           << ", line_of_fire=" << profile.lineOfFireWidthMeters << "m"
+           << ", status_mode=" << profile.statusClarityMode;
+    return output.str();
+  }
+
   DamageOutcome ResolveDamageAction(CombatantState& target, const DamageSpec& spec)
   {
     DamageOutcome outcome;
@@ -341,11 +352,23 @@ namespace Peter::Combat
         : "combat_damage_overwhelmed_player";
     }
 
+    if (player.health <= request.readabilityProfile.lowHealthThreshold)
+    {
+      outcome.events.push_back(Peter::Core::Event{
+        Peter::Core::EventCategory::Gameplay,
+        "gameplay.combat.low_health_warning",
+        {
+          {"health", std::to_string(player.health)},
+          {"threshold", std::to_string(request.readabilityProfile.lowHealthThreshold)}
+        }});
+    }
+
     std::ostringstream summary;
     summary << "Combat resolved with " << outcome.actionOutcomes.size() << " logged actions"
             << ", damage=" << outcome.playerDamage
             << ", healing=" << outcome.playerHealing
-            << ", remaining_health=" << player.health;
+            << ", remaining_health=" << player.health
+            << ", telegraph_ms=" << request.readabilityProfile.telegraphWindowMilliseconds;
     outcome.summary = summary.str();
 
     if (outcome.companionHighlight.empty())

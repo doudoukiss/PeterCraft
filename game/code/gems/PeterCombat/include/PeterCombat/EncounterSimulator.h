@@ -2,6 +2,7 @@
 
 #include "PeterAI/CompanionAi.h"
 #include "PeterCore/EventBus.h"
+#include "PeterCore/QualityProfile.h"
 
 #include <map>
 #include <string>
@@ -81,6 +82,7 @@ namespace Peter::Combat
     bool highRiskRoom = false;
     bool timedMissionPressure = false;
     int playerHealth = 100;
+    Peter::Core::CombatReadabilityProfile readabilityProfile;
   };
 
   struct EncounterOutcome
@@ -98,6 +100,8 @@ namespace Peter::Combat
   };
 
   [[nodiscard]] std::string_view ToString(CombatActionKind kind);
+  [[nodiscard]] std::string DescribeCombatReadability(
+    const Peter::Core::CombatReadabilityProfile& profile);
   [[nodiscard]] DamageOutcome ResolveDamageAction(CombatantState& target, const DamageSpec& spec);
   [[nodiscard]] DamageOutcome ResolveSupportAction(CombatantState& target, const SupportActionSpec& spec);
   [[nodiscard]] std::vector<DamageOutcome> TickStatuses(CombatantState& target, std::string_view sourceId);

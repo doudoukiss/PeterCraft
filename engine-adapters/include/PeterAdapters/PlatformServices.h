@@ -32,7 +32,10 @@ namespace Peter::Adapters
     std::string actionId;
     std::string primaryInput;
     std::string secondaryInput;
+    std::string displayLabelId;
+    std::string categoryId;
     bool remappable = true;
+    bool supportsHoldToggle = false;
   };
 
   struct CameraRigState
@@ -48,6 +51,10 @@ namespace Peter::Adapters
     bool subtitlesEnabled = true;
     int subtitleScalePercent = 100;
     int textScalePercent = 100;
+    bool subtitleBackgroundEnabled = true;
+    bool highContrastEnabled = false;
+    bool iconRedundancyEnabled = true;
+    bool motionComfortEnabled = false;
   };
 
   class IInputAdapter
@@ -92,6 +99,11 @@ namespace Peter::Adapters
     virtual void PostUiCue(std::string_view cueId) = 0;
     virtual void PostWorldCue(std::string_view cueId) = 0;
     virtual void PostFeedbackCue(std::string_view cueFamily, std::string_view variantId) = 0;
+    virtual void PostPrioritizedFeedbackCue(
+      std::string_view cueFamily,
+      std::string_view variantId,
+      int priority,
+      bool critical) = 0;
   };
 
   class IUiAdapter

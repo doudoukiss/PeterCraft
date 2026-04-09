@@ -19,11 +19,23 @@ namespace Peter::UI
     int textScalePercent = 100;
     bool subtitlesEnabled = true;
     int subtitleScalePercent = 100;
+    bool subtitleBackgroundEnabled = true;
     double cameraSensitivity = 1.0;
     bool invertY = false;
     bool holdToInteract = true;
     bool reducedTimePressure = false;
     bool lightAimAssist = true;
+    bool highContrastEnabled = false;
+    bool iconRedundancyEnabled = true;
+    bool motionComfortEnabled = false;
+  };
+
+  struct OnboardingCheckpoint
+  {
+    std::string id;
+    std::string labelTextId;
+    std::string helpTextId;
+    bool completed = false;
   };
 
   [[nodiscard]] std::string RenderHomeBaseOverview(const Peter::World::HomeBaseDefinition& homeBase);
@@ -49,9 +61,12 @@ namespace Peter::UI
   [[nodiscard]] std::string RenderTutorialLesson(
     const Peter::World::TutorialLessonDefinition& lesson,
     int hintLevel);
+  [[nodiscard]] std::string ResolveChildFacingText(std::string_view textId);
+  [[nodiscard]] std::string ResolveActionDisplayLabel(const Peter::Adapters::ActionBinding& binding);
   [[nodiscard]] std::string RenderAccessibilitySettings(
     const AccessibilitySettings& settings,
     const std::vector<Peter::Adapters::ActionBinding>& bindings);
+  [[nodiscard]] std::string RenderOnboardingFunnel(const std::vector<OnboardingCheckpoint>& checkpoints);
   [[nodiscard]] std::string RenderWorkshopTracks(
     const std::vector<Peter::Progression::UpgradeTrackDefinition>& tracks,
     const Peter::Progression::WorkshopState& workshopState);
@@ -65,6 +80,7 @@ namespace Peter::UI
     const Peter::Workshop::CreatorManifest& manifest,
     const Peter::Workshop::CreatorProgressState& progress,
     const Peter::AI::AgentExplainSnapshot& snapshot);
+  [[nodiscard]] std::string RenderCreatorValidationMessage(bool valid, std::string_view summary);
   [[nodiscard]] Peter::Core::StructuredFields ToSaveFields(const AccessibilitySettings& settings);
   [[nodiscard]] AccessibilitySettings AccessibilitySettingsFromSaveFields(
     const Peter::Core::StructuredFields& fields,

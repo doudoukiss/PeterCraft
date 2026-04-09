@@ -3,10 +3,13 @@
 #include "PeterCombat/EncounterSimulator.h"
 #include "PeterCore/EventBus.h"
 #include "PeterCore/FeatureRegistry.h"
+#include "PeterCore/QualityProfile.h"
 #include "PeterCore/StableId.h"
 #include "PeterInventory/InventoryState.h"
 #include "PeterProgression/Crafting.h"
 #include "PeterTest/TestMacros.h"
+#include "PeterTelemetry/QualityMetrics.h"
+#include "PeterTraversal/TraversalProfile.h"
 #include "PeterUI/SlicePresentation.h"
 #include "PeterValidation/ValidationModule.h"
 #include "PeterWorkshop/CreatorWorkshop.h"
@@ -41,6 +44,20 @@ PETER_TEST_MAIN({
   eventBus.RegisterSink(&sink);
   eventBus.Emit({Peter::Core::EventCategory::Gameplay, "gameplay.test", {}});
   PETER_ASSERT_EQ(1, sink.count);
+
+  const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
+  PETER_ASSERT_TRUE(Peter::Validation::ValidatePhase6QualityProfile(qualityProfile).valid);
+  PETER_ASSERT_EQ(60, qualityProfile.budgets.fpsTarget);
+  const auto traversalProfile = Peter::Traversal::BuildTraversalProfile(qualityProfile);
+  PETER_ASSERT_TRUE(Peter::Traversal::EvaluateMovementResponsivenessScore(traversalProfile) > 0.0);
+  const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(
+    qualityProfile,
+    {
+      {"cold_boot_ms", "ms", 1000.0, 0.0, true, "test"},
+      {"fps_average", "fps", 60.0, 0.0, true, "test"},
+      {"frame_time_p95_ms", "ms", 16.6, 0.0, true, "test"}
+    });
+  PETER_ASSERT_TRUE(qualityReport.passed);
 
   PETER_ASSERT_TRUE(Peter::AI::HasLineOfSight(6, 10, false));
   PETER_ASSERT_TRUE(!Peter::AI::HasLineOfSight(12, 10, false));
@@ -205,14 +222,20 @@ PETER_TEST_MAIN({
 
   Peter::UI::AccessibilitySettings settings;
   settings.actionBindings["action.jump"] = "Space";
+  settings.subtitleBackgroundEnabled = true;
+  settings.highContrastEnabled = true;
+  settings.iconRedundancyEnabled = true;
+  settings.motionComfortEnabled = true;
   const auto serializedSettings = Peter::UI::ToSaveFields(settings);
   const auto loadedSettings = Peter::UI::AccessibilitySettingsFromSaveFields(
     serializedSettings,
     {
-      Peter::Adapters::ActionBinding{"action.jump", "Space", "A", true},
-      Peter::Adapters::ActionBinding{"action.interact", "E", "X", true}
+      Peter::Adapters::ActionBinding{"action.jump", "Space", "A", "input.jump", "movement", true, false},
+      Peter::Adapters::ActionBinding{"action.interact", "E", "X", "input.interact", "interaction", true, true}
     });
   PETER_ASSERT_EQ(100, loadedSettings.textScalePercent);
+  PETER_ASSERT_TRUE(loadedSettings.highContrastEnabled);
+  PETER_ASSERT_TRUE(Peter::Validation::ValidateAccessibilitySettings(loadedSettings, qualityProfile).valid);
 
   Peter::Workshop::CreatorManifest creatorManifest;
   const auto activation = Peter::Workshop::ActivateCreatorArtifact(

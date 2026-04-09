@@ -9,6 +9,8 @@ target_link_libraries(PeterCoreUnitTests
     PeterCore
     PeterInventory
     PeterProgression
+    PeterTelemetry
+    PeterTraversal
     PeterUI
     PeterValidation
     PeterWorkshop

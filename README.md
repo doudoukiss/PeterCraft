@@ -1,7 +1,7 @@
 # PeterCraft
 
 PeterCraft is a PC-first, single-player extraction-adventure maker game for children.
-This repository now contains a runnable Phase 5 content beta on top of the Phase 0
+This repository now contains a runnable Phase 6 quality beta on top of the Phase 0
 foundation, Phase 1 slice, and Phase 2 systems work: portable gameplay contracts, validation,
 tests, save domains, telemetry, deterministic AI scenarios, safe creator content storage, and a
 readable home/mission/raid loop.
@@ -14,6 +14,7 @@ readable home/mission/raid loop.
 - Keep observability, validation, and debug support mandatory instead of optional.
 - Deepen the creator workshop with safe value, rule, tiny-script, and mini-mission layers.
 - Scale shipped content through runtime-loaded catalogs, review records, and thin authoring tools.
+- Harden saves, accessibility, onboarding evidence, and release-quality gates before the RC phase.
 
 ## Repository layout
 
@@ -30,6 +31,7 @@ readable home/mission/raid loop.
 3. Run `powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\validate.ps1`
 4. Run `powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\test.ps1`
 5. Run `powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1`
+6. Run `powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets`
 
 ## Current status
 
@@ -45,6 +47,9 @@ The current implementation includes:
 - three authored raid zones and six authored mission blueprints assembled from the portable catalogs instead of hardcoded mission definitions
 - authoring support under `tools/content-authoring/` for scaffolding, previews, room metrics, content diffs, and generated preview artifacts
 - review records for shippable rooms, encounters, and missions under `docs/quality/content-reviews/`
+- Phase 6 quality tooling under `tools/quality/` for budgets, soak runs, save-health verification, QA exports, playtest summaries, and release-candidate gates
+- atomic save-domain writes with backup restore paths plus creator-artifact health inspection and restore-by-revision support
+- expanded accessibility settings, onboarding funnel telemetry, child-facing copy helpers, and release-quality debug/quality overlay output
 
 It still keeps engine binding behind adapters and does not yet attempt content scale,
 advanced procedural generation, or unrestricted creator tooling.

@@ -13,6 +13,7 @@ target_compile_features(PeterDebug PUBLIC cxx_std_20)
 target_link_libraries(PeterDebug
   PUBLIC
     PeterAI
+    PeterTelemetry
 )
 
 peter_enable_strict_warnings(PeterDebug)

@@ -26,6 +26,7 @@ CONTENT_SCHEMA_BY_DIR = {
   "feedback-tags": "feedback_tags.schema.json",
   "style-profiles": "style_profiles.schema.json",
   "content-manifests": "content_manifests.schema.json",
+  "quality-profiles": "quality_profiles.schema.json",
 }
 
 
@@ -121,6 +122,7 @@ def validate_content_registry() -> list[str]:
   feedback_tags = registry["feedback-tags"]
   style_profiles = registry["style-profiles"]
   manifests = registry["content-manifests"]
+  quality_profiles = registry["quality-profiles"]
 
   room_ids: dict[str, str] = {}
   for content_id, payload in room_variants.items():
@@ -215,6 +217,19 @@ def validate_content_registry() -> list[str]:
     for style_id in split_csv(payload.get("style_profile_ids", "")):
       if style_id not in style_profiles:
         issues.append(f"game/data/content/content-manifests/{manifest_id}.json: unknown style profile {style_id}")
+
+  for profile_id, payload in quality_profiles.items():
+    required_families = split_csv(payload.get("feedback_required_families", ""))
+    priority_map = {
+      token.split(":", 1)[0]: token.split(":", 1)[1]
+      for token in split_csv(payload.get("feedback_priorities", ""))
+      if ":" in token
+    }
+    if not required_families:
+      issues.append(f"game/data/content/quality-profiles/{profile_id}.json: profile must declare required feedback families")
+    for family in required_families:
+      if family not in priority_map:
+        issues.append(f"game/data/content/quality-profiles/{profile_id}.json: missing priority for feedback family {family}")
 
   return issues
 

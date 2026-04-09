@@ -11,6 +11,7 @@ target_include_directories(PeterTraversal
 target_link_libraries(PeterTraversal
   PUBLIC
     PeterAdapters
+    PeterCore
 )
 
 target_compile_features(PeterTraversal PUBLIC cxx_std_20)

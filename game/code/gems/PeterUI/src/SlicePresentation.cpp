@@ -6,6 +6,32 @@ namespace Peter::UI
 {
   namespace
   {
+    std::string LookupChildFacingText(const std::string_view textId)
+    {
+      static const std::map<std::string, std::string, std::less<>> kStrings = {
+        {"help.first_mission", "Pick a mission with a clear goal and head out when you feel ready."},
+        {"help.first_extraction", "Follow the bright extraction cue and stay calm during the countdown."},
+        {"help.first_repair", "Broken gear can be repaired or recovered in the workshop."},
+        {"help.first_creator_change", "Try a safe workshop change, preview it, and then watch what happens."},
+        {"help.first_explain_panel", "Open the Why panel to see the top reasons behind your companion's choice."},
+        {"input.crouch", "Crouch"},
+        {"input.interact", "Interact"},
+        {"input.jump", "Jump"},
+        {"input.move", "Move"},
+        {"input.sprint", "Sprint"},
+        {"onboarding.first_creator_change", "First safe creator change"},
+        {"onboarding.first_explain_panel", "First explain panel open"},
+        {"onboarding.first_extraction", "First extraction"},
+        {"onboarding.first_mission", "First mission launch"},
+        {"onboarding.first_repair", "First repair or recovery"},
+        {"workshop.validation.invalid", "That change is not safe yet. Try the suggested range or reset it."},
+        {"workshop.validation.valid", "That change is safe. Preview it, then apply it when you are ready."}
+      };
+
+      const auto iterator = kStrings.find(std::string(textId));
+      return iterator == kStrings.end() ? std::string(textId) : iterator->second;
+    }
+
     std::string SerializeBindings(const std::map<std::string, std::string, std::less<>>& bindings)
     {
       std::ostringstream output;
@@ -239,6 +265,16 @@ namespace Peter::UI
     return output.str();
   }
 
+  std::string ResolveChildFacingText(const std::string_view textId)
+  {
+    return LookupChildFacingText(textId);
+  }
+
+  std::string ResolveActionDisplayLabel(const Peter::Adapters::ActionBinding& binding)
+  {
+    return LookupChildFacingText(binding.displayLabelId.empty() ? binding.actionId : binding.displayLabelId);
+  }
+
   std::string RenderAccessibilitySettings(
     const AccessibilitySettings& settings,
     const std::vector<Peter::Adapters::ActionBinding>& bindings)
@@ -247,17 +283,36 @@ namespace Peter::UI
     output << "Text=" << settings.textScalePercent
            << "% subtitles=" << (settings.subtitlesEnabled ? "on" : "off")
            << " subtitle_scale=" << settings.subtitleScalePercent
-           << "% sensitivity=" << settings.cameraSensitivity
+           << "% subtitle_background=" << (settings.subtitleBackgroundEnabled ? "on" : "off")
+           << " sensitivity=" << settings.cameraSensitivity
            << " invert_y=" << (settings.invertY ? "true" : "false")
            << " hold_to_interact=" << (settings.holdToInteract ? "true" : "false")
            << " reduced_time_pressure=" << (settings.reducedTimePressure ? "true" : "false")
-           << " aim_assist=" << (settings.lightAimAssist ? "light" : "off");
+           << " aim_assist=" << (settings.lightAimAssist ? "light" : "off")
+           << " high_contrast=" << (settings.highContrastEnabled ? "true" : "false")
+           << " icon_redundancy=" << (settings.iconRedundancyEnabled ? "true" : "false")
+           << " motion_comfort=" << (settings.motionComfortEnabled ? "true" : "false");
 
     for (const auto& binding : bindings)
     {
       const auto override = settings.actionBindings.find(binding.actionId);
-      output << "\n- " << binding.actionId << ": "
+      output << "\n- " << ResolveActionDisplayLabel(binding)
+             << " [" << binding.categoryId << "]"
+             << ": "
              << (override == settings.actionBindings.end() ? binding.primaryInput : override->second);
+    }
+    return output.str();
+  }
+
+  std::string RenderOnboardingFunnel(const std::vector<OnboardingCheckpoint>& checkpoints)
+  {
+    std::ostringstream output;
+    output << "First 15 minutes";
+    for (const auto& checkpoint : checkpoints)
+    {
+      output << "\n- " << LookupChildFacingText(checkpoint.labelTextId)
+             << ": " << (checkpoint.completed ? "done" : "next")
+             << " | help: " << LookupChildFacingText(checkpoint.helpTextId);
     }
     return output.str();
   }
@@ -330,6 +385,12 @@ namespace Peter::UI
     return output.str();
   }
 
+  std::string RenderCreatorValidationMessage(const bool valid, const std::string_view summary)
+  {
+    return LookupChildFacingText(valid ? "workshop.validation.valid" : "workshop.validation.invalid") +
+      std::string("\n") + std::string(summary);
+  }
+
   Peter::Core::StructuredFields ToSaveFields(const AccessibilitySettings& settings)
   {
     return Peter::Core::StructuredFields{
@@ -337,9 +398,13 @@ namespace Peter::UI
       {"action_bindings", SerializeBindings(settings.actionBindings)},
       {"camera_sensitivity", std::to_string(settings.cameraSensitivity)},
       {"hold_to_interact", settings.holdToInteract ? "true" : "false"},
+      {"high_contrast_enabled", settings.highContrastEnabled ? "true" : "false"},
+      {"icon_redundancy_enabled", settings.iconRedundancyEnabled ? "true" : "false"},
       {"invert_y", settings.invertY ? "true" : "false"},
       {"light_aim_assist", settings.lightAimAssist ? "true" : "false"},
+      {"motion_comfort_enabled", settings.motionComfortEnabled ? "true" : "false"},
       {"reduced_time_pressure", settings.reducedTimePressure ? "true" : "false"},
+      {"subtitle_background_enabled", settings.subtitleBackgroundEnabled ? "true" : "false"},
       {"subtitle_scale_percent", std::to_string(settings.subtitleScalePercent)},
       {"subtitles_enabled", settings.subtitlesEnabled ? "true" : "false"},
       {"text_scale_percent", std::to_string(settings.textScalePercent)}
@@ -359,9 +424,13 @@ namespace Peter::UI
     const auto actionBindings = fields.find("action_bindings");
     const auto cameraSensitivity = fields.find("camera_sensitivity");
     const auto holdToInteract = fields.find("hold_to_interact");
+    const auto highContrastEnabled = fields.find("high_contrast_enabled");
+    const auto iconRedundancyEnabled = fields.find("icon_redundancy_enabled");
     const auto invertY = fields.find("invert_y");
     const auto lightAimAssist = fields.find("light_aim_assist");
+    const auto motionComfortEnabled = fields.find("motion_comfort_enabled");
     const auto reducedTimePressure = fields.find("reduced_time_pressure");
+    const auto subtitleBackgroundEnabled = fields.find("subtitle_background_enabled");
     const auto subtitleScale = fields.find("subtitle_scale_percent");
     const auto subtitlesEnabled = fields.find("subtitles_enabled");
     const auto textScale = fields.find("text_scale_percent");
@@ -372,9 +441,17 @@ namespace Peter::UI
     }
     settings.cameraSensitivity = cameraSensitivity == fields.end() ? 1.0 : std::stod(cameraSensitivity->second);
     settings.holdToInteract = holdToInteract == fields.end() ? true : holdToInteract->second == "true";
+    settings.highContrastEnabled =
+      highContrastEnabled != fields.end() && highContrastEnabled->second == "true";
+    settings.iconRedundancyEnabled =
+      iconRedundancyEnabled == fields.end() ? true : iconRedundancyEnabled->second == "true";
     settings.invertY = invertY != fields.end() && invertY->second == "true";
     settings.lightAimAssist = lightAimAssist == fields.end() ? true : lightAimAssist->second == "true";
+    settings.motionComfortEnabled =
+      motionComfortEnabled != fields.end() && motionComfortEnabled->second == "true";
     settings.reducedTimePressure = reducedTimePressure != fields.end() && reducedTimePressure->second == "true";
+    settings.subtitleBackgroundEnabled =
+      subtitleBackgroundEnabled == fields.end() ? true : subtitleBackgroundEnabled->second == "true";
     settings.subtitleScalePercent = subtitleScale == fields.end() ? 100 : std::stoi(subtitleScale->second);
     settings.subtitlesEnabled = subtitlesEnabled == fields.end() ? true : subtitlesEnabled->second == "true";
     settings.textScalePercent = textScale == fields.end() ? 100 : std::stoi(textScale->second);

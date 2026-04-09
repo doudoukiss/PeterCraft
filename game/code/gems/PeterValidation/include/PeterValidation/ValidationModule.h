@@ -2,6 +2,7 @@
 
 #include "PeterAI/CompanionAi.h"
 #include "PeterAdapters/PlatformServices.h"
+#include "PeterCore/QualityProfile.h"
 #include "PeterInventory/InventoryState.h"
 #include "PeterUI/SlicePresentation.h"
 #include "PeterWorkshop/CreatorWorkshop.h"
@@ -70,5 +71,10 @@ namespace Peter::Validation
   [[nodiscard]] RuleValidationResult ValidateInputBindings(
     const std::vector<Peter::Adapters::ActionBinding>& bindings,
     const Peter::UI::AccessibilitySettings& settings);
+  [[nodiscard]] RuleValidationResult ValidateAccessibilitySettings(
+    const Peter::UI::AccessibilitySettings& settings,
+    const Peter::Core::Phase6QualityProfile& qualityProfile);
+  [[nodiscard]] RuleValidationResult ValidatePhase6QualityProfile(
+    const Peter::Core::Phase6QualityProfile& profile);
   std::string_view GetModuleSummary();
 } // namespace Peter::Validation

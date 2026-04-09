@@ -24,11 +24,11 @@ namespace Peter::Adapters
       std::vector<ActionBinding> DefaultBindings() const override
       {
         return {
-          {"action.move", "WASD", "Left Stick", false},
-          {"action.interact", "E", "X", true},
-          {"action.jump", "Space", "A", true},
-          {"action.sprint", "Left Shift", "Left Stick Click", true},
-          {"action.crouch", "C", "B", true}
+          {"action.move", "WASD", "Left Stick", "input.move", "movement", false, false},
+          {"action.interact", "E", "X", "input.interact", "interaction", true, true},
+          {"action.jump", "Space", "A", "input.jump", "movement", true, false},
+          {"action.sprint", "Left Shift", "Left Stick Click", "input.sprint", "movement", true, true},
+          {"action.crouch", "C", "B", "input.crouch", "movement", true, true}
         };
       }
     };
@@ -107,6 +107,17 @@ namespace Peter::Adapters
       {
         std::cout << "[feedback-audio] " << cueFamily << ':' << variantId << '\n';
       }
+
+      void PostPrioritizedFeedbackCue(
+        std::string_view cueFamily,
+        std::string_view variantId,
+        const int priority,
+        const bool critical) override
+      {
+        std::cout << "[feedback-audio] " << cueFamily << ':' << variantId
+                  << " priority=" << priority
+                  << " critical=" << (critical ? "true" : "false") << '\n';
+      }
     };
 
     class NullUiAdapter final : public IUiAdapter
@@ -151,7 +162,11 @@ namespace Peter::Adapters
       {
         std::cout << "[ui-settings] subtitles=" << (settings.subtitlesEnabled ? "on" : "off")
                   << " subtitle_scale=" << settings.subtitleScalePercent
-                  << " text_scale=" << settings.textScalePercent << '\n';
+                  << " text_scale=" << settings.textScalePercent
+                  << " subtitle_background=" << (settings.subtitleBackgroundEnabled ? "on" : "off")
+                  << " high_contrast=" << (settings.highContrastEnabled ? "true" : "false")
+                  << " icon_redundancy=" << (settings.iconRedundancyEnabled ? "true" : "false")
+                  << " motion_comfort=" << (settings.motionComfortEnabled ? "true" : "false") << '\n';
       }
 
       void PresentDebugMarkers(const std::vector<std::string>& markerIds) override

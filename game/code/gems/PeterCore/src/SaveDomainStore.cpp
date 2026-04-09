@@ -1,84 +1,11 @@
 #include "PeterCore/SaveDomainStore.h"
 
-#include <fstream>
-#include <sstream>
+#include "PeterCore/StructuredStore.h"
+
 #include <utility>
 
 namespace Peter::Core
 {
-  namespace
-  {
-    std::string EscapeJson(const std::string_view value)
-    {
-      std::string escaped;
-      escaped.reserve(value.size());
-
-      for (const char character : value)
-      {
-        switch (character)
-        {
-          case '\\':
-            escaped += "\\\\";
-            break;
-          case '"':
-            escaped += "\\\"";
-            break;
-          case '\n':
-            escaped += "\\n";
-            break;
-          default:
-            escaped += character;
-            break;
-        }
-      }
-
-      return escaped;
-    }
-
-    std::string UnescapeJson(const std::string_view value)
-    {
-      std::string unescaped;
-      unescaped.reserve(value.size());
-
-      bool escaping = false;
-      for (const char character : value)
-      {
-        if (!escaping)
-        {
-          if (character == '\\')
-          {
-            escaping = true;
-          }
-          else
-          {
-            unescaped += character;
-          }
-          continue;
-        }
-
-        switch (character)
-        {
-          case 'n':
-            unescaped += '\n';
-            break;
-          case '\\':
-            unescaped += '\\';
-            break;
-          case '"':
-            unescaped += '"';
-            break;
-          default:
-            unescaped += character;
-            break;
-        }
-
-        escaping = false;
-      }
-
-      return unescaped;
-    }
-  } // namespace
-
   SaveDomainStore::SaveDomainStore(ProfileInfo profile, EventBus& eventBus)
     : m_profile(std::move(profile))
     , m_eventBus(eventBus)
@@ -90,42 +17,29 @@ namespace Peter::Core
     return std::filesystem::exists(DomainPath(domainId));
   }
 
-  StructuredFields SaveDomainStore::ReadDomain(const std::string& domainId) const
+  SaveReadResult SaveDomainStore::ReadDomainChecked(const std::string& domainId) const
   {
-    StructuredFields fields;
-    const auto path = DomainPath(domainId);
-    if (!std::filesystem::exists(path))
+    SaveReadResult result;
+    result.sourcePath = DomainPath(domainId);
+    const auto parseResult = ParseStructuredFieldsFile(result.sourcePath);
+    result.fields = parseResult.fields;
+    result.valid = parseResult.valid;
+    result.message = parseResult.valid ? "Domain loaded successfully." : parseResult.error;
+
+    if (!parseResult.valid)
     {
-      return fields;
-    }
-
-    std::ifstream input(path);
-    const std::string content(
-      (std::istreambuf_iterator<char>(input)),
-      std::istreambuf_iterator<char>());
-
-    std::size_t cursor = 0;
-    while (true)
-    {
-      const auto keyStart = content.find('"', cursor);
-      if (keyStart == std::string::npos)
+      const auto restoreResult = RestoreStructuredFieldsFile(
+        result.sourcePath,
+        LatestBackupPath(domainId),
+        PreviousBackupPath(domainId));
+      if (restoreResult.success)
       {
-        break;
+        const auto repaired = ParseStructuredFieldsFile(result.sourcePath);
+        result.fields = repaired.fields;
+        result.valid = repaired.valid;
+        result.restoredFromBackup = repaired.valid;
+        result.message = repaired.valid ? "Domain restored from backup." : repaired.error;
       }
-
-      const auto keyEnd = content.find('"', keyStart + 1);
-      const auto valueStart = content.find('"', keyEnd + 1);
-      const auto valueEnd = content.find('"', valueStart + 1);
-      if (keyEnd == std::string::npos || valueStart == std::string::npos || valueEnd == std::string::npos)
-      {
-        break;
-      }
-
-      const auto key = UnescapeJson(std::string_view(content).substr(keyStart + 1, keyEnd - keyStart - 1));
-      const auto value =
-        UnescapeJson(std::string_view(content).substr(valueStart + 1, valueEnd - valueStart - 1));
-      fields[key] = value;
-      cursor = valueEnd + 1;
     }
 
     m_eventBus.Emit(Event{
@@ -133,60 +47,121 @@ namespace Peter::Core
       "save_load.domain.read",
       {
         {"domain_id", domainId},
-        {"field_count", std::to_string(fields.size())},
-        {"path", path.string()}
+        {"field_count", std::to_string(result.fields.size())},
+        {"path", result.sourcePath.string()},
+        {"restored_from_backup", result.restoredFromBackup ? "true" : "false"},
+        {"valid", result.valid ? "true" : "false"}
       }});
 
-    return fields;
+    return result;
   }
 
-  void SaveDomainStore::WriteDomain(const std::string& domainId, const StructuredFields& fields) const
+  StructuredFields SaveDomainStore::ReadDomain(const std::string& domainId) const
+  {
+    return ReadDomainChecked(domainId).fields;
+  }
+
+  SaveWriteResult SaveDomainStore::WriteDomain(const std::string& domainId, const StructuredFields& fields) const
   {
     const auto path = DomainPath(domainId);
-    std::filesystem::create_directories(path.parent_path());
-
-    {
-      std::ofstream backup(m_profile.backupRoot / (domainId + ".bak.json"), std::ios::trunc);
-      backup << "{";
-      bool first = true;
-      for (const auto& [key, value] : fields)
-      {
-        if (!first)
-        {
-          backup << ",";
-        }
-        backup << '"' << EscapeJson(key) << "\":\"" << EscapeJson(value) << '"';
-        first = false;
-      }
-      backup << "}\n";
-    }
-
-    std::ofstream output(path, std::ios::trunc);
-    output << "{";
-    bool first = true;
-    for (const auto& [key, value] : fields)
-    {
-      if (!first)
-      {
-        output << ",";
-      }
-      output << '"' << EscapeJson(key) << "\":\"" << EscapeJson(value) << '"';
-      first = false;
-    }
-    output << "}\n";
+    const auto latestBackupPath = LatestBackupPath(domainId);
+    const auto previousBackupPath = PreviousBackupPath(domainId);
+    const auto writeResult = WriteStructuredFieldsFileAtomic(path, fields, latestBackupPath, previousBackupPath);
 
     m_eventBus.Emit(Event{
       EventCategory::SaveLoad,
       "save_load.domain.write",
       {
+        {"atomic_replace", writeResult.atomicReplace ? "true" : "false"},
         {"domain_id", domainId},
+        {"duration_ms", std::to_string(writeResult.durationMs)},
         {"field_count", std::to_string(fields.size())},
-        {"path", path.string()}
+        {"path", path.string()},
+        {"success", writeResult.success ? "true" : "false"}
       }});
+
+    return SaveWriteResult{
+      writeResult.success,
+      writeResult.durationMs,
+      writeResult.bytesWritten,
+      writeResult.message,
+      path,
+      latestBackupPath,
+      previousBackupPath};
+  }
+
+  SaveRestoreResult SaveDomainStore::RestoreDomain(const std::string_view domainId) const
+  {
+    const auto restoreResult = RestoreStructuredFieldsFile(
+      DomainPath(domainId),
+      LatestBackupPath(domainId),
+      PreviousBackupPath(domainId));
+
+    m_eventBus.Emit(Event{
+      EventCategory::SaveLoad,
+      "save_load.domain.restore",
+      {
+        {"domain_id", std::string(domainId)},
+        {"restored_from", restoreResult.restoredFromPath.string()},
+        {"restored_to", restoreResult.restoredToPath.string()},
+        {"success", restoreResult.success ? "true" : "false"}
+      }});
+
+    return SaveRestoreResult{
+      restoreResult.success,
+      restoreResult.message,
+      restoreResult.restoredFromPath,
+      restoreResult.restoredToPath};
+  }
+
+  SaveHealthReport SaveDomainStore::InspectHealth() const
+  {
+    SaveHealthReport report;
+    if (!std::filesystem::exists(m_profile.saveDataRoot))
+    {
+      report.summary = "No save domains have been created yet.";
+      return report;
+    }
+
+    for (const auto& entry : std::filesystem::directory_iterator(m_profile.saveDataRoot))
+    {
+      if (!entry.is_regular_file() || entry.path().extension() != ".json")
+      {
+        continue;
+      }
+
+      ++report.checkedDomains;
+      const auto domainId = entry.path().stem().string();
+      const auto readResult = ReadDomainChecked(domainId);
+      if (readResult.restoredFromBackup)
+      {
+        ++report.restoredDomains;
+      }
+      if (!readResult.valid)
+      {
+        report.healthy = false;
+        report.invalidDomainIds.push_back(domainId);
+      }
+    }
+
+    report.summary = report.healthy
+      ? "All save domains are healthy."
+      : "One or more save domains are invalid.";
+    return report;
   }
 
   std::filesystem::path SaveDomainStore::DomainPath(const std::string_view domainId) const
   {
     return m_profile.saveDataRoot / (std::string(domainId) + ".json");
+  }
+
+  std::filesystem::path SaveDomainStore::LatestBackupPath(const std::string_view domainId) const
+  {
+    return m_profile.backupRoot / (std::string(domainId) + ".latest.bak.json");
+  }
+
+  std::filesystem::path SaveDomainStore::PreviousBackupPath(const std::string_view domainId) const
+  {
+    return m_profile.backupRoot / (std::string(domainId) + ".previous.bak.json");
   }
 } // namespace Peter::Core

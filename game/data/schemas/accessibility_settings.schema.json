@@ -9,11 +9,15 @@
     "textScalePercent",
     "subtitlesEnabled",
     "subtitleScalePercent",
+    "subtitleBackgroundEnabled",
     "cameraSensitivity",
     "invertY",
     "holdToInteract",
     "reducedTimePressure",
     "lightAimAssist",
+    "highContrastEnabled",
+    "iconRedundancyEnabled",
+    "motionComfortEnabled",
     "actionBindings"
   ],
   "properties": {
@@ -22,11 +26,15 @@
     "textScalePercent": { "type": "integer", "minimum": 80, "maximum": 150 },
     "subtitlesEnabled": { "type": "boolean" },
     "subtitleScalePercent": { "type": "integer", "minimum": 80, "maximum": 150 },
+    "subtitleBackgroundEnabled": { "type": "boolean" },
     "cameraSensitivity": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
     "invertY": { "type": "boolean" },
     "holdToInteract": { "type": "boolean" },
     "reducedTimePressure": { "type": "boolean" },
     "lightAimAssist": { "type": "boolean" },
+    "highContrastEnabled": { "type": "boolean" },
+    "iconRedundancyEnabled": { "type": "boolean" },
+    "motionComfortEnabled": { "type": "boolean" },
     "actionBindings": {
       "type": "object",
       "additionalProperties": {

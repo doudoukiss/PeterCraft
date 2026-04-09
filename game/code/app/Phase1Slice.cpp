@@ -6,6 +6,7 @@
 #include "PeterWorld/SceneShell.h"
 
 #include <algorithm>
+#include <chrono>
 #include <sstream>
 #include <stdexcept>
 
@@ -24,6 +25,33 @@ namespace Peter::App
     constexpr std::string_view kCreatorManifestDomain = "save_domain.creator_manifest";
     constexpr std::string_view kCreatorProgressDomain = "save_domain.creator_progress";
     constexpr std::string_view kCreatorSettingsDomain = "save_domain.creator_settings";
+
+    template <typename Fn>
+    auto MeasureMilliseconds(Fn&& function, double& durationMs) -> decltype(function())
+    {
+      const auto started = std::chrono::steady_clock::now();
+      auto result = function();
+      const auto finished = std::chrono::steady_clock::now();
+      durationMs = std::chrono::duration<double, std::milli>(finished - started).count();
+      return result;
+    }
+
+    void EmitPerformanceMetric(
+      Peter::Core::EventBus& eventBus,
+      std::string_view name,
+      std::string_view metricId,
+      const double value,
+      std::string_view unit,
+      Peter::Core::StructuredFields extra = {})
+    {
+      extra["metric_id"] = std::string(metricId);
+      extra["unit"] = std::string(unit);
+      extra["value"] = std::to_string(value);
+      eventBus.Emit(Peter::Core::Event{
+        Peter::Core::EventCategory::Performance,
+        std::string(name),
+        std::move(extra)});
+    }
 
     Peter::Core::SliceItemLedger ToSliceLedger(const Peter::Inventory::ItemLedger& ledger)
     {
@@ -315,14 +343,16 @@ namespace Peter::App
     , m_profile(std::move(profile))
     , m_saveDomainStore(saveDomainStore)
     , m_creatorContentStore(m_profile, m_eventBus)
+    , m_qualityProfile(Peter::Core::LoadPhase6QualityProfile())
     , m_homeBase(Peter::World::BuildPhase1HomeBase())
     , m_raidZone(Peter::World::BuildPhase1RaidZone())
-    , m_traversal(Peter::Traversal::BuildPhase1TraversalProfile())
+    , m_traversal(Peter::Traversal::BuildTraversalProfile(m_qualityProfile))
   {
   }
 
   Phase1Slice::PersistentState Phase1Slice::LoadPersistentState() const
   {
+    const auto started = std::chrono::steady_clock::now();
     PersistentState state;
     m_creatorContentStore.EnsureLayout();
     const auto defaultBindings = m_platform.input->DefaultBindings();
@@ -444,6 +474,65 @@ namespace Peter::App
         m_saveDomainStore.ReadDomain(std::string(kCreatorSettingsDomain)));
     }
 
+    const auto invalidateCreatorArtifact = [&](const std::string_view kindId, const std::string_view contentId) {
+      state.creatorManifest.disabledContent[std::string(kindId)] = true;
+      state.creatorManifest.activeDraftIds.erase(std::string(kindId));
+      m_eventBus.Emit(Peter::Core::Event{
+        Peter::Core::EventCategory::CreatorTools,
+        "creator_tools.content.auto_disabled",
+        {
+          {"content_id", std::string(contentId)},
+          {"kind", std::string(kindId)},
+          {"reason", "invalid_or_unreadable_artifact"}
+        }});
+    };
+
+    std::vector<std::pair<std::string, std::string>> activeArtifacts;
+    for (const auto& [kindId, contentId] : state.creatorManifest.activeDraftIds)
+    {
+      activeArtifacts.emplace_back(kindId, contentId);
+    }
+
+    for (const auto& [kindId, contentId] : activeArtifacts)
+    {
+      if (kindId == "logic")
+      {
+        const auto readResult =
+          m_creatorContentStore.ReadArtifactChecked(Peter::Core::CreatorContentKind::LogicRules, contentId);
+        if (!readResult.valid)
+        {
+          invalidateCreatorArtifact(kindId, contentId);
+        }
+      }
+      else if (kindId == "script")
+      {
+        const auto readResult =
+          m_creatorContentStore.ReadArtifactChecked(Peter::Core::CreatorContentKind::TinyScript, contentId);
+        if (!readResult.valid)
+        {
+          invalidateCreatorArtifact(kindId, contentId);
+        }
+      }
+      else if (kindId == "tinker")
+      {
+        const auto readResult =
+          m_creatorContentStore.ReadArtifactChecked(Peter::Core::CreatorContentKind::TinkerPreset, contentId);
+        if (!readResult.valid)
+        {
+          invalidateCreatorArtifact(kindId, contentId);
+        }
+      }
+      else if (kindId == "mini_mission")
+      {
+        const auto readResult =
+          m_creatorContentStore.ReadArtifactChecked(Peter::Core::CreatorContentKind::MiniMission, contentId);
+        if (!readResult.valid)
+        {
+          invalidateCreatorArtifact(kindId, contentId);
+        }
+      }
+    }
+
     state.tinkerValues = LoadActiveTinkerValues(m_creatorContentStore, state.creatorManifest);
     state.companionConfig = Peter::Workshop::ApplyTinkerValues(state.companionConfig, state.tinkerValues, false);
 
@@ -454,35 +543,56 @@ namespace Peter::App
       state.loadout.favoriteItemId = state.loadout.equippedToolId;
     }
 
+    const auto accessibilityValidation =
+      Peter::Validation::ValidateAccessibilitySettings(state.accessibility, m_qualityProfile);
+    if (!accessibilityValidation.valid)
+    {
+      state.accessibility = Peter::UI::AccessibilitySettingsFromSaveFields({}, defaultBindings);
+      m_eventBus.Emit(Peter::Core::Event{
+        Peter::Core::EventCategory::Validation,
+        "validation.accessibility.reset_to_safe_defaults",
+        {{"reason", accessibilityValidation.message}}});
+    }
+
+    const auto finished = std::chrono::steady_clock::now();
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.save.full_load",
+      "full_load_ms",
+      std::chrono::duration<double, std::milli>(finished - started).count(),
+      "ms",
+      {{"profile_id", m_profile.profileId}});
+
     return state;
   }
 
   void Phase1Slice::SavePersistentState(const PersistentState& state) const
   {
-    m_saveDomainStore.WriteDomain(
+    double totalSaveDurationMs = 0.0;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kInventoryDomain),
-      Peter::Inventory::ToSaveFields(state.inventory, state.loadout));
-    m_saveDomainStore.WriteDomain(
+      Peter::Inventory::ToSaveFields(state.inventory, state.loadout)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kRecoveryDomain),
-      Peter::Inventory::RecoveryStateToSaveFields(state.recovery));
-    m_saveDomainStore.WriteDomain(
+      Peter::Inventory::RecoveryStateToSaveFields(state.recovery)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kWorkshopDomain),
-      Peter::Progression::ToSaveFields(state.workshop));
-    m_saveDomainStore.WriteDomain(
+      Peter::Progression::ToSaveFields(state.workshop)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kCompanionDomain),
-      Peter::AI::ToSaveFields(state.companionConfig));
-    m_saveDomainStore.WriteDomain(
+      Peter::AI::ToSaveFields(state.companionConfig)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kAccessibilityDomain),
-      Peter::UI::ToSaveFields(state.accessibility));
-    m_saveDomainStore.WriteDomain(
+      Peter::UI::ToSaveFields(state.accessibility)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kProfileMetaDomain),
       Peter::Core::StructuredFields{
         {"schema_version", "2"},
         {"completed_raids", std::to_string(state.completedRaids)},
         {"last_raid_result", state.lastRaidResult},
         {"profile_id", m_profile.profileId}
-      });
-    m_saveDomainStore.WriteDomain(
+      }).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kTutorialDomain),
       Peter::Core::StructuredFields{
         {"schema_version", "2"},
@@ -490,42 +600,78 @@ namespace Peter::App
         {"guided_first_run_complete", state.guidedFirstRunComplete ? "true" : "false"},
         {"rule_edit_complete", state.ruleEditComplete ? "true" : "false"},
         {"tutorial_hint_level", std::to_string(state.tutorialHintLevel)}
-      });
-    m_saveDomainStore.WriteDomain(
+      }).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kMissionDomain),
       Peter::Core::StructuredFields{
         {"schema_version", "2"},
         {"last_mission_id", state.lastMissionId},
         {"last_scene_id", state.lastSceneId},
         {"last_result", state.lastRaidResult}
-      });
-    m_saveDomainStore.WriteDomain(
+      }).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kCreatorManifestDomain),
-      Peter::Workshop::ToSaveFields(state.creatorManifest));
-    m_saveDomainStore.WriteDomain(
+      Peter::Workshop::ToSaveFields(state.creatorManifest)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kCreatorProgressDomain),
-      Peter::Workshop::ToSaveFields(state.creatorProgress));
-    m_saveDomainStore.WriteDomain(
+      Peter::Workshop::ToSaveFields(state.creatorProgress)).durationMs;
+    totalSaveDurationMs += m_saveDomainStore.WriteDomain(
       std::string(kCreatorSettingsDomain),
-      Peter::Workshop::ToSaveFields(state.creatorSettings));
+      Peter::Workshop::ToSaveFields(state.creatorSettings)).durationMs;
+
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.save.full_save",
+      "full_save_ms",
+      totalSaveDurationMs,
+      "ms",
+      {{"profile_id", m_profile.profileId}});
   }
 
   void Phase1Slice::PresentHomeBase(const PersistentState& state) const
   {
     auto cameraRig = m_traversal.cameraRig;
     cameraRig.followDistanceMeters =
-      std::max(cameraRig.followDistanceMeters, Peter::AI::ResolveFollowDistance(state.companionConfig) - 1.0);
+      std::max(
+        std::max(cameraRig.followDistanceMeters, Peter::AI::ResolveFollowDistance(state.companionConfig) - 1.0),
+        m_qualityProfile.movement.companionSpacingMeters);
     m_platform.camera->ApplyRig(cameraRig);
     m_platform.ui->ApplyPresentationSettings(Peter::Adapters::PresentationSettings{
       state.accessibility.subtitlesEnabled,
       state.accessibility.subtitleScalePercent,
-      state.accessibility.textScalePercent});
+      state.accessibility.textScalePercent,
+      state.accessibility.subtitleBackgroundEnabled,
+      state.accessibility.highContrastEnabled,
+      state.accessibility.iconRedundancyEnabled,
+      state.accessibility.motionComfortEnabled});
     m_platform.ui->PresentState("ui.home_base");
     m_platform.ui->PresentPanel("home_base.overview", Peter::UI::RenderHomeBaseOverview(m_homeBase));
     m_platform.ui->PresentPanel("home_base.companion_editor", Peter::UI::RenderCompanionBehaviorEditor(state.companionConfig));
+
+    double accessibilityRenderMs = 0.0;
+    const auto accessibilityPanel = MeasureMilliseconds(
+      [&]() {
+        return Peter::UI::RenderAccessibilitySettings(state.accessibility, m_platform.input->DefaultBindings());
+      },
+      accessibilityRenderMs);
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.ui.panel_render",
+      "ui_render_p95_ms",
+      accessibilityRenderMs,
+      "ms",
+      {{"panel_id", "home_base.accessibility"}});
+    m_platform.ui->PresentPanel("home_base.accessibility", accessibilityPanel);
+
     m_platform.ui->PresentPanel(
-      "home_base.accessibility",
-      Peter::UI::RenderAccessibilitySettings(state.accessibility, m_platform.input->DefaultBindings()));
+      "home_base.onboarding",
+      Peter::UI::RenderOnboardingFunnel({
+        {"onboarding.first_mission", "onboarding.first_mission", "help.first_mission", state.lastRaidResult != "none"},
+        {"onboarding.first_extraction", "onboarding.first_extraction", "help.first_extraction", state.completedRaids > 0},
+        {"onboarding.first_repair", "onboarding.first_repair", "help.first_repair", HasLesson(state.completedLessons, "lesson.phase2.first_repair")},
+        {"onboarding.first_creator_change", "onboarding.first_creator_change", "help.first_creator_change", state.ruleEditComplete},
+        {"onboarding.first_explain_panel", "onboarding.first_explain_panel", "help.first_explain_panel", HasLesson(state.completedLessons, "lesson.phase4.read_explanation")}
+      }));
     const auto* activeRuleset = LoadActiveLogicRuleset(m_creatorContentStore, state.creatorManifest);
     const auto activeScript = LoadActiveTinyScript(m_creatorContentStore, state.creatorManifest);
     m_platform.ui->PresentCreatorPanel(
@@ -551,9 +697,11 @@ namespace Peter::App
       Peter::Core::EventCategory::Gameplay,
       "gameplay.traversal.ready",
       {
+        {"camera_feel", Peter::Traversal::DescribeCameraFeel(m_qualityProfile.camera)},
         {"camera_mode", cameraRig.mode},
         {"input_scheme", m_platform.input->ActiveScheme()},
         {"interaction_range_meters", std::to_string(m_traversal.interactionRangeMeters)},
+        {"movement_responsiveness", std::to_string(Peter::Traversal::EvaluateMovementResponsivenessScore(m_traversal))},
         {"reduced_time_pressure", state.accessibility.reducedTimePressure ? "true" : "false"}
       }});
   }
@@ -742,6 +890,14 @@ namespace Peter::App
             ruleset->id,
             revision,
             validation.valid);
+          m_platform.ui->PresentCreatorPanel(
+            "creator.lesson.logic_validation",
+            Peter::UI::RenderCreatorValidationMessage(validation.valid, validation.message));
+          m_platform.audio->PostPrioritizedFeedbackCue(
+            validation.valid ? "creator_success" : "creator_error",
+            validation.valid ? "logic_template" : "logic_template_invalid",
+            validation.valid ? 2 : 3,
+            !validation.valid);
           m_eventBus.Emit(Peter::Core::Event{
             Peter::Core::EventCategory::CreatorTools,
             "creator_tools.logic.applied",
@@ -772,6 +928,14 @@ namespace Peter::App
             templateScript->id,
             revision,
             validation.valid);
+          m_platform.ui->PresentCreatorPanel(
+            "creator.lesson.script_validation",
+            Peter::UI::RenderCreatorValidationMessage(validation.valid, validation.valid ? "Tiny script passed validation." : validation.error));
+          m_platform.audio->PostPrioritizedFeedbackCue(
+            validation.valid ? "creator_success" : "creator_error",
+            validation.valid ? "script_valid" : "script_invalid",
+            validation.valid ? 2 : 3,
+            !validation.valid);
           m_eventBus.Emit(Peter::Core::Event{
             Peter::Core::EventCategory::CreatorTools,
             "creator_tools.script.validated",
@@ -849,6 +1013,15 @@ namespace Peter::App
   SliceRunReport Phase1Slice::Run(SliceScenario scenario)
   {
     auto state = LoadPersistentState();
+    const auto qualityValidation = Peter::Validation::ValidatePhase6QualityProfile(m_qualityProfile);
+    m_eventBus.Emit(Peter::Core::Event{
+      Peter::Core::EventCategory::Validation,
+      "validation.runtime.quality_profile",
+      {
+        {"message", qualityValidation.message},
+        {"profile_id", m_qualityProfile.id},
+        {"valid", qualityValidation.valid ? "true" : "false"}
+      }});
     PresentHomeBase(state);
 
     switch (scenario)
@@ -875,8 +1048,65 @@ namespace Peter::App
     const bool expectSuccess,
     const bool guidedMode)
   {
+    auto evaluateCompanion = [&](const Peter::AI::CompanionConfig& config,
+                                 const Peter::AI::CompanionWorldContext& context,
+                                 const Peter::AI::BehaviorOverrideSet* overrides = nullptr) {
+      double decisionMs = 0.0;
+      Peter::AI::CompanionDecisionSnapshot snapshot;
+      if (overrides == nullptr)
+      {
+        snapshot = MeasureMilliseconds(
+          [&]() { return Peter::AI::EvaluateCompanion(config, context); },
+          decisionMs);
+      }
+      else
+      {
+        snapshot = MeasureMilliseconds(
+          [&]() { return Peter::AI::EvaluateCompanion(config, context, *overrides); },
+          decisionMs);
+      }
+      EmitPerformanceMetric(
+        m_eventBus,
+        "performance.ai.decision",
+        "ai_decision_p95_ms",
+        decisionMs,
+        "ms",
+        {{"goal", context.currentGoal}, {"room_id", context.roomNodeId}});
+      return snapshot;
+    };
+
+    auto postFeedback = [&](const std::string_view cueFamily,
+                            const std::string_view variantId,
+                            const int priority,
+                            const bool critical,
+                            const std::string_view beatId) {
+      m_platform.audio->PostPrioritizedFeedbackCue(cueFamily, variantId, priority, critical);
+      EmitPerformanceMetric(
+        m_eventBus,
+        "performance.feedback.world_cue",
+        "concurrent_world_feedback",
+        1.0,
+        "count",
+        {{"beat_id", std::string(beatId)}, {"cue_family", std::string(cueFamily)}});
+      EmitPerformanceMetric(
+        m_eventBus,
+        "performance.feedback.critical_beat",
+        "critical_feedback_per_beat",
+        critical ? 1.0 : 0.0,
+        "count",
+        {{"beat_id", std::string(beatId)}, {"cue_family", std::string(cueFamily)}});
+    };
+
     Peter::World::SceneShell sceneShell(m_eventBus);
-    const auto homeScene = sceneShell.LoadHomeBase(m_homeBase);
+    double transitionMs = 0.0;
+    const auto homeScene = MeasureMilliseconds([&]() { return sceneShell.LoadHomeBase(m_homeBase); }, transitionMs);
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.scene.transition",
+      "transition_ms",
+      transitionMs,
+      "ms",
+      {{"target_scene", m_homeBase.sceneId}});
     (void)homeScene;
 
     const auto* mission = Peter::World::FindMissionTemplate(missionId);
@@ -898,6 +1128,13 @@ namespace Peter::App
         {"mission_id", mission->id},
         {"template", mission->templateType}
       }});
+    if (guidedMode)
+    {
+      m_eventBus.Emit(Peter::Core::Event{
+        Peter::Core::EventCategory::Gameplay,
+        "gameplay.onboarding.first_mission.started",
+        {{"mission_id", mission->id}}});
+    }
 
     const auto missionValidation = Peter::Validation::ValidateMissionTemplate(*mission);
     const auto extractionValidation = Peter::Validation::ValidateExtractionCountdown(
@@ -926,10 +1163,28 @@ namespace Peter::App
       RunLesson(state, "lesson.phase2.mission_choice", false);
     }
 
-    const auto raidScene = sceneShell.LoadRaidZone(raidZone);
+    const auto raidScene = MeasureMilliseconds([&]() { return sceneShell.LoadRaidZone(raidZone); }, transitionMs);
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.scene.transition",
+      "transition_ms",
+      transitionMs,
+      "ms",
+      {{"target_scene", raidZone.sceneId}});
     (void)raidScene;
     m_platform.ui->PresentState("ui.raid_hud");
-    m_platform.ui->PresentPanel("raid.overview", Peter::UI::RenderRaidZoneOverview(raidZone, *mission));
+    double raidOverviewRenderMs = 0.0;
+    const auto raidOverview = MeasureMilliseconds(
+      [&]() { return Peter::UI::RenderRaidZoneOverview(raidZone, *mission); },
+      raidOverviewRenderMs);
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.ui.panel_render",
+      "ui_render_p95_ms",
+      raidOverviewRenderMs,
+      "ms",
+      {{"panel_id", "raid.overview"}});
+    m_platform.ui->PresentPanel("raid.overview", raidOverview);
     if (missionBlueprint != nullptr)
     {
       m_platform.ui->PresentPanel(
@@ -1011,7 +1266,8 @@ namespace Peter::App
     combatContext.interestMarkerActive = combatContext.rareLootVisible;
     combatContext.interestMarkerId = combatContext.rareLootVisible ? ("marker.rare_loot." + firstEncounterRoomId) : "";
 
-    auto companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
+    auto companionDecision = evaluateCompanion(state.companionConfig, combatContext);
+    postFeedback("companion_ack", companionDecision.calloutToken, 1, false, "companion_decision");
     EmitCompanionDecision(firstEncounterRoomId, companionDecision);
 
     Peter::Combat::EncounterRequest encounterRequest{
@@ -1025,6 +1281,10 @@ namespace Peter::App
     for (const auto& event : encounterOutcome.events)
     {
       m_eventBus.Emit(event);
+    }
+    if (encounterOutcome.alarmTriggered)
+    {
+      postFeedback("threat_escalation", "alarm_triggered", 3, true, "combat_alarm");
     }
     raid.playerHealth = std::max(0, raid.playerHealth - encounterOutcome.playerDamage + encounterOutcome.playerHealing);
     raid.timeline.push_back("Combat: " + encounterOutcome.summary);
@@ -1043,7 +1303,8 @@ namespace Peter::App
         : "goal.scout_path";
       combatContext.visibleThreatId = raidZone.encounters.at(1).enemies.front().enemyId;
       combatContext.lastKnownThreatPositionToken = secondEncounterRoomId;
-      companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
+      companionDecision = evaluateCompanion(state.companionConfig, combatContext);
+      postFeedback("companion_ack", companionDecision.calloutToken, 1, false, "companion_decision");
       EmitCompanionDecision(secondEncounterRoomId, companionDecision);
       encounterRequest.enemies = raidZone.encounters.at(1).enemies;
       encounterRequest.companionDecision = companionDecision;
@@ -1055,6 +1316,10 @@ namespace Peter::App
       for (const auto& event : encounterOutcome.events)
       {
         m_eventBus.Emit(event);
+      }
+      if (encounterOutcome.alarmTriggered)
+      {
+        postFeedback("threat_escalation", "alarm_triggered", 3, true, "combat_alarm");
       }
       raid.playerHealth = std::max(0, raid.playerHealth - encounterOutcome.playerDamage + encounterOutcome.playerHealing);
       raid.timeline.push_back("Second combat: " + encounterOutcome.summary);
@@ -1074,7 +1339,12 @@ namespace Peter::App
         (void)addedObjectiveItem;
         if (const auto* definition = Peter::Inventory::FindItemDefinition(objective.targetId))
         {
-          m_platform.audio->PostFeedbackCue(definition->audioCueFamily, std::string(Peter::Inventory::ToString(definition->rarity)));
+          postFeedback(
+            definition->audioCueFamily,
+            std::string(Peter::Inventory::ToString(definition->rarity)),
+            2,
+            false,
+            "loot_pickup");
           m_platform.ui->PresentPrompt(Peter::Inventory::RenderRarityFeedback(*definition));
           m_eventBus.Emit(Peter::Core::Event{
             Peter::Core::EventCategory::Gameplay,
@@ -1175,10 +1445,12 @@ namespace Peter::App
       combatContext.heardEventToken = "sound.extraction_alarm";
       combatContext.interestMarkerActive = true;
       combatContext.interestMarkerId = "marker.extraction.pad";
-      companionDecision = Peter::AI::EvaluateCompanion(state.companionConfig, combatContext);
+      companionDecision = evaluateCompanion(state.companionConfig, combatContext);
+      postFeedback("companion_ack", companionDecision.calloutToken, 1, false, "companion_decision");
       EmitCompanionDecision(raidZone.extractionRoomId, companionDecision);
 
       m_platform.audio->PostWorldCue(raidZone.extraction.successCueId);
+      postFeedback("extraction", "success", 3, true, "extraction_success");
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
         "gameplay.extraction.success",
@@ -1223,6 +1495,10 @@ namespace Peter::App
             {"node_id", nextNode},
             {"unlocked", unlockResult.unlocked ? "true" : "false"}
           }});
+        if (unlockResult.unlocked)
+        {
+          postFeedback("workshop_success", nextNode, 2, false, "workshop_unlock");
+        }
       }
       m_platform.ui->PresentPanel("workbench.tracks", workshopPanel);
 
@@ -1238,9 +1514,16 @@ namespace Peter::App
         Peter::Core::EventCategory::CreatorTools,
         "creator_tools.explain_panel.opened",
         {
-          {"action", companionDecision.lastAction},
-          {"state", companionDecision.currentState}
-        }});
+            {"action", companionDecision.lastAction},
+            {"state", companionDecision.currentState}
+          }});
+      if (guidedMode)
+      {
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::Gameplay,
+          "gameplay.onboarding.first_explain_panel.completed",
+          {{"mission_id", mission->id}}});
+      }
 
       if (guidedMode)
       {
@@ -1253,7 +1536,7 @@ namespace Peter::App
         const auto preview = Peter::Workshop::BuildCompanionBehaviorPreview(previousConfig, previewConfig);
         m_platform.ui->PresentPanel(
           "companion.rule_preview",
-          preview.summary + "\n" + preview.deltaSummary + "\n" + preview.comparisonSummary);
+          Peter::UI::RenderCreatorValidationMessage(preview.valid, preview.summary + "\n" + preview.deltaSummary + "\n" + preview.comparisonSummary));
         m_eventBus.Emit(Peter::Core::Event{
           Peter::Core::EventCategory::CreatorTools,
           "creator_tools.behavior_chip.previewed",
@@ -1264,6 +1547,7 @@ namespace Peter::App
         if (preview.valid)
         {
           state.companionConfig = previewConfig;
+          postFeedback("creator_success", "behavior_preview", 2, false, "creator_preview");
           m_eventBus.Emit(Peter::Core::Event{
             Peter::Core::EventCategory::CreatorTools,
             "creator_tools.behavior_chip.applied",
@@ -1273,8 +1557,8 @@ namespace Peter::App
             }});
         }
         const auto previewContext = BuildExplainPreviewContext(state.workshop);
-        const auto beforePreview = Peter::AI::EvaluateCompanion(previousConfig, previewContext);
-        const auto afterPreview = Peter::AI::EvaluateCompanion(state.companionConfig, previewContext);
+        const auto beforePreview = evaluateCompanion(previousConfig, previewContext);
+        const auto afterPreview = evaluateCompanion(state.companionConfig, previewContext);
         m_platform.ui->PresentPanel(
           "companion.rule_effect",
           Peter::UI::RenderCompanionCompareView(beforePreview, afterPreview, preview.deltaSummary));
@@ -1286,6 +1570,13 @@ namespace Peter::App
             {"before_state", beforePreview.currentState}
           }});
         state.ruleEditComplete = preview.valid;
+        if (preview.valid)
+        {
+          m_eventBus.Emit(Peter::Core::Event{
+            Peter::Core::EventCategory::Gameplay,
+            "gameplay.onboarding.first_creator_change.completed",
+            {{"mission_id", mission->id}}});
+        }
 
         RunLesson(state, "lesson.phase4.change_value", false);
         RunLesson(state, "lesson.phase4.change_rule", false);
@@ -1349,8 +1640,8 @@ namespace Peter::App
             scriptOverrides.overrides.begin(),
             scriptOverrides.overrides.end());
         }
-        const auto creatorBefore = Peter::AI::EvaluateCompanion(previousConfig, creatorContext);
-        const auto creatorAfter = Peter::AI::EvaluateCompanion(creatorConfig, creatorContext, creatorOverrides);
+        const auto creatorBefore = evaluateCompanion(previousConfig, creatorContext);
+        const auto creatorAfter = evaluateCompanion(creatorConfig, creatorContext, &creatorOverrides);
         m_platform.ui->PresentPanel(
           "creator.safe_simulation.compare",
           Peter::UI::RenderCompanionCompareView(
@@ -1384,13 +1675,26 @@ namespace Peter::App
       if (guidedMode)
       {
         state.guidedFirstRunComplete = true;
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::Gameplay,
+          "gameplay.onboarding.first_extraction.completed",
+          {{"mission_id", mission->id}}});
       }
 
       state.completedRaids += 1;
       state.lastRaidResult = "success";
       state.lastMissionId = mission->id;
       state.lastSceneId = raidZone.sceneId;
-      const auto resultsScene = sceneShell.LoadRaidResults(raid.missionId, true);
+      const auto resultsScene = MeasureMilliseconds(
+        [&]() { return sceneShell.LoadRaidResults(raid.missionId, true); },
+        transitionMs);
+      EmitPerformanceMetric(
+        m_eventBus,
+        "performance.scene.transition",
+        "transition_ms",
+        transitionMs,
+        "ms",
+        {{"target_scene", "scene.results.success"}});
       (void)resultsScene;
     }
     else
@@ -1419,6 +1723,7 @@ namespace Peter::App
       raidSummary.brokenItems = Peter::Inventory::SummarizeLedger(recoveryResolution.brokenItems);
 
       m_platform.audio->PostWorldCue(raidZone.extraction.failCueId);
+      postFeedback("extraction", "failure", 3, true, "extraction_failure");
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
         "gameplay.extraction.failure",
@@ -1451,17 +1756,41 @@ namespace Peter::App
             {"mission_id", raid.missionId},
             {"result", raidSummary.recoveredItems}
           }});
+        m_eventBus.Emit(Peter::Core::Event{
+          Peter::Core::EventCategory::Gameplay,
+          "gameplay.onboarding.first_repair.completed",
+          {{"mission_id", mission->id}}});
       }
 
       RunLesson(state, "lesson.phase2.first_repair", true);
       state.lastRaidResult = "failure";
       state.lastMissionId = mission->id;
       state.lastSceneId = raidZone.sceneId;
-      const auto resultsScene = sceneShell.LoadRaidResults(raid.missionId, false);
+      const auto resultsScene = MeasureMilliseconds(
+        [&]() { return sceneShell.LoadRaidResults(raid.missionId, false); },
+        transitionMs);
+      EmitPerformanceMetric(
+        m_eventBus,
+        "performance.scene.transition",
+        "transition_ms",
+        transitionMs,
+        "ms",
+        {{"target_scene", "scene.results.failure"}});
       (void)resultsScene;
     }
 
-    m_platform.ui->PresentPanel("raid.summary", Peter::UI::RenderPostRaidSummary(raidSummary));
+    double summaryRenderMs = 0.0;
+    const auto summaryPanel = MeasureMilliseconds(
+      [&]() { return Peter::UI::RenderPostRaidSummary(raidSummary); },
+      summaryRenderMs);
+    EmitPerformanceMetric(
+      m_eventBus,
+      "performance.ui.panel_render",
+      "ui_render_p95_ms",
+      summaryRenderMs,
+      "ms",
+      {{"panel_id", "raid.summary"}});
+    m_platform.ui->PresentPanel("raid.summary", summaryPanel);
     m_eventBus.Emit(Peter::Core::Event{
       Peter::Core::EventCategory::Gameplay,
       "gameplay.post_raid.summary_opened",
@@ -1477,14 +1806,21 @@ namespace Peter::App
         {"player_health", std::to_string(raid.playerHealth)},
         {"result", raidSummary.success ? "success" : "failure"}
       }});
+    if (guidedMode)
+    {
+      m_eventBus.Emit(Peter::Core::Event{
+        Peter::Core::EventCategory::Gameplay,
+        "gameplay.onboarding.first_mission.completed",
+        {{"mission_id", raid.missionId}, {"result", raidSummary.success ? "success" : "failure"}}});
+    }
 
     SavePersistentState(state);
 
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 5 content beta loop: runtime-loaded missions, author previews, and reviewable content catalogs are active."
-        : "Completed the Phase 5 failure-and-recovery loop: authored content remained valid, reviewable, and isolated from creator-local edits.",
+        ? "Completed the Phase 6 quality beta loop: budgets, onboarding telemetry, hardened saves, and polished creator feedback are active."
+        : "Completed the Phase 6 failure-and-recovery loop: save safety, creator containment, and post-raid clarity remained intact under failure.",
       mission->id,
       companionDecision,
       Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),

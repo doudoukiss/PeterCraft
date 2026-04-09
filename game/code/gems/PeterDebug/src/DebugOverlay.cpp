@@ -22,6 +22,19 @@ namespace Peter::Debug
     SetValue("AI Alert", snapshot.blackboard.alertLevel);
   }
 
+  void DebugOverlay::SetSaveHealthReport(const Peter::Core::SaveHealthReport& report)
+  {
+    SetValue("Save Health", report.healthy ? "healthy" : "needs_attention");
+    SetValue("Save Domains Checked", std::to_string(report.checkedDomains));
+    SetValue("Save Domains Restored", std::to_string(report.restoredDomains));
+  }
+
+  void DebugOverlay::SetQualityReport(const Peter::Telemetry::QualityReport& report)
+  {
+    SetValue("Quality Gate", report.passed ? "pass" : "fail");
+    SetValue("Quality Summary", report.summary);
+  }
+
   std::string DebugOverlay::Render() const
   {
     std::ostringstream output;

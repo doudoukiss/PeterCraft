@@ -1,13 +1,12 @@
-name: validate_build_test_quality
+name: nightly_quality
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
 
 jobs:
-  validate-build-test:
+  soak-and-quality:
     runs-on: windows-latest
 
     steps:
@@ -28,32 +27,21 @@ jobs:
         shell: pwsh
         run: ./tools/build-scripts/bootstrap.ps1
 
-      - name: Validate
-        shell: pwsh
-        run: ./tools/build-scripts/validate.ps1
-
       - name: Build
         shell: pwsh
         run: ./tools/build-scripts/build.ps1
 
-      - name: Test
-        shell: pwsh
-        run: ./tools/build-scripts/test.ps1
-
-      - name: Run quality gate
+      - name: Run nightly soak
         shell: pwsh
         run: |
-          ./tools/build-scripts/run-dev.ps1
+          ./tools/build-scripts/quality.ps1 run-soak --iterations 4
           ./tools/build-scripts/quality.ps1 check-budgets
           ./tools/build-scripts/quality.ps1 verify-saves
-          ./tools/build-scripts/quality.ps1 export-qa-matrix
-          ./tools/build-scripts/quality.ps1 gate-rc
 
-      - name: Upload development build artifact
+      - name: Upload nightly quality artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: petercraft-phase6-dev-build
+          name: petercraft-nightly-quality
           path: |
-            out/build/windows-vs2022-dev/bin/Debug/PeterCraftApp.exe
             Saved/Logs/*.jsonl
             Saved/Generated/quality/*

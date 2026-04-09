@@ -5,6 +5,7 @@
 #include "PeterCore/CreatorContentStore.h"
 #include "PeterCore/EventBus.h"
 #include "PeterCore/ProfileService.h"
+#include "PeterCore/QualityProfile.h"
 #include "PeterCore/SaveDomainStore.h"
 #include "PeterCore/SliceTypes.h"
 #include "PeterInventory/InventoryState.h"
@@ -99,6 +100,7 @@ namespace Peter::App
     Peter::Core::ProfileInfo m_profile;
     Peter::Core::SaveDomainStore& m_saveDomainStore;
     Peter::Core::CreatorContentStore m_creatorContentStore;
+    Peter::Core::Phase6QualityProfile m_qualityProfile;
     Peter::World::HomeBaseDefinition m_homeBase;
     Peter::World::RaidZoneDefinition m_raidZone;
     Peter::Traversal::TraversalProfile m_traversal;

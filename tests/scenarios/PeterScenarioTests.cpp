@@ -1,5 +1,6 @@
 #include "PeterAI/CompanionAi.h"
 #include "PeterCombat/EncounterSimulator.h"
+#include "PeterCore/QualityProfile.h"
 #include "PeterInventory/InventoryState.h"
 #include "PeterTest/TestMacros.h"
 #include "PeterTools/ScenarioHarness.h"
@@ -118,7 +119,9 @@ PETER_TEST_MAIN({
     false,
     true,
     true,
-    60};
+    60,
+    Peter::Core::LoadPhase6QualityProfile().combat};
   const auto encounterOutcome = Peter::Combat::ResolveEncounter(encounterRequest);
   PETER_ASSERT_TRUE(!encounterOutcome.events.empty());
+  PETER_ASSERT_TRUE(encounterOutcome.summary.find("telegraph_ms") != std::string::npos);
 })

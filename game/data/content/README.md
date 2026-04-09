@@ -9,3 +9,4 @@ Phase 5 moves shipped content into runtime-loaded catalogs.
 - `feedback-tags/` defines audio and VFX hook tags for content authors.
 - `style-profiles/` defines world-building rules for each zone.
 - `content-manifests/` defines which assets are expected to pass shippable validation.
+- `quality-profiles/` defines Phase 6 performance, accessibility, feel, and feedback budgets for the portable shell.

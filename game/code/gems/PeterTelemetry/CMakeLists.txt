@@ -1,5 +1,6 @@
 add_library(PeterTelemetry STATIC
   src/JsonlTelemetrySink.cpp
+  src/QualityMetrics.cpp
   src/TelemetryModule.cpp
 )
 
@@ -11,6 +12,8 @@ target_include_directories(PeterTelemetry
 target_link_libraries(PeterTelemetry
   PUBLIC
     PeterCore
+  PRIVATE
+    Psapi
 )
 
 target_compile_features(PeterTelemetry PUBLIC cxx_std_20)

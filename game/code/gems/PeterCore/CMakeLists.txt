@@ -4,8 +4,10 @@ add_library(PeterCore STATIC
   src/EventBus.cpp
   src/FeatureRegistry.cpp
   src/ProfileService.cpp
+  src/QualityProfile.cpp
   src/SaveDomainStore.cpp
   src/StableId.cpp
+  src/StructuredStore.cpp
 )
 
 target_include_directories(PeterCore

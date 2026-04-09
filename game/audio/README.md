@@ -2,5 +2,6 @@
 
 Placeholder home for authored audio content and trigger catalogs.
 
-Phase 5 routes shipped content feedback through tag-driven cue families such as
-danger, reward, extraction, maker-success, companion-decision, and tutorial hooks.
+Phase 6 routes shipped content feedback through tagged cue families plus priority-aware shell
+feedback for loot, extraction, threat escalation, workshop success, creator validation failures,
+and creator success moments.
