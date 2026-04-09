@@ -1,0 +1,9 @@
+{
+   "O3DE": {
+        "Autoexec": {
+            "ConsoleCommands": {
+                "LoadLevel": "one_room_proof"
+            }
+        }
+    }
+}

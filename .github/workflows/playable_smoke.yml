@@ -1,0 +1,49 @@
+name: playable_smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows-playable-smoke:
+    runs-on:
+      - self-hosted
+      - windows
+      - o3de
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up MSVC developer command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Bootstrap
+        shell: pwsh
+        run: ./tools/build-scripts/bootstrap.ps1
+
+      - name: Build playable runtime
+        shell: pwsh
+        run: ./tools/build-scripts/build-playable.ps1
+
+      - name: Launch one-room proof
+        shell: pwsh
+        run: ./tools/build-scripts/run-playable.ps1 -LaunchOneRoomProof
+
+      - name: Run playable runtime
+        shell: pwsh
+        run: ./tools/build-scripts/run-playable.ps1
+
+      - name: Upload playable artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: petercraft-phase7-playable-smoke
+          path: |
+            Saved/Logs/*
+            Saved/Generated/o3de/*

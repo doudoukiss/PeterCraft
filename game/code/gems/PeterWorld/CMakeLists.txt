@@ -13,6 +13,7 @@ target_include_directories(PeterWorld
 target_link_libraries(PeterWorld
   PUBLIC
     PeterAI
+    PeterAdapters
     PeterCore
     PeterInventory
     PeterWorkshop

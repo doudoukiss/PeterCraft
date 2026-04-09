@@ -12,6 +12,7 @@ namespace Peter::World::Detail
     std::vector<FeedbackTagDefinition> feedbackTags;
     std::vector<WorldStyleProfileDefinition> styleProfiles;
     std::vector<MissionBlueprintDefinition> missionBlueprints;
+    std::vector<PlayableSceneBindingDefinition> sceneBindings;
     ShippableContentManifest manifest;
   };
 

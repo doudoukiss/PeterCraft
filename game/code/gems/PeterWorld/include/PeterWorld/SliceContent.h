@@ -228,6 +228,17 @@ namespace Peter::World
     ExtractionSettings extraction;
   };
 
+  struct PlayableSceneBindingDefinition
+  {
+    std::string sceneId;
+    std::string displayName;
+    std::string levelName;
+    std::string levelAssetPath;
+    std::string spawnPointId;
+    std::string transitionCardId;
+    bool proofRoom = false;
+  };
+
   struct ShippableContentManifest
   {
     std::string id;
@@ -288,6 +299,8 @@ namespace Peter::World
   [[nodiscard]] const WorldStyleProfileDefinition* FindWorldStyleProfile(std::string_view styleProfileId);
   [[nodiscard]] const std::vector<MissionBlueprintDefinition>& BuildPhase5MissionBlueprints();
   [[nodiscard]] const MissionBlueprintDefinition* FindMissionBlueprint(std::string_view missionBlueprintId);
+  [[nodiscard]] const std::vector<PlayableSceneBindingDefinition>& BuildPhase7PlayableSceneBindings();
+  [[nodiscard]] const PlayableSceneBindingDefinition* FindPhase7PlayableSceneBinding(std::string_view sceneId);
   [[nodiscard]] const ShippableContentManifest& BuildPhase5ShippableContentManifest();
   [[nodiscard]] RoomMetricsSummary BuildRoomMetricsSummary(std::string_view roomVariantId);
   [[nodiscard]] const std::vector<MissionTemplateDefinition>& BuildPhase2MissionTemplates();

@@ -18,8 +18,8 @@
       }
     },
     {
-      "name": "windows-vs2022-playable-preflight",
-      "displayName": "Windows VS2022 Playable Preflight",
+      "name": "windows-vs2022-playable-runtime",
+      "displayName": "Windows VS2022 Playable Runtime",
       "inherits": "windows-vs2022-headless",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
@@ -53,8 +53,8 @@
       "configuration": "Release"
     },
     {
-      "name": "windows-vs2022-playable-preflight-debug",
-      "configurePreset": "windows-vs2022-playable-preflight",
+      "name": "windows-vs2022-playable-runtime-debug",
+      "configurePreset": "windows-vs2022-playable-runtime",
       "configuration": "Debug"
     },
     {

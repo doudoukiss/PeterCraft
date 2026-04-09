@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Phase 7.0 makes PeterCraft's runtime split explicit before O3DE integration begins.
-
-There are now two named runtime modes:
+PeterCraft now keeps two first-class runtime modes:
 
 - `headless`
 - `playable`
+
+This split protects the portable shell while allowing real O3DE hosting work to land incrementally.
 
 ## Headless
 
@@ -32,13 +32,14 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1
 
 ## Playable
 
-Use `playable` only as a migration preflight in Phase 7.0.
+Use `playable` for the Windows-only O3DE-backed runtime baseline in Phase 7.1.
 
 Current behavior:
 
 - the app accepts `--runtime playable`
-- backend selection is explicit
-- the runtime exits cleanly with a structured “backend unavailable until Phase 7.1” result
+- the runtime bootstraps the pinned O3DE `25.10.2` project under `game/o3de/`
+- logical scene requests are mapped through the portable scene-binding catalog
+- the adapter layer launches real O3DE levels while the portable shell remains intact
 
 Canonical commands:
 
@@ -47,9 +48,15 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\build-playable.ps
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-playable.ps1
 ```
 
+One-room proof:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-playable.ps1 -LaunchOneRoomProof
+```
+
 ## CLI contract
 
-The executable now supports:
+The executable supports:
 
 ```text
 --runtime headless|playable
@@ -58,10 +65,11 @@ The executable now supports:
 Defaults:
 
 - runtime defaults to `headless`
-- tests and CI should stay on `headless` unless a specific preflight check needs `playable`
+- tests and CI stay on `headless`
+- playable smoke remains additive in Phase 7.1
 
 ## Why this split matters
 
-- it protects the current deterministic shell
-- it makes the future O3DE path visible without pretending it exists yet
-- it keeps build scripts, docs, and CI honest during Phase 7 migration
+- it protects the deterministic shell
+- it keeps O3DE-specific work behind adapters
+- it lets PeterCraft prove a real engine-backed host before broader real-time feature work expands

@@ -1,0 +1,29 @@
+{
+    "gem_name": "PeterCraftRuntime",
+    "version": "1.0.0",
+    "display_name": "PeterCraftRuntime",
+    "license": "Apache-2.0",
+    "license_url": "https://opensource.org/licenses/Apache-2.0",
+    "origin": "PeterCraft",
+    "origin_url": "https://github.com/petercraft/petercraft",
+    "type": "",
+    "summary": "Project gem for the PeterCraft Phase 7.1 O3DE playable runtime baseline.",
+    "canonical_tags": [
+        "Gem"
+    ],
+    "user_tags": [
+        "PeterCraftRuntime"
+    ],
+    "platforms": [
+        "${Platforms}"
+    ],
+    "icon_path": "preview.png",
+    "requirements": "",
+    "documentation_url": "",
+    "dependencies": [
+    ],
+    "compatible_engines": [
+    ],
+    "engine_api_dependencies":[
+    ]
+}

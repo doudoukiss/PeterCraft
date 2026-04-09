@@ -70,7 +70,14 @@ namespace Peter::App
     auto runtimeFactoryResult = CreatePlatformServices(bootConfig, runtimeDescriptor);
     const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
     const auto playableQualityProfile = Peter::Core::LoadPhase7PlayableQualityProfile();
-    FeatureRegistry features(VersionInfo{"0.7.0", "phase7_0"});
+    const bool playableRuntimeActive =
+      runtimeFactoryResult.available
+      && runtimeDescriptor.mode == Peter::Adapters::RuntimeMode::Playable;
+    const Peter::Core::QualityProfileBase& activeQualityProfile = playableRuntimeActive
+      ? static_cast<const Peter::Core::QualityProfileBase&>(playableQualityProfile)
+      : static_cast<const Peter::Core::QualityProfileBase&>(qualityProfile);
+
+    FeatureRegistry features(VersionInfo{"0.7.1", "phase7_1"});
     features.SetFlag("feature.vertical_slice", true);
     features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
@@ -82,20 +89,21 @@ namespace Peter::App
     features.SetFlag("feature.content_catalogs", true);
     features.SetFlag("feature.quality_beta", true);
     features.SetFlag("feature.atomic_save_hardening", true);
-    features.SetFlag("feature.playable_runtime", false);
-    features.SetFlag("feature.o3de_adapter", false);
-    features.SetFlag("feature.realtime_traversal", false);
-    features.SetFlag("feature.realtime_combat", false);
-    features.SetFlag("feature.realtime_ai", false);
-    features.SetFlag("feature.raid_hud", false);
-    features.SetFlag("feature.playable_audio", false);
-    features.SetFlag("feature.phase7_blockout_art", false);
+    features.SetFlag("feature.playable_runtime", playableRuntimeActive);
+    features.SetFlag("feature.o3de_adapter", playableRuntimeActive);
+    features.SetFlag("feature.realtime_traversal", playableRuntimeActive);
+    features.SetFlag("feature.realtime_combat", playableRuntimeActive);
+    features.SetFlag("feature.realtime_ai", playableRuntimeActive);
+    features.SetFlag("feature.raid_hud", playableRuntimeActive);
+    features.SetFlag("feature.playable_audio", playableRuntimeActive);
+    features.SetFlag("feature.phase7_blockout_art", playableRuntimeActive);
 
     eventBus.Emit(Event{
       EventCategory::Gameplay,
       "runtime.mode.selected",
       {
         {"backend_id", runtimeFactoryResult.descriptor.backendId},
+        {"bootstrap_message", runtimeFactoryResult.message},
         {"mode", Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode)},
         {"playable_runtime_compiled", kPlayableRuntimeCompiled ? "true" : "false"},
         {"status", runtimeFactoryResult.available ? "ready" : runtimeFactoryResult.statusCode}
@@ -111,7 +119,8 @@ namespace Peter::App
           {"message", runtimeFactoryResult.message},
           {"mode", Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode)}
         }});
-      std::cout << "PeterCraft Phase 7.0 Runtime Preflight\n";
+      std::cout << "PeterCraft Phase 7.1 Runtime Bootstrap\n";
+      std::cout << "Build track: " << features.Version().track << '\n';
       std::cout << "Runtime mode: " << Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode) << '\n';
       std::cout << runtimeFactoryResult.message << '\n';
       return 2;
@@ -188,14 +197,14 @@ namespace Peter::App
       {"frame_time_p95_ms", "ms", 16.6, 0.0, true, "shell"},
       {"working_set_mb", "mb", workingSetMb, 0.0, true, "process"}
     };
-    const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(qualityProfile, qualitySamples);
+    const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(activeQualityProfile, qualitySamples);
 
     DebugOverlay overlay;
     overlay.SetRuntimeDescriptor(runtimeDescriptor);
     overlay.SetFeatureFlags(features.Flags());
     overlay.SetValue("FPS", "60");
     overlay.SetValue("Frame Time", "16.6ms");
-    overlay.SetValue("Target Hardware", Peter::Core::DescribeTargetHardwareProfile(qualityProfile.targetHardware));
+    overlay.SetValue("Target Hardware", Peter::Core::DescribeTargetHardwareProfile(activeQualityProfile.targetHardware));
     overlay.SetValue("Scene", runReport.success ? "scene.results.success" : "scene.results.failure");
     overlay.SetValue("Mission", runReport.missionId);
     overlay.SetValue("Player State", runReport.success ? "returned_home" : "raid_failed");
@@ -215,7 +224,9 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 7.0 Headless Runtime\n";
+    std::cout << (playableRuntimeActive
+      ? "PeterCraft Phase 7.1 Playable Runtime\n"
+      : "PeterCraft Phase 7.1 Headless Runtime\n");
     std::cout << runReport.summary << "\n";
     std::cout << Peter::Telemetry::RenderQualityReport(qualityReport) << "\n";
     std::cout << overlay.Render() << '\n';

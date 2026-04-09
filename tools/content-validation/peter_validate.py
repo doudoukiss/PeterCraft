@@ -23,6 +23,7 @@ CONTENT_SCHEMA_BY_DIR = {
   "room-variants": "room_variants.schema.json",
   "encounter-patterns": "encounter_patterns.schema.json",
   "mission-blueprints": "mission_blueprints.schema.json",
+  "scene-bindings": "scene_bindings.schema.json",
   "feedback-tags": "feedback_tags.schema.json",
   "style-profiles": "style_profiles.schema.json",
   "content-manifests": "content_manifests.schema.json",
@@ -119,6 +120,7 @@ def validate_content_registry() -> list[str]:
   room_variants = registry["room-variants"]
   encounter_patterns = registry["encounter-patterns"]
   mission_blueprints = registry["mission-blueprints"]
+  scene_bindings = registry["scene-bindings"]
   feedback_tags = registry["feedback-tags"]
   style_profiles = registry["style-profiles"]
   manifests = registry["content-manifests"]
@@ -203,6 +205,24 @@ def validate_content_registry() -> list[str]:
     review = review_path("mission-blueprints", content_id)
     if not review.exists():
       issues.append(f"{review.relative_to(REPO_ROOT)}: missing review record for shippable mission")
+
+  scene_ids: set[str] = set()
+  o3de_project_root = REPO_ROOT / "game" / "o3de"
+  for content_id, payload in scene_bindings.items():
+    scene_id = payload.get("scene_id", "")
+    if scene_id in scene_ids:
+      issues.append(f"game/data/content/scene-bindings/{content_id}.json: duplicate scene_id {scene_id}")
+    scene_ids.add(scene_id)
+
+    level_asset_path = payload.get("level_asset_path", "")
+    if level_asset_path:
+      level_path = o3de_project_root / pathlib.Path(level_asset_path)
+      if not level_path.exists():
+        issues.append(
+          f"game/data/content/scene-bindings/{content_id}.json: missing O3DE level asset {level_asset_path}"
+        )
+    else:
+      issues.append(f"game/data/content/scene-bindings/{content_id}.json: missing level_asset_path")
 
   for manifest_id, payload in manifests.items():
     for room_variant_id in split_csv(payload.get("room_variant_ids", "")):

@@ -70,6 +70,46 @@ namespace Peter::Adapters
     bool motionComfortEnabled = false;
   };
 
+  struct SceneLoadRequest
+  {
+    std::string logicalSceneId;
+    std::string levelName;
+    std::string levelAssetPath;
+    std::string spawnPointId;
+  };
+
+  struct SceneLoadResult
+  {
+    bool success = false;
+    std::string backendName;
+    std::string statusCode = "ok";
+    std::string message;
+  };
+
+  struct O3DEBootstrapConfig
+  {
+    std::filesystem::path repoRoot;
+    std::filesystem::path userRoot;
+    std::filesystem::path engineRoot;
+    std::filesystem::path projectRoot;
+    bool developmentMode = true;
+  };
+
+  struct O3DEBootstrapResult
+  {
+    bool success = false;
+    bool engineRegistered = false;
+    bool projectRegistered = false;
+    std::string statusCode = "uninitialized";
+    std::string message;
+    std::filesystem::path engineRoot;
+    std::filesystem::path projectRoot;
+    std::filesystem::path launcherPath;
+    std::filesystem::path assetProcessorPath;
+    std::filesystem::path logPath;
+    std::filesystem::path runtimeRegistryPath;
+  };
+
   class IInputAdapter
   {
   public:
@@ -137,6 +177,14 @@ namespace Peter::Adapters
       std::string_view gestureToken) = 0;
   };
 
+  class ISceneAdapter
+  {
+  public:
+    virtual ~ISceneAdapter() = default;
+    virtual std::string BackendName() const = 0;
+    virtual SceneLoadResult LoadScene(const SceneLoadRequest& request) = 0;
+  };
+
   struct PlatformServices
   {
     std::unique_ptr<IInputAdapter> input;
@@ -145,6 +193,7 @@ namespace Peter::Adapters
     std::unique_ptr<INavigationAdapter> navigation;
     std::unique_ptr<IAudioAdapter> audio;
     std::unique_ptr<IUiAdapter> ui;
+    std::unique_ptr<ISceneAdapter> scene;
   };
 
   struct PlatformFactoryResult
@@ -158,6 +207,8 @@ namespace Peter::Adapters
 
   [[nodiscard]] std::string ToString(RuntimeMode mode);
   [[nodiscard]] bool TryParseRuntimeMode(std::string_view value, RuntimeMode& mode);
+  [[nodiscard]] std::filesystem::path ResolveDefaultO3DERoot();
+  [[nodiscard]] O3DEBootstrapResult BootstrapO3DEProject(const O3DEBootstrapConfig& config);
   [[nodiscard]] RuntimeDescriptor BuildRuntimeDescriptor(
     RuntimeMode mode,
     bool playableRuntimeEnabled);

@@ -142,6 +142,23 @@ namespace Peter::World
     return nullptr;
   }
 
+  const std::vector<PlayableSceneBindingDefinition>& BuildPhase7PlayableSceneBindings()
+  {
+    return Detail::GetPhase5Catalog().sceneBindings;
+  }
+
+  const PlayableSceneBindingDefinition* FindPhase7PlayableSceneBinding(const std::string_view sceneId)
+  {
+    for (const auto& binding : BuildPhase7PlayableSceneBindings())
+    {
+      if (binding.sceneId == sceneId)
+      {
+        return &binding;
+      }
+    }
+    return nullptr;
+  }
+
   const ShippableContentManifest& BuildPhase5ShippableContentManifest()
   {
     return Detail::GetPhase5Catalog().manifest;

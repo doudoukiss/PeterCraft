@@ -6,6 +6,7 @@ Phase 5 moves shipped content into runtime-loaded catalogs.
 - `room-variants/` defines concrete authored room variants with exits and anchors.
 - `encounter-patterns/` defines reusable encounter grammar blocks.
 - `mission-blueprints/` defines authored missions built from template families and content ids.
+- `scene-bindings/` maps logical PeterCraft scene ids to O3DE level assets and spawn metadata.
 - `feedback-tags/` defines audio and VFX hook tags for content authors.
 - `style-profiles/` defines world-building rules for each zone.
 - `content-manifests/` defines which assets are expected to pass shippable validation.

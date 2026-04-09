@@ -21,6 +21,10 @@
   - dependencies: CLI/runtime selection is explicit
   - acceptance: `--runtime playable` exits cleanly with a backend-unavailable result
   - repo area: `game/code/app/`, `tools/build-scripts/run-playable.ps1`
+- Task: replace the playable stub with an O3DE-backed bootstrap in Phase 7.1
+  - dependencies: in-repo O3DE project, adapter seam, scene-binding catalog
+  - acceptance: `--runtime playable` registers the project, creates O3DE platform services, and can launch the bound one-room proof
+  - repo area: `engine-adapters/o3de/`, `game/o3de/`, `game/code/app/`, `game/code/gems/PeterWorld/`
 
 ## Engine integration
 
@@ -28,6 +32,10 @@
   - dependencies: runtime separation complete, quality budgets defined, CI stable
   - acceptance: backend selection can instantiate a real playable adapter stack
   - repo area: `engine-adapters/`, `game/code/app/`, `game/assets/`, `game/ui/`
+- Task: document the O3DE baseline and decision-gate evidence
+  - dependencies: pinned engine version, build scripts, runtime spike outputs
+  - acceptance: contributors can install O3DE, build playable, run playable, debug adapter failures, and find the measurement dashboard without guessing
+  - repo area: `docs/setup/`, `docs/adr/`, `docs/execution/`, `Saved/Generated/o3de/`
 
 ## Traversal
 

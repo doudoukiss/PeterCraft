@@ -1103,7 +1103,7 @@ namespace Peter::App
         {{"beat_id", std::string(beatId)}, {"cue_family", std::string(cueFamily)}});
     };
 
-    Peter::World::SceneShell sceneShell(m_eventBus);
+    Peter::World::SceneShell sceneShell(m_eventBus, m_platform.scene.get());
     double transitionMs = 0.0;
     const auto homeScene = MeasureMilliseconds([&]() { return sceneShell.LoadHomeBase(m_homeBase); }, transitionMs);
     EmitPerformanceMetric(
@@ -1836,8 +1836,8 @@ namespace Peter::App
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 7.0 headless runtime loop: budgets, onboarding telemetry, hardened saves, and polished creator feedback are active."
-        : "Completed the Phase 7.0 headless failure-and-recovery loop: save safety, creator containment, and post-raid clarity remained intact under failure.",
+        ? "Completed the Phase 7.1 runtime loop: the portable shell stayed intact while the O3DE-backed scene path, adapter logging, and playable transition bindings came online."
+        : "Completed the Phase 7.1 failure-and-recovery loop: save safety, creator containment, and post-raid clarity remained intact while the playable scene path stayed available.",
       mission->id,
       companionDecision,
       Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),

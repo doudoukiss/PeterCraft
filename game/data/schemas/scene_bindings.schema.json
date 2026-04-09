@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["scene_id", "display_name", "level_name", "level_asset_path", "spawn_point_id", "transition_card_id", "proof_room"],
+  "properties": {
+    "scene_id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "level_name": {"type": "string", "minLength": 1},
+    "level_asset_path": {"type": "string", "minLength": 1},
+    "spawn_point_id": {"type": "string", "minLength": 1},
+    "transition_card_id": {"type": "string", "minLength": 1},
+    "proof_room": {"type": "string", "enum": ["true", "false"]}
+  },
+  "additionalProperties": true
+}

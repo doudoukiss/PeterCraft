@@ -45,6 +45,11 @@ PETER_TEST_MAIN({
   PETER_ASSERT_EQ(std::string("playable"), Peter::Adapters::ToString(runtimeMode));
   const auto runtimeDescriptor = Peter::Adapters::BuildRuntimeDescriptor(runtimeMode, false);
   PETER_ASSERT_EQ(std::string("playable_stub"), runtimeDescriptor.backendId);
+  const auto headlessRuntime = Peter::Adapters::BuildRuntimeDescriptor(Peter::Adapters::RuntimeMode::Headless, true);
+  const Peter::Adapters::BootConfig bootConfig{std::filesystem::current_path(), std::filesystem::temp_directory_path() / "PeterCraftUnitHeadless", true};
+  const auto headlessPlatform = Peter::Adapters::CreatePlatformServices(bootConfig, headlessRuntime);
+  PETER_ASSERT_TRUE(headlessPlatform.available);
+  PETER_ASSERT_TRUE(headlessPlatform.services.scene != nullptr);
 
   Peter::Core::EventBus eventBus;
   CountingSink sink;
@@ -274,6 +279,7 @@ PETER_TEST_MAIN({
   PETER_ASSERT_TRUE(!Peter::World::BuildPhase5RoomKits().empty());
   PETER_ASSERT_TRUE(!Peter::World::BuildPhase5RoomVariants().empty());
   PETER_ASSERT_TRUE(!Peter::World::BuildPhase5MissionBlueprints().empty());
+  PETER_ASSERT_TRUE(!Peter::World::BuildPhase7PlayableSceneBindings().empty());
   PETER_ASSERT_TRUE(Peter::Validation::ValidateRoomKitDefinition(
     Peter::World::BuildPhase5RoomKits().front()).valid);
   PETER_ASSERT_TRUE(Peter::Validation::ValidateRoomVariantDefinition(

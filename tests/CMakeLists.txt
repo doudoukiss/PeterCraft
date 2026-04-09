@@ -4,6 +4,7 @@ add_executable(PeterCoreUnitTests
 
 target_link_libraries(PeterCoreUnitTests
   PRIVATE
+    PeterAdapters
     PeterAI
     PeterCombat
     PeterCore
@@ -102,7 +103,7 @@ add_test(
 )
 
 add_test(
-  NAME playable_runtime_preflight_unavailable
+  NAME playable_runtime_unavailable_when_not_compiled
   COMMAND $<TARGET_FILE:PeterCraftApp> --runtime playable --profile-id player.test.playable --no-settings
 )
-set_tests_properties(playable_runtime_preflight_unavailable PROPERTIES WILL_FAIL TRUE)
+set_tests_properties(playable_runtime_unavailable_when_not_compiled PROPERTIES WILL_FAIL TRUE)

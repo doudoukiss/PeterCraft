@@ -304,6 +304,21 @@ namespace Peter::World::Detail
       return blueprint;
     }
 
+    PlayableSceneBindingDefinition LoadSceneBinding(const std::filesystem::path& path)
+    {
+      const auto fields = ParseFields(path);
+      PlayableSceneBindingDefinition binding;
+      binding.sceneId = fields.at("scene_id");
+      binding.displayName = fields.at("display_name");
+      binding.levelName = fields.at("level_name");
+      binding.levelAssetPath = fields.at("level_asset_path");
+      binding.spawnPointId = fields.at("spawn_point_id");
+      binding.transitionCardId = fields.at("transition_card_id");
+      const auto proofRoom = fields.find("proof_room");
+      binding.proofRoom = proofRoom != fields.end() && ParseBool(proofRoom->second);
+      return binding;
+    }
+
     ShippableContentManifest LoadManifest(const std::filesystem::path& path)
     {
       const auto fields = ParseFields(path);
@@ -342,6 +357,7 @@ namespace Peter::World::Detail
       for (const auto& path : SortedJsonFiles(contentRoot / "feedback-tags")) loaded.feedbackTags.push_back(LoadFeedbackTag(path));
       for (const auto& path : SortedJsonFiles(contentRoot / "style-profiles")) loaded.styleProfiles.push_back(LoadStyleProfile(path));
       for (const auto& path : SortedJsonFiles(contentRoot / "mission-blueprints")) loaded.missionBlueprints.push_back(LoadMissionBlueprint(path));
+      for (const auto& path : SortedJsonFiles(contentRoot / "scene-bindings")) loaded.sceneBindings.push_back(LoadSceneBinding(path));
       const auto manifests = SortedJsonFiles(contentRoot / "content-manifests");
       if (!manifests.empty())
       {

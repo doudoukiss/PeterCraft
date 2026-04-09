@@ -1,0 +1,48 @@
+{
+    "project_name": "PeterCraftRuntime",
+    "version": "0.7.1",
+    "project_id": "{43106C64-41F8-4AD4-9639-812D005C0A49}",
+    "origin": "https://github.com/petercraft/petercraft",
+    "license": "Apache-2.0",
+    "display_name": "PeterCraftRuntime",
+    "summary": "O3DE-backed playable runtime baseline for PeterCraft Phase 7.1.",
+    "canonical_tags": [
+        "Project",
+        "PlayableRuntime"
+    ],
+    "user_tags": [
+        "PeterCraftRuntime",
+        "PeterCraft"
+    ],
+    "icon_path": "preview.png",
+    "engine": "o3de",
+    "external_subdirectories": [
+        "Gem"
+    ],
+    "restricted": "PeterCraftRuntime",
+    "gem_names": [
+        "PeterCraftRuntime",
+        "Atom",
+        "AudioSystem",
+        "CameraFramework",
+        "DebugDraw",
+        "DiffuseProbeGrid",
+        "EditorPythonBindings",
+        "EMotionFX",
+        "GameState",
+        "ImGui",
+        "LandscapeCanvas",
+        "LyShine",
+        "MiniAudio",
+        "PhysX",
+        "PrimitiveAssets",
+        "PrefabBuilder",
+        "SaveData",
+        "ScriptCanvasPhysics",
+        "ScriptEvents",
+        "StartingPointInput",
+        "TextureAtlas",
+        "WhiteBox",
+        "RemoteTools"
+    ]
+}

@@ -1,11 +1,19 @@
 #include "PeterAdapters/PlatformServices.h"
 
 #include <filesystem>
+#include <cstdlib>
 #include <iostream>
 #include <utility>
 
 namespace Peter::Adapters
 {
+#if defined(PETERCRAFT_ENABLE_PLAYABLE_RUNTIME) && PETERCRAFT_ENABLE_PLAYABLE_RUNTIME && defined(_WIN32)
+  PlatformFactoryResult CreateO3DEPlatformServices(
+    const BootConfig& bootConfig,
+    const RuntimeDescriptor& runtimeDescriptor);
+  O3DEBootstrapResult BootstrapO3DEProjectImpl(const O3DEBootstrapConfig& config);
+#endif
+
   namespace
   {
     class NullInputAdapter final : public IInputAdapter
@@ -187,6 +195,24 @@ namespace Peter::Adapters
                   << " gesture=" << gestureToken << '\n';
       }
     };
+
+    class NullSceneAdapter final : public ISceneAdapter
+    {
+    public:
+      std::string BackendName() const override
+      {
+        return "headless_scene_shell";
+      }
+
+      SceneLoadResult LoadScene(const SceneLoadRequest& request) override
+      {
+        return {
+          true,
+          BackendName(),
+          "headless_noop",
+          "Headless runtime acknowledged logical scene '" + request.logicalSceneId + "'."};
+      }
+    };
   } // namespace
 
   std::string ToString(const RuntimeMode mode)
@@ -218,8 +244,42 @@ namespace Peter::Adapters
     RuntimeDescriptor descriptor;
     descriptor.mode = mode;
     descriptor.playableRuntimeEnabled = playableRuntimeEnabled;
-    descriptor.backendId = mode == RuntimeMode::Playable ? "playable_stub" : "null_headless";
+    descriptor.backendId = mode == RuntimeMode::Playable
+      ? (playableRuntimeEnabled ? "o3de_playable" : "playable_stub")
+      : "null_headless";
     return descriptor;
+  }
+
+  std::filesystem::path ResolveDefaultO3DERoot()
+  {
+    char* configuredRoot = nullptr;
+    std::size_t configuredRootLength = 0;
+    if (_dupenv_s(&configuredRoot, &configuredRootLength, "PETERCRAFT_O3DE_ROOT") == 0
+      && configuredRoot != nullptr
+      && configuredRootLength > 1)
+    {
+      const std::filesystem::path root(configuredRoot);
+      std::free(configuredRoot);
+      return root;
+    }
+    std::free(configuredRoot);
+
+    return std::filesystem::path("C:/o3de/25.10.2");
+  }
+
+  O3DEBootstrapResult BootstrapO3DEProject(const O3DEBootstrapConfig& config)
+  {
+#if defined(PETERCRAFT_ENABLE_PLAYABLE_RUNTIME) && PETERCRAFT_ENABLE_PLAYABLE_RUNTIME && defined(_WIN32)
+    return BootstrapO3DEProjectImpl(config);
+#else
+    O3DEBootstrapResult result;
+    result.success = false;
+    result.statusCode = "playable_runtime_not_compiled";
+    result.message = "Playable runtime bootstrap is unavailable in this build.";
+    result.engineRoot = config.engineRoot;
+    result.projectRoot = config.projectRoot;
+    return result;
+#endif
   }
 
   PlatformFactoryResult CreatePlatformServices(
@@ -235,14 +295,22 @@ namespace Peter::Adapters
       return result;
     }
 
-    result.available = false;
-    result.statusCode = "backend_unavailable";
-    result.message = "Playable runtime backend unavailable until Phase 7.1.";
     if (!runtimeDescriptor.playableRuntimeEnabled)
     {
-      result.message += " Build option PETERCRAFT_ENABLE_PLAYABLE_RUNTIME is OFF.";
+      result.available = false;
+      result.statusCode = "playable_runtime_not_compiled";
+      result.message = "Playable runtime is disabled in this build. Rebuild with PETERCRAFT_ENABLE_PLAYABLE_RUNTIME=ON.";
+      return result;
     }
+
+#if defined(PETERCRAFT_ENABLE_PLAYABLE_RUNTIME) && PETERCRAFT_ENABLE_PLAYABLE_RUNTIME && defined(_WIN32)
+    return CreateO3DEPlatformServices(bootConfig, runtimeDescriptor);
+#else
+    result.available = false;
+    result.statusCode = "backend_unavailable";
+    result.message = "Playable runtime requires a Windows build with O3DE runtime support enabled.";
     return result;
+#endif
   }
 
   PlatformServices CreateNullPlatformServices(const BootConfig& bootConfig)
@@ -254,6 +322,7 @@ namespace Peter::Adapters
     services.navigation = std::make_unique<NullNavigationAdapter>();
     services.audio = std::make_unique<NullAudioAdapter>();
     services.ui = std::make_unique<NullUiAdapter>();
+    services.scene = std::make_unique<NullSceneAdapter>();
     return services;
   }
 } // namespace Peter::Adapters
