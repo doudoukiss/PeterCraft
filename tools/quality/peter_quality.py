@@ -36,17 +36,26 @@ def write_text(path: pathlib.Path, body: str) -> pathlib.Path:
   return path
 
 
-def load_events(path: pathlib.Path) -> list[dict[str, object]]:
+def load_events(path: pathlib.Path) -> tuple[list[dict[str, object]], int]:
   events: list[dict[str, object]] = []
+  malformed_lines = 0
   if not path.exists():
-    return events
+    return events, malformed_lines
   with path.open("r", encoding="utf-8-sig") as handle:
     for line in handle:
       line = line.strip()
       if not line:
         continue
-      events.append(json.loads(line))
-  return events
+      try:
+        payload = json.loads(line)
+      except json.JSONDecodeError:
+        malformed_lines += 1
+        continue
+      if isinstance(payload, dict):
+        events.append(payload)
+      else:
+        malformed_lines += 1
+  return events, malformed_lines
 
 
 def percentile(values: Iterable[float], ratio: float) -> float:
@@ -135,7 +144,8 @@ def metric_passes(metric_id: str, value: float, threshold: float) -> bool:
 def run_budget_check(telemetry_path: pathlib.Path) -> int:
   profile = load_quality_profile()
   thresholds = budget_thresholds(profile)
-  metrics = sample_metrics(load_events(telemetry_path))
+  events, malformed_lines = load_events(telemetry_path)
+  metrics = sample_metrics(events)
 
   rows: list[dict[str, object]] = []
   passed = True
@@ -153,8 +163,16 @@ def run_budget_check(telemetry_path: pathlib.Path) -> int:
       passed = False
 
   output_root = ensure_generated_root()
-  write_text(output_root / "budget-check.json", json.dumps(rows, indent=2))
-  markdown = ["# Budget Check", f"- telemetry: `{telemetry_path}`", f"- passed: `{str(passed).lower()}`", ""]
+  write_text(
+    output_root / "budget-check.json",
+    json.dumps({"malformed_lines": malformed_lines, "rows": rows}, indent=2))
+  markdown = [
+    "# Budget Check",
+    f"- telemetry: `{telemetry_path}`",
+    f"- passed: `{str(passed).lower()}`",
+    f"- malformed_lines_skipped: `{malformed_lines}`",
+    "",
+  ]
   for row in rows:
     markdown.append(
       f"- `{row['metric_id']}` value={row['value']:.2f} budget={row['budget']:.2f} samples={row['samples']} pass={str(row['passed']).lower()}"

@@ -681,15 +681,18 @@ namespace Peter::App
         activeRuleset,
         activeScript.id.empty() ? nullptr : &activeScript));
 
-    if (state.creatorProgress.mentorViewUnlocked || Peter::Progression::HasUnlockedNode(
+    const bool mentorUnlocked = state.creatorProgress.mentorViewUnlocked || Peter::Progression::HasUnlockedNode(
       state.workshop,
-      "track.creator_unlocks.mentor_view"))
+      "track.creator_unlocks.mentor_view");
+    if (mentorUnlocked)
     {
+      auto mentorProgress = state.creatorProgress;
+      mentorProgress.mentorViewUnlocked = mentorUnlocked;
       const auto previewContext = BuildExplainPreviewContext(state.workshop);
       const auto previewDecision = Peter::AI::EvaluateCompanion(state.companionConfig, previewContext);
       const auto mentorPanel = Peter::UI::RenderMentorSummary(
         state.creatorManifest,
-        state.creatorProgress,
+        mentorProgress,
         Peter::AI::BuildExplainSnapshot(previewDecision));
       m_platform.ui->PresentPanel("home_base.mentor_summary", mentorPanel);
     }
@@ -946,11 +949,14 @@ namespace Peter::App
       {
         Peter::Tools::DeterministicScenarioHarness harness(step.targetId.empty() ? "scenario.ai.follow_corridor.v1" : step.targetId);
         const auto compare = harness.Compare(Peter::AI::DefaultCompanionConfig(), state.companionConfig);
+        const std::string replaySummary = compare.changed
+          ? "Your creator change changed the deterministic path."
+          : "Your creator change kept the same action path here, so it mainly affected explanation, spacing, or safety margins.";
         const auto snippet = Peter::Workshop::BuildCreatorReplaySnippet(
           compare.scenarioId,
           compare.beforeActionPath,
           compare.afterActionPath,
-          "Your creator change changed the deterministic path.");
+          replaySummary);
         m_platform.ui->PresentReplayTimeline("creator.lesson.replay", Peter::UI::RenderReplaySnippet(snippet));
         m_eventBus.Emit(Peter::Core::Event{
           Peter::Core::EventCategory::CreatorTools,
@@ -1439,7 +1445,7 @@ namespace Peter::App
       combatContext.distanceToThreatMeters = 8;
       combatContext.extractionUrgency = state.accessibility.reducedTimePressure ? 2 : 3;
       combatContext.roomNodeId = raidZone.extractionRoomId;
-      combatContext.routeNodeId = "route.machine_silo.vault_watch";
+      combatContext.routeNodeId = raidZone.sceneId + ".extraction_path";
       combatContext.currentGoal = "goal.reach_extraction";
       combatContext.visibleThreatId = "enemy.none";
       combatContext.heardEventToken = "sound.extraction_alarm";
@@ -1478,15 +1484,13 @@ namespace Peter::App
       raidSummary.recoveredItems = "none";
 
       VisitStation(FindStation("station.home.workbench"));
-      std::string workshopPanel = Peter::UI::RenderWorkshopTracks(
-        Peter::Progression::BuildPhase2UpgradeTracks(),
-        state.workshop);
       const auto nextNode = NextUpgradeNodeForMission(state.workshop, *mission);
+      std::string unlockSummary;
       if (!nextNode.empty())
       {
         const auto unlockResult =
           Peter::Progression::UnlockUpgradeNode(nextNode, state.inventory, state.loadout, state.workshop);
-        workshopPanel += "\n" + unlockResult.summary;
+        unlockSummary = unlockResult.summary;
         m_eventBus.Emit(Peter::Core::Event{
           Peter::Core::EventCategory::Gameplay,
           "gameplay.workshop.upgrade_unlocked",
@@ -1499,6 +1503,13 @@ namespace Peter::App
         {
           postFeedback("workshop_success", nextNode, 2, false, "workshop_unlock");
         }
+      }
+      std::string workshopPanel = Peter::UI::RenderWorkshopTracks(
+        Peter::Progression::BuildPhase2UpgradeTracks(),
+        state.workshop);
+      if (!unlockSummary.empty())
+      {
+        workshopPanel += "\n" + unlockSummary;
       }
       m_platform.ui->PresentPanel("workbench.tracks", workshopPanel);
 
@@ -1650,26 +1661,32 @@ namespace Peter::App
             "Safe simulation after tinker, logic, and tiny script changes."));
         Peter::Tools::DeterministicScenarioHarness creatorHarness("scenario.ai.loot_vs_safety.v1");
         const auto creatorCompare = creatorHarness.Compare(previousConfig, creatorConfig);
+        const std::string creatorReplaySummary = creatorCompare.changed
+          ? "Your creator changes produced a new explainable behavior path."
+          : "Your creator changes kept the same action path in this scenario, so the difference is limited to explanation, pacing, or safety margins.";
         const auto creatorReplay = Peter::Workshop::BuildCreatorReplaySnippet(
           creatorCompare.scenarioId,
           creatorCompare.beforeActionPath,
           creatorCompare.afterActionPath,
-          "Your creator changes produced a new explainable behavior path.");
+          creatorReplaySummary);
         m_platform.ui->PresentReplayTimeline(
           "creator.safe_simulation.replay",
           Peter::UI::RenderReplaySnippet(creatorReplay));
-        const auto mentorPanel = Peter::UI::RenderMentorSummary(
-          state.creatorManifest,
-          state.creatorProgress,
-          Peter::AI::BuildExplainSnapshot(creatorAfter));
-        const auto mentorPath = m_creatorContentStore.WriteMentorSummary(
-          "mentor.phase4.creator_summary",
-          mentorPanel);
-        m_platform.ui->PresentMentorSummaryPrompt(mentorPath.string(), mentorPanel);
-        m_eventBus.Emit(Peter::Core::Event{
-          Peter::Core::EventCategory::CreatorTools,
-          "creator_tools.mentor_view.opened",
-          {{"export_path", mentorPath.string()}, {"safe_sim_runs", std::to_string(state.creatorProgress.safeSimulationRuns)}}});
+        if (state.creatorProgress.mentorViewUnlocked)
+        {
+          const auto mentorPanel = Peter::UI::RenderMentorSummary(
+            state.creatorManifest,
+            state.creatorProgress,
+            Peter::AI::BuildExplainSnapshot(creatorAfter));
+          const auto mentorPath = m_creatorContentStore.WriteMentorSummary(
+            "mentor.phase4.creator_summary",
+            mentorPanel);
+          m_platform.ui->PresentMentorSummaryPrompt(mentorPath.string(), mentorPanel);
+          m_eventBus.Emit(Peter::Core::Event{
+            Peter::Core::EventCategory::CreatorTools,
+            "creator_tools.mentor_view.opened",
+            {{"export_path", mentorPath.string()}, {"safe_sim_runs", std::to_string(state.creatorProgress.safeSimulationRuns)}}});
+        }
       }
 
       if (guidedMode)
