@@ -230,6 +230,16 @@ def validate_content_registry() -> list[str]:
     for family in required_families:
       if family not in priority_map:
         issues.append(f"game/data/content/quality-profiles/{profile_id}.json: missing priority for feedback family {family}")
+    if profile_id == "quality.phase7.playable":
+      for field_name in [
+        "input_to_motion_latency_budget_ms",
+        "interaction_hitch_budget_ms",
+        "audio_voice_concurrency_budget",
+      ]:
+        if not payload.get(field_name):
+          issues.append(
+            f"game/data/content/quality-profiles/{profile_id}.json: missing required Phase 7 field {field_name}"
+          )
 
   return issues
 

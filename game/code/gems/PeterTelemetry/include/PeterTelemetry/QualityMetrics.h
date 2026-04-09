@@ -17,18 +17,22 @@ namespace Peter::Telemetry
     double budget = 0.0;
     bool passed = true;
     std::string source;
+    bool measured = true;
   };
 
   struct QualityReport
   {
     bool passed = true;
+    std::string profileId;
+    std::string profileDisplayName;
     std::string summary;
+    std::size_t unmeasuredSamples = 0;
     std::vector<QualityMetricSample> samples;
   };
 
   [[nodiscard]] std::size_t CurrentWorkingSetMegabytes();
   [[nodiscard]] QualityReport EvaluateQualityReport(
-    const Peter::Core::Phase6QualityProfile& profile,
+    const Peter::Core::QualityProfileBase& profile,
     const std::vector<QualityMetricSample>& samples);
   [[nodiscard]] std::string RenderQualityReport(const QualityReport& report);
 } // namespace Peter::Telemetry

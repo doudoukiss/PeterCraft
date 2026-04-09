@@ -21,6 +21,7 @@ try {
   }
 
   & $python @arguments
+  Assert-LastExitCode 'Run validation tooling'
 } finally {
   Pop-Location
 }

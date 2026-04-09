@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PeterCraft Phase 6 Quality Profile",
+  "title": "PeterCraft Quality Profile",
   "type": "object",
   "required": [
     "kind",
@@ -40,11 +40,14 @@
     "cold_boot_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "transition_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "peak_working_set_budget_mb": { "type": "string", "pattern": "^[0-9]+$" },
+    "input_to_motion_latency_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "ai_decision_p95_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "ui_panel_render_p95_ms": { "type": "string", "pattern": "^[0-9.]+$" },
+    "interaction_hitch_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "single_save_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "full_load_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
     "full_save_budget_ms": { "type": "string", "pattern": "^[0-9.]+$" },
+    "audio_voice_concurrency_budget": { "type": "string", "pattern": "^[0-9]+$" },
     "movement_acceleration_mps2": { "type": "string", "pattern": "^[0-9.]+$" },
     "movement_deceleration_mps2": { "type": "string", "pattern": "^[0-9.]+$" },
     "movement_jump_readability_scale": { "type": "string", "pattern": "^[0-9.]+$" },

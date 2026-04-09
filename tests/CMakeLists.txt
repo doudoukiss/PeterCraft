@@ -78,25 +78,31 @@ add_test(NAME scenario_deterministic_shell COMMAND PeterScenarioTests)
 
 add_test(
   NAME slice_happy_path
-  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario happy_path --profile-id player.test.happy --no-settings
+  COMMAND $<TARGET_FILE:PeterCraftApp> --runtime headless --scenario happy_path --profile-id player.test.happy --no-settings
 )
 
 add_test(
   NAME slice_failure_path
-  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario failure_path --profile-id player.test.failure --no-settings
+  COMMAND $<TARGET_FILE:PeterCraftApp> --runtime headless --scenario failure_path --profile-id player.test.failure --no-settings
 )
 
 add_test(
   NAME smoke_vertical_slice
-  COMMAND $<TARGET_FILE:PeterCraftApp> --smoke-test --profile-id player.test.smoke --no-settings
+  COMMAND $<TARGET_FILE:PeterCraftApp> --runtime headless --smoke-test --profile-id player.test.smoke --no-settings
 )
 
 add_test(
   NAME slice_artifact_recovery
-  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario artifact_recovery --profile-id player.test.artifact --no-settings
+  COMMAND $<TARGET_FILE:PeterCraftApp> --runtime headless --scenario artifact_recovery --profile-id player.test.artifact --no-settings
 )
 
 add_test(
   NAME slice_escort_support
-  COMMAND $<TARGET_FILE:PeterCraftApp> --scenario escort_support --profile-id player.test.escort --no-settings
+  COMMAND $<TARGET_FILE:PeterCraftApp> --runtime headless --scenario escort_support --profile-id player.test.escort --no-settings
 )
+
+add_test(
+  NAME playable_runtime_preflight_unavailable
+  COMMAND $<TARGET_FILE:PeterCraftApp> --runtime playable --profile-id player.test.playable --no-settings
+)
+set_tests_properties(playable_runtime_preflight_unavailable PROPERTIES WILL_FAIL TRUE)

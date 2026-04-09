@@ -19,6 +19,7 @@ namespace Peter::Core
 
     void SetFlag(const std::string& flagName, bool enabled);
     [[nodiscard]] bool IsEnabled(std::string_view flagName) const;
+    [[nodiscard]] const std::map<std::string, bool, std::less<>>& Flags() const;
     [[nodiscard]] const VersionInfo& Version() const;
 
   private:

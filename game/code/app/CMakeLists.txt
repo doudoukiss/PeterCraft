@@ -28,5 +28,9 @@ target_link_libraries(PeterCraftApp
 )
 
 target_compile_features(PeterCraftApp PRIVATE cxx_std_20)
+target_compile_definitions(PeterCraftApp
+  PRIVATE
+    PETERCRAFT_ENABLE_PLAYABLE_RUNTIME=$<BOOL:${PETERCRAFT_ENABLE_PLAYABLE_RUNTIME}>
+)
 
 peter_enable_strict_warnings(PeterCraftApp)

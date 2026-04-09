@@ -4,9 +4,64 @@
 
 namespace Peter::Validation
 {
+  namespace
+  {
+    RuleValidationResult ValidateAccessibilitySettingsAgainstProfile(
+      const Peter::UI::AccessibilitySettings& settings,
+      const Peter::Core::QualityProfileBase& qualityProfile)
+    {
+      if (settings.textScalePercent < 90 || settings.textScalePercent > 200)
+      {
+        return RuleValidationResult{false, "Text scale must stay inside the supported 90% to 200% range."};
+      }
+      if (settings.subtitleScalePercent < 90 || settings.subtitleScalePercent > 180)
+      {
+        return RuleValidationResult{false, "Subtitle scale must stay inside the supported 90% to 180% range."};
+      }
+      if (qualityProfile.subtitleBackgroundRequired && !settings.subtitleBackgroundEnabled)
+      {
+        return RuleValidationResult{false, "Subtitle background must remain available in the runtime."};
+      }
+      if (qualityProfile.iconRedundancyRequired && !settings.iconRedundancyEnabled)
+      {
+        return RuleValidationResult{false, "Critical prompts cannot disable icon redundancy completely."};
+      }
+      return RuleValidationResult{true, "Accessibility settings are valid."};
+    }
+
+    RuleValidationResult ValidateQualityProfileBase(
+      const Peter::Core::QualityProfileBase& profile,
+      const std::string_view profileLabel)
+    {
+      if (profile.id.empty() || profile.displayName.empty() || profile.targetHardware.id.empty())
+      {
+        return RuleValidationResult{
+          false,
+          std::string(profileLabel) + " quality profile needs id, display name, and target hardware."
+        };
+      }
+      if (profile.budgets.fpsTarget < 30 || profile.budgets.frameTimeP95Ms <= 0.0)
+      {
+        return RuleValidationResult{false, "Performance budgets must be positive and realistic."};
+      }
+      if (profile.feedback.requiredCueFamilies.empty())
+      {
+        return RuleValidationResult{false, "Feedback profile must list required cue families."};
+      }
+      for (const auto& family : profile.feedback.requiredCueFamilies)
+      {
+        if (!profile.feedback.cuePriorityByFamily.contains(family))
+        {
+          return RuleValidationResult{false, "Every required cue family needs a priority mapping."};
+        }
+      }
+      return RuleValidationResult{true, std::string(profileLabel) + " quality profile is valid."};
+    }
+  } // namespace
+
   ValidationStatus ValidationStatus::PlaceholderHealthy()
   {
-    return ValidationStatus{"ok", "phase 6 validation, quality profiles, content catalogs, save hardening checks, authoring checks, migrations, and deterministic scenario guards are active"};
+    return ValidationStatus{"ok", "phase 7.0 validation, quality profiles, runtime-mode separation checks, content catalogs, save hardening checks, authoring checks, migrations, and deterministic scenario guards are active"};
   }
 
   RuleValidationResult ValidateFollowDistance(const double followDistanceMeters)
@@ -591,47 +646,44 @@ namespace Peter::Validation
     const Peter::UI::AccessibilitySettings& settings,
     const Peter::Core::Phase6QualityProfile& qualityProfile)
   {
-    if (settings.textScalePercent < 90 || settings.textScalePercent > 200)
-    {
-      return RuleValidationResult{false, "Text scale must stay inside the supported 90% to 200% range."};
-    }
-    if (settings.subtitleScalePercent < 90 || settings.subtitleScalePercent > 180)
-    {
-      return RuleValidationResult{false, "Subtitle scale must stay inside the supported 90% to 180% range."};
-    }
-    if (qualityProfile.subtitleBackgroundRequired && !settings.subtitleBackgroundEnabled)
-    {
-      return RuleValidationResult{false, "Subtitle background must remain available in the Phase 6 shell."};
-    }
-    if (qualityProfile.iconRedundancyRequired && !settings.iconRedundancyEnabled)
-    {
-      return RuleValidationResult{false, "Critical prompts cannot disable icon redundancy completely."};
-    }
-    return RuleValidationResult{true, "Accessibility settings are valid."};
+    return ValidateAccessibilitySettingsAgainstProfile(settings, qualityProfile);
+  }
+
+  RuleValidationResult ValidateAccessibilitySettings(
+    const Peter::UI::AccessibilitySettings& settings,
+    const Peter::Core::Phase7PlayableQualityProfile& qualityProfile)
+  {
+    return ValidateAccessibilitySettingsAgainstProfile(settings, qualityProfile);
   }
 
   RuleValidationResult ValidatePhase6QualityProfile(const Peter::Core::Phase6QualityProfile& profile)
   {
-    if (profile.id.empty() || profile.displayName.empty() || profile.targetHardware.id.empty())
+    return ValidateQualityProfileBase(profile, "Phase 6");
+  }
+
+  RuleValidationResult ValidatePhase7PlayableQualityProfile(
+    const Peter::Core::Phase7PlayableQualityProfile& profile)
+  {
+    const auto commonValidation = ValidateQualityProfileBase(profile, "Phase 7 playable");
+    if (!commonValidation.valid)
     {
-      return RuleValidationResult{false, "Phase 6 quality profile needs id, display name, and target hardware."};
+      return commonValidation;
     }
-    if (profile.budgets.fpsTarget < 30 || profile.budgets.frameTimeP95Ms <= 0.0)
+
+    if (profile.budgets.inputToMotionLatencyBudgetMs <= 0.0)
     {
-      return RuleValidationResult{false, "Performance budgets must be positive and realistic."};
+      return RuleValidationResult{false, "Phase 7 playable profile needs an input-to-motion latency budget."};
     }
-    if (profile.feedback.requiredCueFamilies.empty())
+    if (profile.budgets.interactionHitchBudgetMs <= 0.0)
     {
-      return RuleValidationResult{false, "Feedback profile must list required cue families."};
+      return RuleValidationResult{false, "Phase 7 playable profile needs an interaction hitch budget."};
     }
-    for (const auto& family : profile.feedback.requiredCueFamilies)
+    if (profile.budgets.audioVoiceConcurrencyBudget < 1)
     {
-      if (!profile.feedback.cuePriorityByFamily.contains(family))
-      {
-        return RuleValidationResult{false, "Every required cue family needs a priority mapping."};
-      }
+      return RuleValidationResult{false, "Phase 7 playable profile needs an audio concurrency budget."};
     }
-    return RuleValidationResult{true, "Phase 6 quality profile is valid."};
+
+    return RuleValidationResult{true, "Phase 7 playable quality profile is valid."};
   }
 
   std::string_view GetModuleSummary()

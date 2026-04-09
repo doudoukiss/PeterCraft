@@ -74,7 +74,12 @@ namespace Peter::Validation
   [[nodiscard]] RuleValidationResult ValidateAccessibilitySettings(
     const Peter::UI::AccessibilitySettings& settings,
     const Peter::Core::Phase6QualityProfile& qualityProfile);
+  [[nodiscard]] RuleValidationResult ValidateAccessibilitySettings(
+    const Peter::UI::AccessibilitySettings& settings,
+    const Peter::Core::Phase7PlayableQualityProfile& qualityProfile);
   [[nodiscard]] RuleValidationResult ValidatePhase6QualityProfile(
     const Peter::Core::Phase6QualityProfile& profile);
+  [[nodiscard]] RuleValidationResult ValidatePhase7PlayableQualityProfile(
+    const Peter::Core::Phase7PlayableQualityProfile& profile);
   std::string_view GetModuleSummary();
 } // namespace Peter::Validation

@@ -11,7 +11,8 @@
 namespace Peter::App
 {
   using Peter::Adapters::BootConfig;
-  using Peter::Adapters::CreateNullPlatformServices;
+  using Peter::Adapters::BuildRuntimeDescriptor;
+  using Peter::Adapters::CreatePlatformServices;
   using Peter::Core::Event;
   using Peter::Core::EventCategory;
   using Peter::Core::FeatureRegistry;
@@ -27,6 +28,15 @@ namespace Peter::App
   {
   }
 
+  namespace
+  {
+#if defined(PETERCRAFT_ENABLE_PLAYABLE_RUNTIME) && PETERCRAFT_ENABLE_PLAYABLE_RUNTIME
+    constexpr bool kPlayableRuntimeCompiled = true;
+#else
+    constexpr bool kPlayableRuntimeCompiled = false;
+#endif
+  } // namespace
+
   std::filesystem::path PeterCraftApp::ResolveRepoRoot() const
   {
     return std::filesystem::current_path();
@@ -37,13 +47,18 @@ namespace Peter::App
     return ResolveRepoRoot() / "Saved";
   }
 
+  Peter::Adapters::RuntimeDescriptor PeterCraftApp::ResolveRuntimeDescriptor() const
+  {
+    return BuildRuntimeDescriptor(m_options.runtimeMode, kPlayableRuntimeCompiled);
+  }
+
   int PeterCraftApp::Run()
   {
     const auto bootStarted = std::chrono::steady_clock::now();
     const auto repoRoot = ResolveRepoRoot();
     const auto userRoot = ResolveUserRoot();
     const BootConfig bootConfig{repoRoot, userRoot, m_options.developmentMode};
-    auto platform = CreateNullPlatformServices(bootConfig);
+    const auto runtimeDescriptor = ResolveRuntimeDescriptor();
 
     const auto logRoot = userRoot / "Logs";
     std::filesystem::create_directories(logRoot);
@@ -52,8 +67,10 @@ namespace Peter::App
     JsonlTelemetrySink telemetrySink(logRoot / "petercraft-events.jsonl");
     eventBus.RegisterSink(&telemetrySink);
 
+    auto runtimeFactoryResult = CreatePlatformServices(bootConfig, runtimeDescriptor);
     const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
-    FeatureRegistry features(VersionInfo{"0.6.0", "phase6"});
+    const auto playableQualityProfile = Peter::Core::LoadPhase7PlayableQualityProfile();
+    FeatureRegistry features(VersionInfo{"0.7.0", "phase7_0"});
     features.SetFlag("feature.vertical_slice", true);
     features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
@@ -65,6 +82,42 @@ namespace Peter::App
     features.SetFlag("feature.content_catalogs", true);
     features.SetFlag("feature.quality_beta", true);
     features.SetFlag("feature.atomic_save_hardening", true);
+    features.SetFlag("feature.playable_runtime", false);
+    features.SetFlag("feature.o3de_adapter", false);
+    features.SetFlag("feature.realtime_traversal", false);
+    features.SetFlag("feature.realtime_combat", false);
+    features.SetFlag("feature.realtime_ai", false);
+    features.SetFlag("feature.raid_hud", false);
+    features.SetFlag("feature.playable_audio", false);
+    features.SetFlag("feature.phase7_blockout_art", false);
+
+    eventBus.Emit(Event{
+      EventCategory::Gameplay,
+      "runtime.mode.selected",
+      {
+        {"backend_id", runtimeFactoryResult.descriptor.backendId},
+        {"mode", Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode)},
+        {"playable_runtime_compiled", kPlayableRuntimeCompiled ? "true" : "false"},
+        {"status", runtimeFactoryResult.available ? "ready" : runtimeFactoryResult.statusCode}
+      }});
+
+    if (!runtimeFactoryResult.available)
+    {
+      eventBus.Emit(Event{
+        EventCategory::Gameplay,
+        "runtime.backend.unavailable",
+        {
+          {"backend_id", runtimeFactoryResult.descriptor.backendId},
+          {"message", runtimeFactoryResult.message},
+          {"mode", Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode)}
+        }});
+      std::cout << "PeterCraft Phase 7.0 Runtime Preflight\n";
+      std::cout << "Runtime mode: " << Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode) << '\n';
+      std::cout << runtimeFactoryResult.message << '\n';
+      return 2;
+    }
+
+    auto platform = std::move(runtimeFactoryResult.services);
 
     ProfileService profileService(*platform.save, eventBus);
     const auto profile = profileService.EnsureProfile(m_options.profileId);
@@ -77,6 +130,7 @@ namespace Peter::App
       {
         {"active_input_scheme", platform.input->ActiveScheme()},
         {"build_track", features.Version().track},
+        {"runtime_mode", Peter::Adapters::ToString(runtimeDescriptor.mode)},
         {"profile_id", profile.profileId},
         {"scenario", m_options.scenario}
       }});
@@ -103,10 +157,17 @@ namespace Peter::App
     }
 
     const auto validationStatus = ValidationStatus::PlaceholderHealthy();
+    const auto playableProfileValidation =
+      Peter::Validation::ValidatePhase7PlayableQualityProfile(playableQualityProfile);
     eventBus.Emit(Event{
       EventCategory::Validation,
-      "validation.runtime.phase6_ready",
-      {{"summary", validationStatus.summary}, {"status", validationStatus.status}}});
+      "validation.runtime.phase7_0_ready",
+      {
+        {"phase6_summary", validationStatus.summary},
+        {"phase6_status", validationStatus.status},
+        {"phase7_playable_profile", playableProfileValidation.valid ? "valid" : "invalid"},
+        {"phase7_playable_summary", playableProfileValidation.message}
+      }});
 
     Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
     const auto runReport = slice.Run(ParseScenario(m_options.scenario));
@@ -130,6 +191,8 @@ namespace Peter::App
     const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(qualityProfile, qualitySamples);
 
     DebugOverlay overlay;
+    overlay.SetRuntimeDescriptor(runtimeDescriptor);
+    overlay.SetFeatureFlags(features.Flags());
     overlay.SetValue("FPS", "60");
     overlay.SetValue("Frame Time", "16.6ms");
     overlay.SetValue("Target Hardware", Peter::Core::DescribeTargetHardwareProfile(qualityProfile.targetHardware));
@@ -152,7 +215,7 @@ namespace Peter::App
         {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
       }});
 
-    std::cout << "PeterCraft Phase 6 Quality Beta\n";
+    std::cout << "PeterCraft Phase 7.0 Headless Runtime\n";
     std::cout << runReport.summary << "\n";
     std::cout << Peter::Telemetry::RenderQualityReport(qualityReport) << "\n";
     std::cout << overlay.Render() << '\n';

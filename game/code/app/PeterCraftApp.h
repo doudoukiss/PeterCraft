@@ -21,6 +21,7 @@ namespace Peter::App
     bool developmentMode = true;
     bool smokeTest = false;
     bool visitSettings = true;
+    Peter::Adapters::RuntimeMode runtimeMode = Peter::Adapters::RuntimeMode::Headless;
     std::string profileId = "player.default";
     std::string scenario = "guided_first_run";
   };
@@ -34,6 +35,7 @@ namespace Peter::App
   private:
     std::filesystem::path ResolveRepoRoot() const;
     std::filesystem::path ResolveUserRoot() const;
+    [[nodiscard]] Peter::Adapters::RuntimeDescriptor ResolveRuntimeDescriptor() const;
 
     AppOptions m_options;
   };

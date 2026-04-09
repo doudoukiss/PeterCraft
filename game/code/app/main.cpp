@@ -1,12 +1,20 @@
 #include "PeterCraftApp.h"
 
+#include <iostream>
 #include <string_view>
 
 namespace
 {
-  Peter::App::AppOptions ParseArguments(int argc, char** argv)
+  struct ParseResult
   {
     Peter::App::AppOptions options;
+    bool valid = true;
+    std::string error;
+  };
+
+  ParseResult ParseArguments(int argc, char** argv)
+  {
+    ParseResult result;
 
     for (int index = 1; index < argc; ++index)
     {
@@ -14,37 +22,55 @@ namespace
 
       if (argument == "--smoke-test")
       {
-        options.smokeTest = true;
-        options.scenario = "smoke";
+        result.options.smokeTest = true;
+        result.options.scenario = "smoke";
       }
       else if (argument == "--development")
       {
-        options.developmentMode = true;
+        result.options.developmentMode = true;
       }
       else if (argument == "--no-settings")
       {
-        options.visitSettings = false;
+        result.options.visitSettings = false;
       }
       else if (argument == "--release-mode")
       {
-        options.developmentMode = false;
+        result.options.developmentMode = false;
+      }
+      else if (argument == "--runtime" && index + 1 < argc)
+      {
+        Peter::Adapters::RuntimeMode runtimeMode = Peter::Adapters::RuntimeMode::Headless;
+        if (!Peter::Adapters::TryParseRuntimeMode(argv[++index], runtimeMode))
+        {
+          result.valid = false;
+          result.error = "Invalid runtime mode. Use --runtime headless|playable.";
+          break;
+        }
+        result.options.runtimeMode = runtimeMode;
       }
       else if (argument == "--scenario" && index + 1 < argc)
       {
-        options.scenario = argv[++index];
+        result.options.scenario = argv[++index];
       }
       else if (argument == "--profile-id" && index + 1 < argc)
       {
-        options.profileId = argv[++index];
+        result.options.profileId = argv[++index];
       }
     }
 
-    return options;
+    return result;
   }
 } // namespace
 
 int main(int argc, char** argv)
 {
-  Peter::App::PeterCraftApp app(ParseArguments(argc, argv));
+  const auto parseResult = ParseArguments(argc, argv);
+  if (!parseResult.valid)
+  {
+    std::cerr << parseResult.error << '\n';
+    return 2;
+  }
+
+  Peter::App::PeterCraftApp app(parseResult.options);
   return app.Run();
 }

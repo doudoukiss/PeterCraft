@@ -37,7 +37,14 @@ PETER_TEST_MAIN({
   Peter::Core::FeatureRegistry registry({"0.4.0", "phase3"});
   registry.SetFlag("feature.ai_alpha", true);
   PETER_ASSERT_TRUE(registry.IsEnabled("feature.ai_alpha"));
+  PETER_ASSERT_TRUE(registry.Flags().contains("feature.ai_alpha"));
   PETER_ASSERT_EQ(std::string("phase3"), registry.Version().track);
+
+  Peter::Adapters::RuntimeMode runtimeMode = Peter::Adapters::RuntimeMode::Headless;
+  PETER_ASSERT_TRUE(Peter::Adapters::TryParseRuntimeMode("playable", runtimeMode));
+  PETER_ASSERT_EQ(std::string("playable"), Peter::Adapters::ToString(runtimeMode));
+  const auto runtimeDescriptor = Peter::Adapters::BuildRuntimeDescriptor(runtimeMode, false);
+  PETER_ASSERT_EQ(std::string("playable_stub"), runtimeDescriptor.backendId);
 
   Peter::Core::EventBus eventBus;
   CountingSink sink;
@@ -48,6 +55,9 @@ PETER_TEST_MAIN({
   const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
   PETER_ASSERT_TRUE(Peter::Validation::ValidatePhase6QualityProfile(qualityProfile).valid);
   PETER_ASSERT_EQ(60, qualityProfile.budgets.fpsTarget);
+  const auto playableQualityProfile = Peter::Core::LoadPhase7PlayableQualityProfile();
+  PETER_ASSERT_TRUE(Peter::Validation::ValidatePhase7PlayableQualityProfile(playableQualityProfile).valid);
+  PETER_ASSERT_EQ(85.0, playableQualityProfile.budgets.inputToMotionLatencyBudgetMs);
   const auto traversalProfile = Peter::Traversal::BuildTraversalProfile(qualityProfile);
   PETER_ASSERT_TRUE(Peter::Traversal::EvaluateMovementResponsivenessScore(traversalProfile) > 0.0);
   const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(
@@ -58,6 +68,13 @@ PETER_TEST_MAIN({
       {"frame_time_p95_ms", "ms", 16.6, 0.0, true, "test"}
     });
   PETER_ASSERT_TRUE(qualityReport.passed);
+  const auto playableQualityReport = Peter::Telemetry::EvaluateQualityReport(
+    playableQualityProfile,
+    {
+      {"input_to_motion_latency_ms", "ms", 0.0, 0.0, true, "test", false}
+    });
+  PETER_ASSERT_TRUE(playableQualityReport.passed);
+  PETER_ASSERT_EQ(1, static_cast<int>(playableQualityReport.unmeasuredSamples));
 
   PETER_ASSERT_TRUE(Peter::AI::HasLineOfSight(6, 10, false));
   PETER_ASSERT_TRUE(!Peter::AI::HasLineOfSight(12, 10, false));

@@ -8,5 +8,9 @@ target_include_directories(PeterAdapters
 )
 
 target_compile_features(PeterAdapters PUBLIC cxx_std_20)
+target_compile_definitions(PeterAdapters
+  PUBLIC
+    PETERCRAFT_ENABLE_PLAYABLE_RUNTIME=$<BOOL:${PETERCRAFT_ENABLE_PLAYABLE_RUNTIME}>
+)
 
 peter_enable_strict_warnings(PeterAdapters)

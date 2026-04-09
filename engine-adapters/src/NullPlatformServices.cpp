@@ -189,6 +189,62 @@ namespace Peter::Adapters
     };
   } // namespace
 
+  std::string ToString(const RuntimeMode mode)
+  {
+    return mode == RuntimeMode::Playable ? "playable" : "headless";
+  }
+
+  bool TryParseRuntimeMode(const std::string_view value, RuntimeMode& mode)
+  {
+    if (value == "headless")
+    {
+      mode = RuntimeMode::Headless;
+      return true;
+    }
+
+    if (value == "playable")
+    {
+      mode = RuntimeMode::Playable;
+      return true;
+    }
+
+    return false;
+  }
+
+  RuntimeDescriptor BuildRuntimeDescriptor(
+    const RuntimeMode mode,
+    const bool playableRuntimeEnabled)
+  {
+    RuntimeDescriptor descriptor;
+    descriptor.mode = mode;
+    descriptor.playableRuntimeEnabled = playableRuntimeEnabled;
+    descriptor.backendId = mode == RuntimeMode::Playable ? "playable_stub" : "null_headless";
+    return descriptor;
+  }
+
+  PlatformFactoryResult CreatePlatformServices(
+    const BootConfig& bootConfig,
+    const RuntimeDescriptor& runtimeDescriptor)
+  {
+    PlatformFactoryResult result;
+    result.descriptor = runtimeDescriptor;
+
+    if (runtimeDescriptor.mode == RuntimeMode::Headless)
+    {
+      result.services = CreateNullPlatformServices(bootConfig);
+      return result;
+    }
+
+    result.available = false;
+    result.statusCode = "backend_unavailable";
+    result.message = "Playable runtime backend unavailable until Phase 7.1.";
+    if (!runtimeDescriptor.playableRuntimeEnabled)
+    {
+      result.message += " Build option PETERCRAFT_ENABLE_PLAYABLE_RUNTIME is OFF.";
+    }
+    return result;
+  }
+
   PlatformServices CreateNullPlatformServices(const BootConfig& bootConfig)
   {
     PlatformServices services;

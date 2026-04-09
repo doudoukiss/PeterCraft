@@ -1836,8 +1836,8 @@ namespace Peter::App
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 6 quality beta loop: budgets, onboarding telemetry, hardened saves, and polished creator feedback are active."
-        : "Completed the Phase 6 failure-and-recovery loop: save safety, creator containment, and post-raid clarity remained intact under failure.",
+        ? "Completed the Phase 7.0 headless runtime loop: budgets, onboarding telemetry, hardened saves, and polished creator feedback are active."
+        : "Completed the Phase 7.0 headless failure-and-recovery loop: save safety, creator containment, and post-raid clarity remained intact under failure.",
       mission->id,
       companionDecision,
       Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),

@@ -1,5 +1,5 @@
 param(
-  [string]$ConfigurePreset = 'windows-vs2022-dev',
+  [string]$ConfigurePreset = 'windows-vs2022-headless',
   [string]$Configuration = 'Debug',
   [string]$ProfileId = 'player.default',
   [string]$Scenario = 'guided_first_run',
@@ -9,11 +9,9 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 
-$applicationPath = Get-BuildOutputPath -ConfigurePreset $ConfigurePreset -Configuration $Configuration
-
-if (-not (Test-Path $applicationPath)) {
-  throw "Application not found at $applicationPath. Run build.ps1 first."
-}
-
-$resolvedArguments = @('--profile-id', $ProfileId, '--scenario', $Scenario) + $AppArguments
-& $applicationPath @resolvedArguments
+& (Join-Path $PSScriptRoot 'run-headless.ps1') `
+  -ConfigurePreset $ConfigurePreset `
+  -Configuration $Configuration `
+  -ProfileId $ProfileId `
+  -Scenario $Scenario `
+  -AppArguments $AppArguments

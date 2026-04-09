@@ -15,6 +15,19 @@ namespace Peter::Adapters
     bool developmentMode = true;
   };
 
+  enum class RuntimeMode
+  {
+    Headless,
+    Playable
+  };
+
+  struct RuntimeDescriptor
+  {
+    RuntimeMode mode = RuntimeMode::Headless;
+    std::string backendId = "null_headless";
+    bool playableRuntimeEnabled = false;
+  };
+
   struct InputState
   {
     bool moveForward = false;
@@ -134,5 +147,22 @@ namespace Peter::Adapters
     std::unique_ptr<IUiAdapter> ui;
   };
 
+  struct PlatformFactoryResult
+  {
+    PlatformServices services;
+    RuntimeDescriptor descriptor;
+    bool available = true;
+    std::string statusCode = "ok";
+    std::string message;
+  };
+
+  [[nodiscard]] std::string ToString(RuntimeMode mode);
+  [[nodiscard]] bool TryParseRuntimeMode(std::string_view value, RuntimeMode& mode);
+  [[nodiscard]] RuntimeDescriptor BuildRuntimeDescriptor(
+    RuntimeMode mode,
+    bool playableRuntimeEnabled);
+  [[nodiscard]] PlatformFactoryResult CreatePlatformServices(
+    const BootConfig& bootConfig,
+    const RuntimeDescriptor& runtimeDescriptor);
   PlatformServices CreateNullPlatformServices(const BootConfig& bootConfig);
 } // namespace Peter::Adapters

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(PETERCRAFT_ENABLE_STRICT_WARNINGS "Enable strict compiler warnings." ON)
+option(PETERCRAFT_ENABLE_PLAYABLE_RUNTIME "Enable playable runtime migration scaffolding." OFF)
 
 include(CTest)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/game/code/common/cmake")

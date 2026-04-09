@@ -25,11 +25,14 @@ namespace Peter::Core
     double coldBootBudgetMs = 5000.0;
     double transitionBudgetMs = 2000.0;
     int peakWorkingSetBudgetMb = 2048;
+    double inputToMotionLatencyBudgetMs = 85.0;
     double aiDecisionP95Ms = 2.0;
     double uiPanelRenderP95Ms = 1.0;
+    double interactionHitchBudgetMs = 50.0;
     double singleSaveBudgetMs = 50.0;
     double fullLoadBudgetMs = 250.0;
     double fullSaveBudgetMs = 400.0;
+    int audioVoiceConcurrencyBudget = 16;
   };
 
   struct MovementFeelProfile
@@ -69,7 +72,7 @@ namespace Peter::Core
     std::map<std::string, int, std::less<>> cuePriorityByFamily;
   };
 
-  struct Phase6QualityProfile
+  struct QualityProfileBase
   {
     std::string id;
     std::string displayName;
@@ -85,8 +88,18 @@ namespace Peter::Core
     bool motionComfortRequired = true;
   };
 
+  struct Phase6QualityProfile : public QualityProfileBase
+  {
+  };
+
+  struct Phase7PlayableQualityProfile : public QualityProfileBase
+  {
+  };
+
   [[nodiscard]] std::filesystem::path ResolveQualityProfileRoot();
   [[nodiscard]] Phase6QualityProfile BuildDefaultPhase6QualityProfile();
   [[nodiscard]] Phase6QualityProfile LoadPhase6QualityProfile();
+  [[nodiscard]] Phase7PlayableQualityProfile BuildDefaultPhase7PlayableQualityProfile();
+  [[nodiscard]] Phase7PlayableQualityProfile LoadPhase7PlayableQualityProfile();
   [[nodiscard]] std::string DescribeTargetHardwareProfile(const TargetHardwareProfile& profile);
 } // namespace Peter::Core

@@ -175,6 +175,8 @@ PETER_TEST_MAIN({
 
   const auto qualityProfile = Peter::Core::LoadPhase6QualityProfile();
   PETER_ASSERT_TRUE(Peter::Validation::ValidatePhase6QualityProfile(qualityProfile).valid);
+  const auto playableQualityProfile = Peter::Core::LoadPhase7PlayableQualityProfile();
+  PETER_ASSERT_TRUE(Peter::Validation::ValidatePhase7PlayableQualityProfile(playableQualityProfile).valid);
 
   const auto logPath = root / "Logs" / "integration-events.jsonl";
   PETER_ASSERT_TRUE(std::filesystem::exists(logPath));

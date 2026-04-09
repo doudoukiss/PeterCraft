@@ -12,9 +12,11 @@ target_include_directories(PeterTelemetry
 target_link_libraries(PeterTelemetry
   PUBLIC
     PeterCore
-  PRIVATE
-    Psapi
 )
+
+if(WIN32)
+  target_link_libraries(PeterTelemetry PRIVATE Psapi)
+endif()
 
 target_compile_features(PeterTelemetry PUBLIC cxx_std_20)
 

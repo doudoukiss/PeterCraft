@@ -2,28 +2,36 @@
 
 ## Purpose
 
-This file explains how to bootstrap, build, validate, test, and run the current PeterCraft game build on a local Windows machine.
+This runbook explains how to bootstrap, build, validate, test, and run PeterCraft in Phase 7.0.
 
-The current game is a Phase 6 portable runtime shell. It runs as a deterministic app with text-rendered UI/debug output and O3DE-ready adapter seams.
+The repo currently supports two named runtime modes:
+
+- `headless`
+  - the real runtime for Phase 7.0
+  - used for development, tests, validation, deterministic scenarios, and CI
+- `playable`
+  - preflight-only in Phase 7.0
+  - confirms the future engine-backed path is wired into the app and scripts
+  - exits cleanly with a “backend unavailable until Phase 7.1” result
 
 ## Environment
 
 - OS: Windows
-- Shell: PowerShell
-- Build system: CMake + Visual Studio 2022 presets
+- shell: PowerShell
+- build system: CMake + Visual Studio 2022 presets
 - Python: used for validation and quality tooling
 
 ## Prerequisites
 
-Before running the game, make sure the machine has:
+Make sure the machine has:
 
-- Visual Studio 2022 with C++ build tools
-- CMake available on `PATH`
-- Python 3 available through `py -3`
+- Visual Studio 2022 with the C++ desktop workload
+- CMake 3.28 or newer on `PATH`
+- Python 3.12 available through `py -3`
 - Git
 - Git LFS recommended
 
-## First-Time Setup
+## First-time setup
 
 From the repository root:
 
@@ -31,31 +39,44 @@ From the repository root:
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\bootstrap.ps1
 ```
 
-What this does:
+This creates `.venv`, installs Python tooling, and enables local Git LFS support when available.
 
-- creates `.venv` if needed
-- upgrades `pip`
-- installs validation dependencies
-- runs `git lfs install --local` when available
+## Build the headless runtime
 
-## Build The Game
+Canonical command:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\build-headless.ps1
+```
+
+Defaults:
+
+- configure preset: `windows-vs2022-headless`
+- build preset: `windows-vs2022-headless-debug`
+
+Legacy wrapper:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\build.ps1
 ```
 
-This configures and builds the default Windows debug preset:
+The executable is produced under:
 
-- configure preset: `windows-vs2022-dev`
-- build preset: `windows-vs2022-dev-debug`
+- `out/build/windows-vs2022-headless/bin/Debug/PeterCraftApp.exe`
 
-The built executable is produced under:
+## Build the playable preflight
 
-- `out/build/windows-vs2022-dev/bin/Debug/PeterCraftApp.exe`
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\build-playable.ps1
+```
 
-## Validate Content And Contracts
+What this means in Phase 7.0:
 
-Run full validation:
+- builds the same app shell under the playable-preflight preset
+- proves the build option and runtime-selection path exist
+- does **not** build a real engine-backed runtime yet
+
+## Validate content and contracts
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\validate.ps1
@@ -65,71 +86,89 @@ Useful modes:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\validate.ps1 -Mode changed
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\validate.ps1 -Mode files -Files game\data\schemas\accessibility_settings.schema.json
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\validate.ps1 -Mode files -Files game\data\content\quality-profiles\quality.phase7.playable.json
 ```
 
-## Run Automated Tests
+## Run automated tests
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\test.ps1
 ```
 
-This runs:
+This runs unit, integration, scenario, headless smoke, and the playable-preflight-unavailable check.
 
-- unit tests
-- integration tests
-- deterministic scenario tests
-- slice smoke/path tests
+## Run the headless runtime
 
-## Run The Game
+Canonical command:
 
-Default run:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1
+```
+
+Defaults:
+
+- runtime: `headless`
+- profile: `player.default`
+- scenario: `guided_first_run`
+- configuration: `Debug`
+
+Legacy wrapper:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1
 ```
 
-Default run parameters:
-
-- profile: `player.default`
-- scenario: `guided_first_run`
-- configuration: `Debug`
-
-## Run A Specific Scenario
+## Run a specific headless scenario
 
 Examples:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -Scenario guided_first_run -ProfileId player.ops.guided
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -Scenario happy_path -ProfileId player.ops.happy
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -Scenario failure_path -ProfileId player.ops.failure
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -Scenario artifact_recovery -ProfileId player.ops.artifact
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -Scenario escort_support -ProfileId player.ops.escort
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -Scenario smoke -ProfileId player.ops.smoke
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -Scenario guided_first_run -ProfileId player.ops.guided
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -Scenario happy_path -ProfileId player.ops.happy
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -Scenario failure_path -ProfileId player.ops.failure
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -Scenario artifact_recovery -ProfileId player.ops.artifact
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -Scenario escort_support -ProfileId player.ops.escort
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -Scenario smoke -ProfileId player.ops.smoke
 ```
 
-You can also pass raw app arguments through `-AppArguments`.
-
-Example:
+## Run the playable preflight
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -ProfileId player.ops.custom -Scenario guided_first_run -AppArguments @('--no-settings')
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-playable.ps1
 ```
 
-## Run The Executable Directly
+Expected Phase 7.0 result:
 
-If you want to bypass the wrapper script:
+- the app selects `--runtime playable`
+- the runtime exits cleanly
+- the wrapper reports that the backend is unavailable until Phase 7.1
+
+## Run the executable directly
+
+Headless:
 
 ```powershell
-.\out\build\windows-vs2022-dev\bin\Debug\PeterCraftApp.exe --profile-id player.direct.run --scenario guided_first_run
+.\out\build\windows-vs2022-headless\bin\Debug\PeterCraftApp.exe --runtime headless --profile-id player.direct.run --scenario guided_first_run
 ```
 
-## Quality Checks
-
-Budget check:
+Playable preflight:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets
+.\out\build\windows-vs2022-playable-preflight\bin\Debug\PeterCraftApp.exe --runtime playable --profile-id player.direct.playable --scenario guided_first_run
+```
+
+## Quality checks
+
+Phase 6 headless gate:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets --profile-id phase6_shell
+```
+
+Phase 7 playable dashboard:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets --profile-id phase7_playable
 ```
 
 Save health:
@@ -141,7 +180,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 verif
 Release-candidate gate:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 gate-rc
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 gate-rc --profile-id phase6_shell
 ```
 
 Other useful quality commands:
@@ -153,7 +192,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 expor
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 summarize-playtest
 ```
 
-## Output Locations
+## Output locations
 
 Runtime and generated outputs are written under `Saved/`.
 
@@ -165,48 +204,55 @@ Important paths:
 - profiles and save data: `Saved/Profiles/`
 - creator artifacts: `Saved/Profiles/<profile>/CreatorContent/`
 
-## Typical Daily Flow
+## Typical daily flow
 
 Use this sequence for normal development or QA:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\build.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\build-headless.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\validate.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\test.ps1
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets --profile-id phase6_shell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets --profile-id phase7_playable
 ```
 
 ## Troubleshooting
 
 If the app does not run:
 
-1. Make sure `build.ps1` completed successfully.
-2. Make sure the executable exists at `out/build/windows-vs2022-dev/bin/Debug/PeterCraftApp.exe`.
-3. Re-run `bootstrap.ps1` if Python tooling or validation commands fail.
+1. Make sure `build-headless.ps1` completed successfully.
+2. Make sure the executable exists at `out/build/windows-vs2022-headless/bin/Debug/PeterCraftApp.exe`.
+3. Re-run `bootstrap.ps1` if Python tooling fails.
 4. Re-run `validate.ps1` to catch data/schema issues.
-5. Re-run `test.ps1` to confirm the runtime shell is still healthy.
+5. Re-run `test.ps1` to confirm the headless shell is still healthy.
+
+If the playable path does not behave as expected:
+
+1. Run `build-playable.ps1`.
+2. Run `run-playable.ps1`.
+3. Confirm the result is a clean “backend unavailable until Phase 7.1” message rather than a crash.
 
 If quality tools fail on a specific profile:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 verify-profile --profile-id player.default
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\quality.ps1 check-budgets --profile-id phase7_playable
 ```
 
 If you want an isolated clean run, use a fresh profile id:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-dev.ps1 -ProfileId player.clean.run -Scenario guided_first_run
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1 -ProfileId player.clean.run -Scenario guided_first_run
 ```
 
-## Recommended Operator Checks
+## Recommended operator checks
 
 A run is considered healthy when:
 
-- the app launches without crashing
+- the headless app launches without crashing
 - the selected scenario reaches a summary screen
 - `test.ps1` is green
 - `validate.ps1` is green
-- `quality.ps1 check-budgets` is green
+- `quality.ps1 check-budgets --profile-id phase6_shell` is green
 - `quality.ps1 verify-saves` reports zero issues
-
+- `run-playable.ps1` confirms the Phase 7.1 handoff cleanly

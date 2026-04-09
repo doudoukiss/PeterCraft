@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  soak-and-quality:
+  headless-soak-and-quality:
     runs-on: windows-latest
 
     steps:
@@ -27,21 +27,22 @@ jobs:
         shell: pwsh
         run: ./tools/build-scripts/bootstrap.ps1
 
-      - name: Build
+      - name: Build headless
         shell: pwsh
-        run: ./tools/build-scripts/build.ps1
+        run: ./tools/build-scripts/build-headless.ps1
 
-      - name: Run nightly soak
+      - name: Run nightly headless soak
         shell: pwsh
         run: |
           ./tools/build-scripts/quality.ps1 run-soak --iterations 4
-          ./tools/build-scripts/quality.ps1 check-budgets
+          ./tools/build-scripts/quality.ps1 check-budgets --profile-id phase6_shell
+          ./tools/build-scripts/quality.ps1 check-budgets --profile-id phase7_playable
           ./tools/build-scripts/quality.ps1 verify-saves
 
-      - name: Upload nightly quality artifacts
+      - name: Upload nightly headless quality artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: petercraft-nightly-quality
+          name: petercraft-nightly-headless-quality
           path: |
             Saved/Logs/*.jsonl
             Saved/Generated/quality/*

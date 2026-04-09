@@ -20,6 +20,11 @@ namespace Peter::Core
     return iterator != m_flags.end() ? iterator->second : false;
   }
 
+  const std::map<std::string, bool, std::less<>>& FeatureRegistry::Flags() const
+  {
+    return m_flags;
+  }
+
   const VersionInfo& FeatureRegistry::Version() const
   {
     return m_versionInfo;

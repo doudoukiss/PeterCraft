@@ -15,9 +15,19 @@ function Get-VenvPython {
 
 function Get-BuildOutputPath {
   param(
-    [string]$ConfigurePreset = 'windows-vs2022-dev',
+    [string]$ConfigurePreset = 'windows-vs2022-headless',
     [string]$Configuration = 'Debug'
   )
 
   return Join-Path (Get-RepoRoot) "out\build\$ConfigurePreset\bin\$Configuration\PeterCraftApp.exe"
+}
+
+function Assert-LastExitCode {
+  param(
+    [string]$Context = 'Native command'
+  )
+
+  if ($LASTEXITCODE -ne 0) {
+    throw "$Context failed with exit code $LASTEXITCODE."
+  }
 }

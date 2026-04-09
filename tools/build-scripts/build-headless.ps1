@@ -1,6 +1,6 @@
 param(
   [string]$ConfigurePreset = 'windows-vs2022-headless',
-  [string]$Configuration = 'Debug'
+  [string]$BuildPreset = 'windows-vs2022-headless-debug'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,8 +10,10 @@ $repoRoot = Get-RepoRoot
 Push-Location $repoRoot
 
 try {
-  ctest -C $Configuration --output-on-failure --test-dir (Join-Path $repoRoot "out/build/$ConfigurePreset")
-  Assert-LastExitCode 'Run CTest'
+  cmake --preset $ConfigurePreset
+  Assert-LastExitCode 'Configure headless build'
+  cmake --build --preset $BuildPreset
+  Assert-LastExitCode 'Build headless runtime'
 } finally {
   Pop-Location
 }

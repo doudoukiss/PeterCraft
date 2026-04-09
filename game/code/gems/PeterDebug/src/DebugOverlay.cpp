@@ -4,9 +4,39 @@
 
 namespace Peter::Debug
 {
+  namespace
+  {
+    std::string FormatFeatureFlags(const std::map<std::string, bool, std::less<>>& flags)
+    {
+      std::ostringstream output;
+      bool first = true;
+      for (const auto& [flagName, enabled] : flags)
+      {
+        if (!first)
+        {
+          output << ", ";
+        }
+        first = false;
+        output << flagName << '=' << (enabled ? "true" : "false");
+      }
+      return output.str();
+    }
+  } // namespace
+
   void DebugOverlay::SetValue(const std::string& key, const std::string& value)
   {
     m_values[key] = value;
+  }
+
+  void DebugOverlay::SetRuntimeDescriptor(const Peter::Adapters::RuntimeDescriptor& descriptor)
+  {
+    SetValue("Runtime Mode", Peter::Adapters::ToString(descriptor.mode));
+    SetValue("Runtime Backend", descriptor.backendId);
+  }
+
+  void DebugOverlay::SetFeatureFlags(const std::map<std::string, bool, std::less<>>& flags)
+  {
+    SetValue("Feature Flags", FormatFeatureFlags(flags));
   }
 
   void DebugOverlay::SetAiSnapshot(const Peter::AI::AgentExplainSnapshot& snapshot)
@@ -33,6 +63,8 @@ namespace Peter::Debug
   {
     SetValue("Quality Gate", report.passed ? "pass" : "fail");
     SetValue("Quality Summary", report.summary);
+    SetValue("Quality Profile", report.profileId);
+    SetValue("Quality Unmeasured", std::to_string(report.unmeasuredSamples));
   }
 
   std::string DebugOverlay::Render() const

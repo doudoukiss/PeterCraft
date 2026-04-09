@@ -14,6 +14,7 @@ Push-Location $repoRoot
 
 try {
   & $python 'tools/quality/peter_quality.py' $Command @ExtraArgs
+  Assert-LastExitCode 'Run quality tooling'
 } finally {
   Pop-Location
 }

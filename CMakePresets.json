@@ -7,27 +7,65 @@
   },
   "configurePresets": [
     {
-      "name": "windows-vs2022-dev",
-      "displayName": "Windows VS2022 Dev",
+      "name": "windows-vs2022-headless",
+      "displayName": "Windows VS2022 Headless",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
         "BUILD_TESTING": "ON",
-        "PETERCRAFT_ENABLE_STRICT_WARNINGS": "ON"
+        "PETERCRAFT_ENABLE_STRICT_WARNINGS": "ON",
+        "PETERCRAFT_ENABLE_PLAYABLE_RUNTIME": "OFF"
+      }
+    },
+    {
+      "name": "windows-vs2022-playable-preflight",
+      "displayName": "Windows VS2022 Playable Preflight",
+      "inherits": "windows-vs2022-headless",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "PETERCRAFT_ENABLE_PLAYABLE_RUNTIME": "ON"
+      }
+    },
+    {
+      "name": "linux-clang-headless-smoke",
+      "displayName": "Linux Clang Headless Smoke",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "ON",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PETERCRAFT_ENABLE_STRICT_WARNINGS": "ON",
+        "PETERCRAFT_ENABLE_PLAYABLE_RUNTIME": "OFF"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "windows-vs2022-dev-debug",
-      "configurePreset": "windows-vs2022-dev",
+      "name": "windows-vs2022-headless-debug",
+      "configurePreset": "windows-vs2022-headless",
       "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-headless-release",
+      "configurePreset": "windows-vs2022-headless",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vs2022-playable-preflight-debug",
+      "configurePreset": "windows-vs2022-playable-preflight",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-clang-headless-smoke",
+      "configurePreset": "linux-clang-headless-smoke"
     }
   ],
   "testPresets": [
     {
-      "name": "windows-vs2022-dev-debug",
-      "configurePreset": "windows-vs2022-dev",
+      "name": "windows-vs2022-headless-debug",
+      "configurePreset": "windows-vs2022-headless",
       "configuration": "Debug",
       "output": {
         "outputOnFailure": true
