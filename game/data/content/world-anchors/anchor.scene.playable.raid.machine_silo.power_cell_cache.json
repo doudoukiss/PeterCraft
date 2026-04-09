@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.raid.machine_silo.power_cell_cache","scene_id":"scene.playable.raid.machine_silo","display_name":"Power Cell Cache","room_id":"room.raid.high_risk_vault","anchor_kind":"loot","entity_name":"PowerCellCache","x_meters":"16.0","y_meters":"-1.0","z_meters":"0.0","marker_ids":"room.raid.high_risk_vault,landmark.power_cell_cache"}

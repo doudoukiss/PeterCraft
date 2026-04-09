@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.home_base.room_marker","scene_id":"scene.playable.home_base","display_name":"Home Base Loop Marker","room_id":"room.home.board","anchor_kind":"room_marker","entity_name":"HomeLoopMarker","x_meters":"10.0","y_meters":"0.0","z_meters":"0.0","marker_ids":"room.home.board,route.home.loop"}

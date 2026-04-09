@@ -20,7 +20,7 @@ steps.
 - Run `build-playable.ps1`
 - Run `run-playable.ps1`
 - Confirm the headless shell creates a local profile stub and writes JSONL telemetry
-- Confirm the playable preflight exits cleanly with a Phase 7.1 handoff message
+- Confirm the playable runtime can enter home base, launch the Machine Silo raid, resolve extraction, show results, and return home cleanly
 
 ## Troubleshooting
 

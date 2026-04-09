@@ -1,5 +1,7 @@
 #include "PeterCraftApp.h"
 
+#include "PlayableSessionController.h"
+
 #include "PeterCore/QualityProfile.h"
 #include "PeterTelemetry/QualityMetrics.h"
 
@@ -77,7 +79,7 @@ namespace Peter::App
       ? static_cast<const Peter::Core::QualityProfileBase&>(playableQualityProfile)
       : static_cast<const Peter::Core::QualityProfileBase&>(qualityProfile);
 
-    FeatureRegistry features(VersionInfo{"0.7.1", "phase7_1"});
+    FeatureRegistry features(VersionInfo{"0.7.2", "phase7_2"});
     features.SetFlag("feature.vertical_slice", true);
     features.SetFlag("feature.core_systems_alpha", true);
     features.SetFlag("feature.debug_overlay", true);
@@ -92,7 +94,7 @@ namespace Peter::App
     features.SetFlag("feature.playable_runtime", playableRuntimeActive);
     features.SetFlag("feature.o3de_adapter", playableRuntimeActive);
     features.SetFlag("feature.realtime_traversal", playableRuntimeActive);
-    features.SetFlag("feature.realtime_combat", playableRuntimeActive);
+    features.SetFlag("feature.realtime_combat", false);
     features.SetFlag("feature.realtime_ai", playableRuntimeActive);
     features.SetFlag("feature.raid_hud", playableRuntimeActive);
     features.SetFlag("feature.playable_audio", playableRuntimeActive);
@@ -119,7 +121,7 @@ namespace Peter::App
           {"message", runtimeFactoryResult.message},
           {"mode", Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode)}
         }});
-      std::cout << "PeterCraft Phase 7.1 Runtime Bootstrap\n";
+      std::cout << "PeterCraft Phase 7.2 Runtime Bootstrap\n";
       std::cout << "Build track: " << features.Version().track << '\n';
       std::cout << "Runtime mode: " << Peter::Adapters::ToString(runtimeFactoryResult.descriptor.mode) << '\n';
       std::cout << runtimeFactoryResult.message << '\n';
@@ -178,8 +180,16 @@ namespace Peter::App
         {"phase7_playable_summary", playableProfileValidation.message}
       }});
 
-    Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
-    const auto runReport = slice.Run(ParseScenario(m_options.scenario));
+    const auto runReport = [&]() {
+      if (playableRuntimeActive)
+      {
+        PlayableSessionController controller(platform, eventBus, profile, saveDomainStore);
+        return controller.Run(m_options.scenario);
+      }
+
+      Phase1Slice slice(platform, eventBus, profile, saveDomainStore);
+      return slice.Run(ParseScenario(m_options.scenario));
+    }();
     const auto saveHealth = saveDomainStore.InspectHealth();
     const auto workingSetMb = static_cast<double>(Peter::Telemetry::CurrentWorkingSetMegabytes());
     eventBus.Emit(Event{
@@ -195,7 +205,10 @@ namespace Peter::App
       {"cold_boot_ms", "ms", coldBootMs, 0.0, true, "boot"},
       {"fps_average", "fps", 60.0, 0.0, true, "shell"},
       {"frame_time_p95_ms", "ms", 16.6, 0.0, true, "shell"},
-      {"working_set_mb", "mb", workingSetMb, 0.0, true, "process"}
+      {"working_set_mb", "mb", workingSetMb, 0.0, true, "process"},
+      {"transition_ms", "ms", runReport.transitionMs, 0.0, playableRuntimeActive, "playable_session"},
+      {"input_to_motion_latency_ms", "ms", runReport.inputToMotionLatencyMs, 0.0, playableRuntimeActive, "playable_session"},
+      {"interaction_hitch_p95_ms", "ms", runReport.interactionHitchMs, 0.0, playableRuntimeActive, "playable_session"}
     };
     const auto qualityReport = Peter::Telemetry::EvaluateQualityReport(activeQualityProfile, qualitySamples);
 
@@ -205,9 +218,24 @@ namespace Peter::App
     overlay.SetValue("FPS", "60");
     overlay.SetValue("Frame Time", "16.6ms");
     overlay.SetValue("Target Hardware", Peter::Core::DescribeTargetHardwareProfile(activeQualityProfile.targetHardware));
-    overlay.SetValue("Scene", runReport.success ? "scene.results.success" : "scene.results.failure");
+    overlay.SetValue("Scene", runReport.currentSceneId.empty()
+      ? (runReport.success ? "scene.results.success" : "scene.results.failure")
+      : runReport.currentSceneId);
     overlay.SetValue("Mission", runReport.missionId);
     overlay.SetValue("Player State", runReport.success ? "returned_home" : "raid_failed");
+    overlay.SetValue("Player Position", std::to_string(runReport.playerPositionX) + "," +
+      std::to_string(runReport.playerPositionY) + "," + std::to_string(runReport.playerPositionZ));
+    overlay.SetValue("Player Velocity", std::to_string(runReport.playerVelocityX) + "," +
+      std::to_string(runReport.playerVelocityY) + "," + std::to_string(runReport.playerVelocityZ));
+    overlay.SetValue("Player Speed", std::to_string(runReport.playerSpeedMetersPerSecond));
+    overlay.SetValue("Room", runReport.roomId);
+    overlay.SetValue("Active Interaction", runReport.activeInteractionId);
+    overlay.SetValue("Extraction State", runReport.extractionState);
+    overlay.SetValue("Input Scheme", runReport.inputScheme);
+    overlay.SetValue("Camera Mode", runReport.cameraMode);
+    overlay.SetValue("Traversal Latency", std::to_string(runReport.inputToMotionLatencyMs) + "ms");
+    overlay.SetValue("Interaction Hitch", std::to_string(runReport.interactionHitchMs) + "ms");
+    overlay.SetValue("Transition", std::to_string(runReport.transitionMs) + "ms");
     overlay.SetValue("Companion State", runReport.lastCompanionDecision.currentState);
     overlay.SetValue("Save Slot", profile.root.string());
     overlay.SetValue("Raid Tip", runReport.raidSummary.lessonTip);
@@ -221,12 +249,14 @@ namespace Peter::App
       {
         {"frame_time_ms", "16.6"},
         {"fps", "60"},
-        {"scene_id", runReport.success ? "scene.results.success" : "scene.results.failure"}
+        {"scene_id", runReport.currentSceneId.empty()
+          ? (runReport.success ? "scene.results.success" : "scene.results.failure")
+          : runReport.currentSceneId}
       }});
 
     std::cout << (playableRuntimeActive
-      ? "PeterCraft Phase 7.1 Playable Runtime\n"
-      : "PeterCraft Phase 7.1 Headless Runtime\n");
+      ? "PeterCraft Phase 7.2 Playable Runtime\n"
+      : "PeterCraft Phase 7.2 Headless Runtime\n");
     std::cout << runReport.summary << "\n";
     std::cout << Peter::Telemetry::RenderQualityReport(qualityReport) << "\n";
     std::cout << overlay.Render() << '\n';

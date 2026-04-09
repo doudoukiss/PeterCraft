@@ -17,8 +17,8 @@ $o3deEditor = Get-O3DEEditorPath
 $assetProcessor = Get-O3DEAssetProcessorPath
 $o3deProjectBuildRoot = Get-O3DEProjectBuildRoot -Name $ProjectBuildName
 $generatedRoot = Join-Path $repoRoot 'Saved\Generated\o3de'
-$buildSummaryPath = Join-Path $generatedRoot 'phase7_1_build_summary.md'
-$decisionGatesPath = Join-Path $generatedRoot 'phase7_1_decision_gates.md'
+$buildSummaryPath = Join-Path $generatedRoot 'playable_build_summary.md'
+$decisionGatesPath = Join-Path $generatedRoot 'playable_decision_gates.md'
 
 Assert-PathExists -Path $o3deRoot -Description 'O3DE root'
 Assert-PathExists -Path $o3deProjectRoot -Description 'PeterCraft O3DE project'
@@ -62,7 +62,7 @@ try {
   $finished = Get-Date
   $elapsed = [Math]::Round(($finished - $started).TotalSeconds, 2)
   $summary = @"
-# Phase 7.1 Playable Build Summary
+# Phase 7.2 Playable Build Summary
 
 - Built at: $finished
 - Duration seconds: $elapsed
@@ -79,7 +79,7 @@ try {
   Set-Content -Path $buildSummaryPath -Value $summary -Encoding UTF8
 
   $decisionGates = @"
-# Phase 7.1 O3DE Decision Gates
+# Playable Decision Gates
 
 - time to first playable room: unmeasured
 - time to add one interactable: unmeasured

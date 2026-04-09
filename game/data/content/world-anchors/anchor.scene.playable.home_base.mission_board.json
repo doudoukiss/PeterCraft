@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.home_base.mission_board","scene_id":"scene.playable.home_base","display_name":"Mission Board","room_id":"room.home.board","anchor_kind":"station","entity_name":"MissionBoard","x_meters":"8.0","y_meters":"0.0","z_meters":"0.0","marker_ids":"room.home.board,landmark.mission_board"}

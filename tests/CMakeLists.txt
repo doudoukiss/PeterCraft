@@ -53,6 +53,34 @@ target_compile_features(PeterFoundationIntegrationTests PRIVATE cxx_std_20)
 peter_enable_strict_warnings(PeterFoundationIntegrationTests)
 add_test(NAME integration_profile_and_telemetry COMMAND PeterFoundationIntegrationTests)
 
+add_executable(PeterPlayableRuntimeIntegrationTests
+  integration/PeterPlayableRuntimeIntegrationTests.cpp
+  ${CMAKE_SOURCE_DIR}/game/code/app/PlayableSessionController.cpp
+)
+
+target_link_libraries(PeterPlayableRuntimeIntegrationTests
+  PRIVATE
+    PeterAdapters
+    PeterAI
+    PeterCore
+    PeterTelemetry
+    PeterTraversal
+    PeterUI
+    PeterValidation
+    PeterWorkshop
+    PeterWorld
+)
+
+target_include_directories(PeterPlayableRuntimeIntegrationTests
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/game/code/app
+    ${CMAKE_SOURCE_DIR}/game/code/common/include
+)
+
+target_compile_features(PeterPlayableRuntimeIntegrationTests PRIVATE cxx_std_20)
+peter_enable_strict_warnings(PeterPlayableRuntimeIntegrationTests)
+add_test(NAME integration_playable_session_loop COMMAND PeterPlayableRuntimeIntegrationTests)
+
 add_executable(PeterScenarioTests
   scenarios/PeterScenarioTests.cpp
 )

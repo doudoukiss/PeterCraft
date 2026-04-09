@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.home_base.workbench","scene_id":"scene.playable.home_base","display_name":"Workshop Bench","room_id":"room.home.workshop","anchor_kind":"station","entity_name":"WorkshopBench","x_meters":"15.0","y_meters":"-2.0","z_meters":"0.0","marker_ids":"room.home.workshop,landmark.workbench"}

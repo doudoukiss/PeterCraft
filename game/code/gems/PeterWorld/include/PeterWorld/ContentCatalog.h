@@ -13,6 +13,9 @@ namespace Peter::World::Detail
     std::vector<WorldStyleProfileDefinition> styleProfiles;
     std::vector<MissionBlueprintDefinition> missionBlueprints;
     std::vector<PlayableSceneBindingDefinition> sceneBindings;
+    std::vector<WorldAnchorDefinition> worldAnchors;
+    std::vector<InteractionDefinition> interactions;
+    std::vector<PlayableRoomMetricsDefinition> playableRoomMetrics;
     ShippableContentManifest manifest;
   };
 

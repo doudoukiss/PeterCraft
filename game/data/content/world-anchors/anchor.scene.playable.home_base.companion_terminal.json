@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.home_base.companion_terminal","scene_id":"scene.playable.home_base","display_name":"Companion Terminal","room_id":"room.home.companion","anchor_kind":"terminal","entity_name":"CompanionTerminal","x_meters":"19.0","y_meters":"3.0","z_meters":"0.0","marker_ids":"room.home.companion,landmark.companion_terminal"}

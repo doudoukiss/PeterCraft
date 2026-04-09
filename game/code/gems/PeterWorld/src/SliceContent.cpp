@@ -159,6 +159,57 @@ namespace Peter::World
     return nullptr;
   }
 
+  const std::vector<WorldAnchorDefinition>& BuildPhase7WorldAnchors()
+  {
+    return Detail::GetPhase5Catalog().worldAnchors;
+  }
+
+  const WorldAnchorDefinition* FindWorldAnchor(const std::string_view anchorId)
+  {
+    for (const auto& anchor : BuildPhase7WorldAnchors())
+    {
+      if (anchor.id == anchorId)
+      {
+        return &anchor;
+      }
+    }
+    return nullptr;
+  }
+
+  const std::vector<InteractionDefinition>& BuildPhase7Interactions()
+  {
+    return Detail::GetPhase5Catalog().interactions;
+  }
+
+  const InteractionDefinition* FindInteractionDefinition(const std::string_view interactionId)
+  {
+    for (const auto& interaction : BuildPhase7Interactions())
+    {
+      if (interaction.id == interactionId)
+      {
+        return &interaction;
+      }
+    }
+    return nullptr;
+  }
+
+  const std::vector<PlayableRoomMetricsDefinition>& BuildPhase7PlayableRoomMetrics()
+  {
+    return Detail::GetPhase5Catalog().playableRoomMetrics;
+  }
+
+  const PlayableRoomMetricsDefinition* FindPlayableRoomMetrics(const std::string_view metricsId)
+  {
+    for (const auto& definition : BuildPhase7PlayableRoomMetrics())
+    {
+      if (definition.id == metricsId)
+      {
+        return &definition;
+      }
+    }
+    return nullptr;
+  }
+
   const ShippableContentManifest& BuildPhase5ShippableContentManifest()
   {
     return Detail::GetPhase5Catalog().manifest;

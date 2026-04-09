@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.raid.machine_silo.extraction_pad","scene_id":"scene.playable.raid.machine_silo","display_name":"Extraction Pad","room_id":"room.raid.extraction_pad","anchor_kind":"extraction","entity_name":"ExtractionPad","x_meters":"24.0","y_meters":"0.0","z_meters":"0.0","marker_ids":"room.raid.extraction_pad,route.raid.extract"}

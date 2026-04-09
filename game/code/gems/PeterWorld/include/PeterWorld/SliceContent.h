@@ -239,6 +239,51 @@ namespace Peter::World
     bool proofRoom = false;
   };
 
+  struct WorldAnchorDefinition
+  {
+    std::string id;
+    std::string sceneId;
+    std::string displayName;
+    std::string roomId;
+    std::string anchorKind;
+    std::string entityName;
+    double xMeters = 0.0;
+    double yMeters = 0.0;
+    double zMeters = 0.0;
+    std::vector<std::string> markerIds;
+  };
+
+  struct InteractionDefinition
+  {
+    std::string id;
+    std::string sceneId;
+    std::string anchorId;
+    std::string displayName;
+    std::string category;
+    std::string promptText;
+    std::string helpText;
+    std::string panelId;
+    std::string objectiveId;
+    int priority = 0;
+    double rangeMeters = 2.5;
+    double facingThreshold = 0.0;
+    int promptCooldownMilliseconds = 350;
+    bool holdToInteract = false;
+  };
+
+  struct PlayableRoomMetricsDefinition
+  {
+    std::string id;
+    std::string sceneId;
+    std::string displayName;
+    int traversalTimeSeconds = 0;
+    std::string coverDensityLabel;
+    std::string landmarkQualityLabel;
+    std::string companionPathSafetyLabel;
+    std::string extractionReadabilityLabel;
+    std::string reviewRecordId;
+  };
+
   struct ShippableContentManifest
   {
     std::string id;
@@ -301,6 +346,12 @@ namespace Peter::World
   [[nodiscard]] const MissionBlueprintDefinition* FindMissionBlueprint(std::string_view missionBlueprintId);
   [[nodiscard]] const std::vector<PlayableSceneBindingDefinition>& BuildPhase7PlayableSceneBindings();
   [[nodiscard]] const PlayableSceneBindingDefinition* FindPhase7PlayableSceneBinding(std::string_view sceneId);
+  [[nodiscard]] const std::vector<WorldAnchorDefinition>& BuildPhase7WorldAnchors();
+  [[nodiscard]] const WorldAnchorDefinition* FindWorldAnchor(std::string_view anchorId);
+  [[nodiscard]] const std::vector<InteractionDefinition>& BuildPhase7Interactions();
+  [[nodiscard]] const InteractionDefinition* FindInteractionDefinition(std::string_view interactionId);
+  [[nodiscard]] const std::vector<PlayableRoomMetricsDefinition>& BuildPhase7PlayableRoomMetrics();
+  [[nodiscard]] const PlayableRoomMetricsDefinition* FindPlayableRoomMetrics(std::string_view metricsId);
   [[nodiscard]] const ShippableContentManifest& BuildPhase5ShippableContentManifest();
   [[nodiscard]] RoomMetricsSummary BuildRoomMetricsSummary(std::string_view roomVariantId);
   [[nodiscard]] const std::vector<MissionTemplateDefinition>& BuildPhase2MissionTemplates();

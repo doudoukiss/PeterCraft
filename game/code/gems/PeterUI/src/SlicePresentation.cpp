@@ -15,9 +15,16 @@ namespace Peter::UI
         {"help.first_creator_change", "Try a safe workshop change, preview it, and then watch what happens."},
         {"help.first_explain_panel", "Open the Why panel to see the top reasons behind your companion's choice."},
         {"input.crouch", "Crouch"},
+        {"input.look", "Look"},
         {"input.interact", "Interact"},
         {"input.jump", "Jump"},
         {"input.move", "Move"},
+        {"input.open_explain", "Open Explain Panel"},
+        {"input.open_inventory", "Open Inventory"},
+        {"input.pause", "Pause"},
+        {"input.primary_action", "Primary Action"},
+        {"input.secondary_action", "Secondary Action"},
+        {"input.call_companion", "Call Companion"},
         {"input.sprint", "Sprint"},
         {"onboarding.first_creator_change", "First safe creator change"},
         {"onboarding.first_explain_panel", "First explain panel open"},
@@ -338,6 +345,51 @@ namespace Peter::UI
     }
     output << "\nLogic ruleset: " << (activeRuleset == nullptr ? "none" : activeRuleset->displayName);
     output << "\nTiny script: " << (activeScript == nullptr ? "none" : activeScript->displayName);
+    return output.str();
+  }
+
+  std::string RenderTraversalDebugPanel(const Peter::Traversal::TraversalState& state)
+  {
+    std::ostringstream output;
+    output << "Traversal Debug\n"
+           << "Position: " << state.positionXMeters << "," << state.positionYMeters << "," << state.positionZMeters << "\n"
+           << "Velocity: " << state.velocityXMetersPerSecond << "," << state.velocityYMetersPerSecond << "," << state.velocityZMetersPerSecond << "\n"
+           << "Grounded: " << (state.grounded ? "true" : "false") << "\n"
+           << "Crouched: " << (state.crouched ? "true" : "false") << "\n"
+           << "Jump Buffer Used: " << (state.jumpBufferConsumed ? "true" : "false") << "\n"
+           << "Camera: " << state.cameraMode << "\n"
+           << "Collision: " << state.collisionState << "\n"
+           << "Input To Motion: " << state.inputToMotionLatencyMs << "ms";
+    return output.str();
+  }
+
+  std::string RenderInteractionPrompt(
+    const Peter::World::InteractionCandidate& candidate,
+    const std::string_view inputScheme)
+  {
+    std::ostringstream output;
+    output << candidate.promptText
+           << "\nTarget: " << candidate.displayName
+           << "\nScheme: " << inputScheme
+           << "\nRange: " << candidate.distanceMeters << "/" << candidate.rangeMeters << "m";
+    if (!candidate.eligible && !candidate.denialReason.empty())
+    {
+      output << "\nWhy not yet: " << candidate.denialReason;
+    }
+    return output.str();
+  }
+
+  std::string RenderExtractionStatus(const Peter::World::ExtractionRuntimeState& state)
+  {
+    std::ostringstream output;
+    output << "Extraction\n"
+           << "State: " << Peter::World::ToString(state.phase)
+           << "\nCountdown: " << state.countdownRemainingSeconds << "/" << state.countdownTotalSeconds << "s"
+           << "\nReduced Time Pressure: " << (state.reducedTimePressure ? "true" : "false");
+    if (!state.failureReason.empty())
+    {
+      output << "\nReason: " << state.failureReason;
+    }
     return output.str();
   }
 

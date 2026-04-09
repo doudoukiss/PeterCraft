@@ -33,10 +33,17 @@ namespace Peter::Adapters
       {
         return {
           {"action.move", "WASD", "Left Stick", "input.move", "movement", false, false},
+          {"action.look", "Mouse", "Right Stick", "input.look", "camera", false, false},
           {"action.interact", "E", "X", "input.interact", "interaction", true, true},
+          {"action.primary_action", "Left Mouse", "Right Trigger", "input.primary_action", "combat", true, true},
+          {"action.secondary_action", "Right Mouse", "Left Trigger", "input.secondary_action", "combat", true, true},
           {"action.jump", "Space", "A", "input.jump", "movement", true, false},
           {"action.sprint", "Left Shift", "Left Stick Click", "input.sprint", "movement", true, true},
-          {"action.crouch", "C", "B", "input.crouch", "movement", true, true}
+          {"action.crouch", "C", "B", "input.crouch", "movement", true, true},
+          {"action.call_companion", "Q", "Y", "input.call_companion", "companion", true, false},
+          {"action.open_inventory", "Tab", "View", "input.open_inventory", "menu", true, false},
+          {"action.open_explain", "F", "DPad Up", "input.open_explain", "menu", true, false},
+          {"action.pause", "Escape", "Menu", "input.pause", "menu", true, false}
         };
       }
     };

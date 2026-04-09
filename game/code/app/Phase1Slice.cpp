@@ -1836,8 +1836,8 @@ namespace Peter::App
     return SliceRunReport{
       raidSummary.success,
       raidSummary.success
-        ? "Completed the Phase 7.1 runtime loop: the portable shell stayed intact while the O3DE-backed scene path, adapter logging, and playable transition bindings came online."
-        : "Completed the Phase 7.1 failure-and-recovery loop: save safety, creator containment, and post-raid clarity remained intact while the playable scene path stayed available.",
+        ? "Completed the Phase 7.2 headless reference loop: the deterministic shell remains available while the playable runtime grows beyond it."
+        : "Completed the Phase 7.2 headless failure-and-recovery reference loop: save safety, creator containment, and post-raid clarity remain intact alongside the playable runtime work.",
       mission->id,
       companionDecision,
       Peter::Workshop::BuildCompanionBehaviorPreview(state.companionConfig, state.companionConfig),

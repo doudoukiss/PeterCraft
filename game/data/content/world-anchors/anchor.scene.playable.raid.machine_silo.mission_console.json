@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.raid.machine_silo.mission_console","scene_id":"scene.playable.raid.machine_silo","display_name":"Mission Console","room_id":"room.raid.guard_post","anchor_kind":"mission","entity_name":"MissionConsole","x_meters":"13.0","y_meters":"0.0","z_meters":"0.0","marker_ids":"room.raid.guard_post,landmark.mission_console"}

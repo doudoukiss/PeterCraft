@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "scene_id",
+    "display_name",
+    "traversal_time_seconds",
+    "cover_density_label",
+    "landmark_quality_label",
+    "companion_path_safety_label",
+    "extraction_readability_label",
+    "review_record_id"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "scene_id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "traversal_time_seconds": {"type": "string", "pattern": "^[0-9]+$"},
+    "cover_density_label": {"type": "string", "minLength": 1},
+    "landmark_quality_label": {"type": "string", "minLength": 1},
+    "companion_path_safety_label": {"type": "string", "minLength": 1},
+    "extraction_readability_label": {"type": "string", "minLength": 1},
+    "review_record_id": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

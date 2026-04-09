@@ -32,14 +32,14 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-headless.ps1
 
 ## Playable
 
-Use `playable` for the Windows-only O3DE-backed runtime baseline in Phase 7.1.
+Use `playable` for the Windows-only O3DE-backed playable session loop in Phase 7.2.
 
 Current behavior:
 
 - the app accepts `--runtime playable`
 - the runtime bootstraps the pinned O3DE `25.10.2` project under `game/o3de/`
 - logical scene requests are mapped through the portable scene-binding catalog
-- the adapter layer launches real O3DE levels while the portable shell remains intact
+- the adapter layer launches real O3DE levels while the playable session controller drives traversal, interactions, extraction, and return-home flow
 
 Canonical commands:
 
@@ -66,10 +66,10 @@ Defaults:
 
 - runtime defaults to `headless`
 - tests and CI stay on `headless`
-- playable smoke remains additive in Phase 7.1
+- playable smoke remains additive in Phase 7.2
 
 ## Why this split matters
 
 - it protects the deterministic shell
 - it keeps O3DE-specific work behind adapters
-- it lets PeterCraft prove a real engine-backed host before broader real-time feature work expands
+- it lets PeterCraft grow a real playable slice without collapsing the headless reference path

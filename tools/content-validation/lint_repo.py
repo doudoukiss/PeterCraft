@@ -20,7 +20,7 @@ TEXT_SUFFIXES = {
   ".yaml",
   ".yml",
 }
-EXCLUDED_PARTS = {".git", ".venv", "out", "Saved"}
+EXCLUDED_PARTS = {".git", ".venv", "out", "Saved", "Cache", "user", "User"}
 
 
 def iter_text_files() -> list[pathlib.Path]:
@@ -37,7 +37,16 @@ def iter_text_files() -> list[pathlib.Path]:
 
 def check_text_rules(path: pathlib.Path) -> list[str]:
   issues: list[str] = []
-  text = path.read_text(encoding="utf-8")
+  text = None
+  last_error: Exception | None = None
+  for encoding in ("utf-8-sig", "utf-16", "cp1252"):
+    try:
+      text = path.read_text(encoding=encoding)
+      break
+    except UnicodeDecodeError as exc:
+      last_error = exc
+  if text is None:
+    raise last_error if last_error is not None else UnicodeDecodeError("utf-8", b"", 0, 1, "unable to decode")
   relative = path.relative_to(REPO_ROOT)
 
   if "\t" in text:

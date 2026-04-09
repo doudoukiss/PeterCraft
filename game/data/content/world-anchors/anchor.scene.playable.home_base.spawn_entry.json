@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.home_base.spawn_entry","scene_id":"scene.playable.home_base","display_name":"Home Entry Spawn","room_id":"room.home.entry","anchor_kind":"spawn","entity_name":"SpawnHomeEntry","x_meters":"0.0","y_meters":"0.0","z_meters":"0.0","marker_ids":"room.home.entry,route.home.loop.start"}

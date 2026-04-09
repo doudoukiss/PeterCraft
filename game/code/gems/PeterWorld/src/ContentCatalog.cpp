@@ -319,6 +319,60 @@ namespace Peter::World::Detail
       return binding;
     }
 
+    WorldAnchorDefinition LoadWorldAnchor(const std::filesystem::path& path)
+    {
+      const auto fields = ParseFields(path);
+      WorldAnchorDefinition anchor;
+      anchor.id = fields.at("id");
+      anchor.sceneId = fields.at("scene_id");
+      anchor.displayName = fields.at("display_name");
+      anchor.roomId = fields.at("room_id");
+      anchor.anchorKind = fields.at("anchor_kind");
+      anchor.entityName = fields.at("entity_name");
+      anchor.xMeters = std::stod(fields.at("x_meters"));
+      anchor.yMeters = std::stod(fields.at("y_meters"));
+      anchor.zMeters = std::stod(fields.at("z_meters"));
+      anchor.markerIds = SplitList(fields.at("marker_ids"));
+      return anchor;
+    }
+
+    InteractionDefinition LoadInteractionDefinition(const std::filesystem::path& path)
+    {
+      const auto fields = ParseFields(path);
+      InteractionDefinition definition;
+      definition.id = fields.at("id");
+      definition.sceneId = fields.at("scene_id");
+      definition.anchorId = fields.at("anchor_id");
+      definition.displayName = fields.at("display_name");
+      definition.category = fields.at("category");
+      definition.promptText = fields.at("prompt_text");
+      definition.helpText = fields.at("help_text");
+      definition.panelId = fields.at("panel_id");
+      definition.objectiveId = fields.at("objective_id");
+      definition.priority = std::stoi(fields.at("priority"));
+      definition.rangeMeters = std::stod(fields.at("range_meters"));
+      definition.facingThreshold = std::stod(fields.at("facing_threshold"));
+      definition.promptCooldownMilliseconds = std::stoi(fields.at("prompt_cooldown_ms"));
+      definition.holdToInteract = ParseBool(fields.at("hold_to_interact"));
+      return definition;
+    }
+
+    PlayableRoomMetricsDefinition LoadPlayableRoomMetricsDefinition(const std::filesystem::path& path)
+    {
+      const auto fields = ParseFields(path);
+      PlayableRoomMetricsDefinition definition;
+      definition.id = fields.at("id");
+      definition.sceneId = fields.at("scene_id");
+      definition.displayName = fields.at("display_name");
+      definition.traversalTimeSeconds = std::stoi(fields.at("traversal_time_seconds"));
+      definition.coverDensityLabel = fields.at("cover_density_label");
+      definition.landmarkQualityLabel = fields.at("landmark_quality_label");
+      definition.companionPathSafetyLabel = fields.at("companion_path_safety_label");
+      definition.extractionReadabilityLabel = fields.at("extraction_readability_label");
+      definition.reviewRecordId = fields.at("review_record_id");
+      return definition;
+    }
+
     ShippableContentManifest LoadManifest(const std::filesystem::path& path)
     {
       const auto fields = ParseFields(path);
@@ -358,6 +412,9 @@ namespace Peter::World::Detail
       for (const auto& path : SortedJsonFiles(contentRoot / "style-profiles")) loaded.styleProfiles.push_back(LoadStyleProfile(path));
       for (const auto& path : SortedJsonFiles(contentRoot / "mission-blueprints")) loaded.missionBlueprints.push_back(LoadMissionBlueprint(path));
       for (const auto& path : SortedJsonFiles(contentRoot / "scene-bindings")) loaded.sceneBindings.push_back(LoadSceneBinding(path));
+      for (const auto& path : SortedJsonFiles(contentRoot / "world-anchors")) loaded.worldAnchors.push_back(LoadWorldAnchor(path));
+      for (const auto& path : SortedJsonFiles(contentRoot / "interactions")) loaded.interactions.push_back(LoadInteractionDefinition(path));
+      for (const auto& path : SortedJsonFiles(contentRoot / "playable-room-metrics")) loaded.playableRoomMetrics.push_back(LoadPlayableRoomMetricsDefinition(path));
       const auto manifests = SortedJsonFiles(contentRoot / "content-manifests");
       if (!manifests.empty())
       {

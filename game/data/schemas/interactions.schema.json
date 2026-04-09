@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "scene_id",
+    "anchor_id",
+    "display_name",
+    "category",
+    "prompt_text",
+    "help_text",
+    "panel_id",
+    "objective_id",
+    "priority",
+    "range_meters",
+    "facing_threshold",
+    "prompt_cooldown_ms",
+    "hold_to_interact"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "scene_id": {"type": "string", "minLength": 1},
+    "anchor_id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "category": {"type": "string", "enum": ["station", "container", "pickup", "mission_object", "extraction", "terminal", "assist"]},
+    "prompt_text": {"type": "string", "minLength": 1},
+    "help_text": {"type": "string", "minLength": 1},
+    "panel_id": {"type": "string", "minLength": 1},
+    "objective_id": {"type": "string", "minLength": 1},
+    "priority": {"type": "string", "pattern": "^[0-9]+$"},
+    "range_meters": {"type": "string", "pattern": "^[0-9.]+$"},
+    "facing_threshold": {"type": "string", "pattern": "^-?[0-9.]+$"},
+    "prompt_cooldown_ms": {"type": "string", "pattern": "^[0-9]+$"},
+    "hold_to_interact": {"type": "string", "enum": ["true", "false"]}
+  },
+  "additionalProperties": true
+}

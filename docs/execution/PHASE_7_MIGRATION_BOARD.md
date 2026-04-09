@@ -25,6 +25,10 @@
   - dependencies: in-repo O3DE project, adapter seam, scene-binding catalog
   - acceptance: `--runtime playable` registers the project, creates O3DE platform services, and can launch the bound one-room proof
   - repo area: `engine-adapters/o3de/`, `game/o3de/`, `game/code/app/`, `game/code/gems/PeterWorld/`
+- Task: extend the playable bootstrap into a long-lived Phase 7.2 session loop
+  - dependencies: O3DE bootstrap landed, scene bindings stable, world anchor and interaction catalogs exist
+  - acceptance: playable runtime can move from home base to raid to results and back home without falling back to the headless shell
+  - repo area: `game/code/app/`, `game/code/gems/PeterTraversal/`, `game/code/gems/PeterWorld/`, `game/code/gems/PeterUI/`
 
 ## Engine integration
 
@@ -43,6 +47,10 @@
   - dependencies: engine integration baseline landed
   - acceptance: over-the-shoulder traversal works in the playable runtime and retains comfort controls
   - repo area: `game/code/gems/PeterTraversal/`, `engine-adapters/`, `game/ui/`
+- Task: measure traversal latency and interaction hitch in the playable runtime
+  - dependencies: controller/camera path emits telemetry, quality profile includes playable metrics
+  - acceptance: `phase7_playable` budget checks report traversal latency, interaction hitch, and transition timings as measured values
+  - repo area: `game/code/app/`, `game/code/gems/PeterTelemetry/`, `tools/quality/`
 
 ## Combat
 

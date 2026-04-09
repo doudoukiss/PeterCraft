@@ -44,6 +44,22 @@ namespace Peter::App
     Peter::Workshop::RuleEditPreview lastRuleEditPreview;
     Peter::Core::ExtractionResult extractionResult;
     Peter::World::RaidSummary raidSummary;
+    std::string currentSceneId;
+    std::string roomId;
+    std::string activeInteractionId;
+    std::string extractionState = "idle";
+    std::string inputScheme = "mouse_keyboard";
+    std::string cameraMode = "third_person_ots";
+    double playerPositionX = 0.0;
+    double playerPositionY = 0.0;
+    double playerPositionZ = 0.0;
+    double playerVelocityX = 0.0;
+    double playerVelocityY = 0.0;
+    double playerVelocityZ = 0.0;
+    double playerSpeedMetersPerSecond = 0.0;
+    double inputToMotionLatencyMs = 0.0;
+    double interactionHitchMs = 0.0;
+    double transitionMs = 0.0;
   };
 
   class Phase1Slice

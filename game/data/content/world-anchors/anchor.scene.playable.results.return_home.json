@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.results.return_home","scene_id":"scene.playable.results","display_name":"Return Home Terminal","room_id":"room.results.summary","anchor_kind":"results","entity_name":"ReturnHomeTerminal","x_meters":"5.0","y_meters":"0.0","z_meters":"0.0","marker_ids":"room.results.summary,landmark.return_home"}

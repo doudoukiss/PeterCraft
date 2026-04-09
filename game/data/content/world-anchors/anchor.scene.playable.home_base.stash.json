@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.home_base.stash","scene_id":"scene.playable.home_base","display_name":"Inventory Stash","room_id":"room.home.stash","anchor_kind":"station","entity_name":"InventoryStash","x_meters":"4.0","y_meters":"-3.0","z_meters":"0.0","marker_ids":"room.home.stash,landmark.stash"}

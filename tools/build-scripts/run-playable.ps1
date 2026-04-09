@@ -15,8 +15,8 @@ $applicationPath = Get-BuildOutputPath -ConfigurePreset $ConfigurePreset -Config
 $o3deProjectRoot = Get-O3DEProjectRoot
 $o3deLauncher = Get-O3DEGameLauncherPath
 $generatedRoot = Join-Path $repoRoot 'Saved\Generated\o3de'
-$runSummaryPath = Join-Path $generatedRoot 'phase7_1_runtime_spike.md'
-$decisionGatesPath = Join-Path $generatedRoot 'phase7_1_decision_gates.md'
+$runSummaryPath = Join-Path $generatedRoot 'playable_runtime_report.md'
+$decisionGatesPath = Join-Path $generatedRoot 'playable_decision_gates.md'
 
 Assert-PathExists -Path $applicationPath -Description 'Playable host application'
 Assert-PathExists -Path $o3deProjectRoot -Description 'PeterCraft O3DE project'
@@ -35,7 +35,7 @@ if ($LaunchOneRoomProof) {
   $elapsed = [Math]::Round(((Get-Date) - $started).TotalSeconds, 2)
 
   $summary = @"
-# Phase 7.1 Runtime Spike
+# Phase 7.2 Playable Runtime Report
 
 - Timestamp: $(Get-Date)
 - Mode: one_room_proof
@@ -46,14 +46,14 @@ if ($LaunchOneRoomProof) {
   Set-Content -Path $runSummaryPath -Value $summary -Encoding UTF8
 
   $decisionGates = @"
-# Phase 7.1 O3DE Decision Gates
+# Playable Decision Gates
 
 - time to first playable room: measured ($elapsed seconds)
 - time to add one interactable: unmeasured
 - time to add one enemy archetype: unmeasured
 - time to author one blockout room: unmeasured
 - time to debug one AI route failure: unmeasured
-- build reproducibility: see phase7_1_build_summary.md
+- build reproducibility: see playable_build_summary.md
 - average iteration time for a gameplay parameter change: unmeasured
 "@
   Set-Content -Path $decisionGatesPath -Value $decisionGates -Encoding UTF8
@@ -72,7 +72,7 @@ try {
 }
 
 $summary = @"
-# Phase 7.1 Runtime Spike
+# Phase 7.2 Playable Runtime Report
 
 - Timestamp: $(Get-Date)
 - Mode: playable_runtime
@@ -82,6 +82,7 @@ $summary = @"
 - O3DE project: $o3deProjectRoot
 - Launcher: $o3deLauncher
 - Exit code: $exitCode
+- Notes: home base, raid traversal, interaction routing, world-space extraction, results, and return-home are expected to run through the playable session controller
 "@
 Set-Content -Path $runSummaryPath -Value $summary -Encoding UTF8
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Track the measured Phase 7.1 O3DE evidence before broader playable feature work expands.
+Track the measured O3DE evidence as PeterCraft moves from the Phase 7.1 host baseline into the Phase 7.2 playable slice.
 
 ## Required measurements
 
@@ -16,17 +16,18 @@ Track the measured Phase 7.1 O3DE evidence before broader playable feature work 
 
 ## Current evidence sources
 
-- generated build summary: `Saved/Generated/o3de/phase7_1_build_summary.md`
-- generated runtime summary: `Saved/Generated/o3de/phase7_1_runtime_spike.md`
+- generated build summary: `Saved/Generated/o3de/playable_build_summary.md`
+- generated runtime summary: `Saved/Generated/o3de/playable_runtime_report.md`
 - adapter log: `Saved/Logs/petercraft-o3de-adapter.log`
 
-## Phase 7.1 baseline
+## Current baseline
 
 - engine version: `25.10.2`
 - project root: `game/o3de/`
 - one-room proof scene id: `scene.playable.one_room_proof`
-- current playable raid scene id: `scene.raid.machine_silo`
-- current playable home scene id: `scene.home.workshop_yard`
+- current playable raid scene id: `scene.playable.raid.machine_silo`
+- current playable home scene id: `scene.playable.home_base`
+- current playable results scene id: `scene.playable.results`
 
 ## Gate rule
 

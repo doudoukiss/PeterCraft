@@ -1,5 +1,6 @@
 add_executable(PeterCraftApp
   Phase1Slice.cpp
+  PlayableSessionController.cpp
   PeterCraftApp.cpp
   main.cpp
 )

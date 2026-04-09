@@ -12,7 +12,7 @@
 ## Runtime modes
 
 - `headless` is the stable local and CI runtime
-- `playable` is the Windows-only O3DE-backed runtime baseline in Phase 7.1
+- `playable` is the Windows-only O3DE-backed playable session loop in Phase 7.2
 
 ## First-time setup
 
@@ -40,5 +40,5 @@ $env:PETERCRAFT_O3DE_ROOT='D:\tools\o3de\25.10.2'
 ## Notes
 
 - Windows remains the required local path for the playable runtime.
-- Headless stays authoritative for tests and CI in Phase 7.1.
+- Headless stays authoritative for tests and CI in Phase 7.2.
 - The playable path uses the in-repo project at `game/o3de/` and keeps core gameplay rules outside engine-only assets.

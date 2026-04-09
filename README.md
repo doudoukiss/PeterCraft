@@ -1,7 +1,7 @@
 # PeterCraft
 
 PeterCraft is a PC-first, single-player extraction-adventure maker game for children.
-This repository now contains a **Phase 7.1 playable runtime baseline**: the portable headless shell is still the authoritative test path, and the repo now also carries a real O3DE project plus a Windows-only playable bootstrap path.
+This repository now contains a **Phase 7.2 playable runtime slice**: the portable headless shell is still the authoritative test path, and the repo now also carries a real O3DE-backed playable session loop with traversal, interaction, home-base routing, raid flow, results, and physical extraction.
 
 ## Current focus
 
@@ -25,9 +25,9 @@ This repository now contains a **Phase 7.1 playable runtime baseline**: the port
   - used by tests, validation, deterministic scenarios, and CI smoke
   - runs the portable shell with `NullPlatformServices`
 - `playable`
-  - Windows-only Phase 7.1 path
+  - Windows-only Phase 7.2 path
   - bootstraps the pinned O3DE `25.10.2` project under `game/o3de/`
-  - launches real O3DE levels through portable scene bindings while preserving the headless shell
+  - runs the O3DE-backed playable session loop through portable scene bindings, anchor data, and interaction catalogs while preserving the headless shell
 
 More detail is in [operation.md](operation.md), [RUNTIME_MODES.md](docs/setup/RUNTIME_MODES.md), and [O3DE_SETUP.md](docs/setup/O3DE_SETUP.md).
 
@@ -48,13 +48,15 @@ Legacy wrappers still exist:
 
 ## Playable runtime
 
-The playable flow is now a real Phase 7.1 bootstrap:
+The playable flow is now a real Phase 7.2 runtime path:
 
 - registers the pinned O3DE engine root
 - registers the in-repo project at `game/o3de/`
 - builds the portable host app with playable runtime support enabled
 - configures and builds the O3DE project launchers
-- launches bound O3DE levels through the new scene-binding catalog
+- launches bound O3DE levels through the scene-binding catalog
+- runs a long-lived playable session loop across home base, raid, results, and return-home states
+- reports traversal, interaction, extraction, and transition metrics into the Phase 7 playable quality profile
 
 The one-room proof can be launched directly with:
 
@@ -67,9 +69,10 @@ The repo currently includes:
 - the Phase 0 through Phase 6 portable runtime, content, creator, save-safety, validation, and quality work
 - explicit runtime selection with `--runtime headless|playable`
 - a Windows-only O3DE playable project pinned to `25.10.2`
-- O3DE bootstrap, adapter logging, and real scene-binding based level launches
+- O3DE bootstrap, adapter logging, real scene-binding based level launches, and a playable session controller
+- portable traversal, interaction, world-anchor, and extraction runtime types for the Phase 7.2 slice
 - separate Phase 6 shell and Phase 7 playable quality profiles
 - headless-first Windows Debug/Release workflows plus Linux Clang compile smoke in CI
 - additive manual playable smoke workflow expectations without making playable a PR prerequisite yet
 
-The repo still does **not** include the later Phase 7.2+ real-time traversal/combat/HUD slice. Phase 7.1 is the engine-backed host milestone.
+The repo still does **not** include the later Phase 7.3 real-time combat slice or the broader Phase 7.4 readability and HUD polish pass. Phase 7.2 establishes the first playable controller, world, and interaction loop.

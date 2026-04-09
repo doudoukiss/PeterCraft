@@ -2,6 +2,7 @@ add_library(PeterWorld STATIC
   src/ContentCatalog.cpp
   src/SceneShell.cpp
   src/SliceContent.cpp
+  src/WorldQueryService.cpp
   src/WorldModule.cpp
 )
 

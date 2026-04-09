@@ -4,8 +4,10 @@
 #include "PeterAdapters/PlatformServices.h"
 #include "PeterCore/EventBus.h"
 #include "PeterProgression/Crafting.h"
+#include "PeterTraversal/TraversalProfile.h"
 #include "PeterWorkshop/CreatorWorkshop.h"
 #include "PeterWorld/SliceContent.h"
+#include "PeterWorld/WorldQueryService.h"
 
 #include <map>
 #include <string>
@@ -74,6 +76,11 @@ namespace Peter::UI
     const std::map<std::string, double, std::less<>>& tinkerValues,
     const Peter::Workshop::LogicRulesetDefinition* activeRuleset,
     const Peter::Workshop::TinyScriptDefinition* activeScript);
+  [[nodiscard]] std::string RenderTraversalDebugPanel(const Peter::Traversal::TraversalState& state);
+  [[nodiscard]] std::string RenderInteractionPrompt(
+    const Peter::World::InteractionCandidate& candidate,
+    std::string_view inputScheme);
+  [[nodiscard]] std::string RenderExtractionStatus(const Peter::World::ExtractionRuntimeState& state);
   [[nodiscard]] std::string RenderTinyScriptEditor(const Peter::Workshop::TinyScriptDefinition& script);
   [[nodiscard]] std::string RenderReplaySnippet(const Peter::Workshop::CreatorReplaySnippet& snippet);
   [[nodiscard]] std::string RenderMentorSummary(

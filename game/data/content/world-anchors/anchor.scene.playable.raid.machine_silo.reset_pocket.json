@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.raid.machine_silo.reset_pocket","scene_id":"scene.playable.raid.machine_silo","display_name":"Safe Reset Pocket","room_id":"room.raid.guard_post","anchor_kind":"room_marker","entity_name":"ResetPocket","x_meters":"12.0","y_meters":"-4.0","z_meters":"0.0","marker_ids":"room.raid.guard_post,landmark.safe_reset"}

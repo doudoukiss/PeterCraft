@@ -2,15 +2,15 @@
 
 ## Purpose
 
-This runbook explains how to bootstrap, build, validate, test, and run PeterCraft in Phase 7.1.
+This runbook explains how to bootstrap, build, validate, test, and run PeterCraft in Phase 7.2.
 
 The repo supports two runtime modes:
 
 - `headless`
   - the stable default for development, tests, validation, deterministic scenarios, and CI
 - `playable`
-  - the Windows-only O3DE-backed runtime baseline in Phase 7.1
-  - launches real levels from the in-repo O3DE project
+  - the Windows-only O3DE-backed playable session loop in Phase 7.2
+  - launches real levels from the in-repo O3DE project and runs the home-base to raid to results flow
 
 ## Environment
 
@@ -94,6 +94,12 @@ Run the playable runtime:
 powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-playable.ps1
 ```
 
+Run the end-to-end playable smoke flow directly:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-playable.ps1 -Scenario smoke
+```
+
 Launch the one-room proof directly:
 
 ```powershell
@@ -169,6 +175,7 @@ If the playable path does not run:
 2. Run `build-playable.ps1`.
 3. Check `Saved/Logs/petercraft-o3de-adapter.log`.
 4. Re-run `run-playable.ps1 -LaunchOneRoomProof`.
+5. Re-run `run-playable.ps1 -Scenario smoke`.
 
 If scene loading fails:
 
@@ -183,6 +190,7 @@ A run is considered healthy when:
 - the headless app launches without crashing
 - headless validation and tests are green
 - the playable build completes
-- `run-playable.ps1` launches the O3DE project without a bootstrap failure
+- `run-playable.ps1` completes the home-base to raid to extraction to results loop without a bootstrap failure
+- `run-playable.ps1 -Scenario smoke` completes the playable smoke loop
 - `run-playable.ps1 -LaunchOneRoomProof` opens the proof room
 - quality and save-health checks stay green

@@ -1,11 +1,11 @@
 {
     "project_name": "PeterCraftRuntime",
-    "version": "0.7.1",
+    "version": "0.7.2",
     "project_id": "{43106C64-41F8-4AD4-9639-812D005C0A49}",
     "origin": "https://github.com/petercraft/petercraft",
     "license": "Apache-2.0",
     "display_name": "PeterCraftRuntime",
-    "summary": "O3DE-backed playable runtime baseline for PeterCraft Phase 7.1.",
+    "summary": "O3DE-backed playable session runtime for PeterCraft Phase 7.2.",
     "canonical_tags": [
         "Project",
         "PlayableRuntime"

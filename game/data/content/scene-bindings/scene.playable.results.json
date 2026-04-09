@@ -1,1 +1,1 @@
-{"scene_id":"scene.results.success","display_name":"Playable Raid Results","level_name":"raid_results","level_asset_path":"Levels/raid_results/raid_results.prefab","spawn_point_id":"spawn.results.entry","transition_card_id":"transition.raid_results","proof_room":"false"}
+{"scene_id":"scene.playable.results","display_name":"Playable Raid Results","level_name":"raid_results","level_asset_path":"Levels/raid_results/raid_results.prefab","spawn_point_id":"spawn.results.entry","transition_card_id":"transition.playable.results","proof_room":"false"}

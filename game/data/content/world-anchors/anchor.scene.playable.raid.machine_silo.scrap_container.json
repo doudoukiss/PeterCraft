@@ -1,0 +1,1 @@
+{"id":"anchor.scene.playable.raid.machine_silo.scrap_container","scene_id":"scene.playable.raid.machine_silo","display_name":"Scrap Container","room_id":"room.raid.salvage_nook","anchor_kind":"loot","entity_name":"ScrapContainer","x_meters":"9.0","y_meters":"2.0","z_meters":"0.0","marker_ids":"room.raid.salvage_nook,landmark.scrap_container"}

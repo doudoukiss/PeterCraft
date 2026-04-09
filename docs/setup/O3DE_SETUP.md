@@ -2,7 +2,7 @@
 
 ## Scope
 
-This guide covers the Phase 7.1 playable runtime baseline.
+This guide covers the Phase 7.2 playable runtime path.
 
 Pinned engine version:
 
@@ -78,13 +78,12 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-scripts\run-playable.ps1 
 
 Logical scenes stay portable in `game/data/content/scene-bindings/`.
 
-Current Phase 7.1 bindings:
+Current playable bindings:
 
 - `scene.playable.one_room_proof`
-- `scene.home.workshop_yard`
-- `scene.raid.machine_silo`
-- `scene.results.success`
-- `scene.results.failure`
+- `scene.playable.home_base`
+- `scene.playable.raid.machine_silo`
+- `scene.playable.results`
 
 These map into real O3DE levels under `game/o3de/Levels/`.
 
@@ -101,6 +100,7 @@ Useful checks:
 3. confirm the launcher/editor/asset processor executables exist
 4. confirm `game/data/content/scene-bindings/` points at real level prefabs
 5. rerun `run-playable.ps1 -LaunchOneRoomProof`
+6. rerun `run-playable.ps1 -Scenario smoke`
 
 ## Re-run the proof room fast
 

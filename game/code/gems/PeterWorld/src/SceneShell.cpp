@@ -2,6 +2,8 @@
 
 #include "PeterAdapters/PlatformServices.h"
 
+#include <chrono>
+
 namespace Peter::World
 {
   SceneShell::SceneShell(
@@ -12,14 +14,14 @@ namespace Peter::World
   {
   }
 
-  SceneState SceneShell::LoadScene(const std::string& sceneId) const
+  SceneState SceneShell::LoadScene(const std::string& sceneId)
   {
     const SceneState state{sceneId, "mission.foundation.none", SceneKind::Menu};
     RequestEngineSceneLoad(state);
     return state;
   }
 
-  SceneState SceneShell::LoadHomeBase(const HomeBaseDefinition& homeBase) const
+  SceneState SceneShell::LoadHomeBase(const HomeBaseDefinition& homeBase)
   {
     const SceneState state{homeBase.sceneId, "mission.none.home", SceneKind::HomeBase};
     RequestEngineSceneLoad(state);
@@ -33,7 +35,7 @@ namespace Peter::World
     return state;
   }
 
-  SceneState SceneShell::LoadRaidZone(const RaidZoneDefinition& raidZone) const
+  SceneState SceneShell::LoadRaidZone(const RaidZoneDefinition& raidZone)
   {
     const SceneState state{raidZone.sceneId, raidZone.missionId, SceneKind::RaidZone};
     RequestEngineSceneLoad(state);
@@ -48,7 +50,7 @@ namespace Peter::World
     return state;
   }
 
-  SceneState SceneShell::LoadRaidResults(const std::string_view missionId, const bool success) const
+  SceneState SceneShell::LoadRaidResults(const std::string_view missionId, const bool success)
   {
     const std::string sceneId = success ? "scene.results.success" : "scene.results.failure";
     const SceneState state{sceneId, std::string(missionId), SceneKind::RaidResults};
@@ -64,11 +66,22 @@ namespace Peter::World
     return state;
   }
 
-  void SceneShell::RequestEngineSceneLoad(const SceneState& state) const
+  const SceneTransitionState& SceneShell::LastTransition() const
+  {
+    return m_lastTransition;
+  }
+
+  void SceneShell::RequestEngineSceneLoad(const SceneState& state)
   {
     const auto* binding = FindPhase7PlayableSceneBinding(state.sceneId);
     if (binding == nullptr)
     {
+      m_lastTransition.previousScene = m_lastTransition.currentScene;
+      m_lastTransition.currentScene = state;
+      m_lastTransition.spawnPointId.clear();
+      m_lastTransition.transitionCardId.clear();
+      m_lastTransition.statusCode = "binding_missing";
+      m_lastTransition.lastDurationMs = 0.0;
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
         "gameplay.scene.binding_missing",
@@ -78,6 +91,11 @@ namespace Peter::World
         }});
       return;
     }
+
+    m_lastTransition.previousScene = m_lastTransition.currentScene;
+    m_lastTransition.currentScene = state;
+    m_lastTransition.spawnPointId = binding->spawnPointId;
+    m_lastTransition.transitionCardId = binding->transitionCardId;
 
     m_eventBus.Emit(Peter::Core::Event{
       Peter::Core::EventCategory::Gameplay,
@@ -91,6 +109,8 @@ namespace Peter::World
 
     if (m_sceneAdapter == nullptr)
     {
+      m_lastTransition.statusCode = "headless_or_no_scene_adapter";
+      m_lastTransition.lastDurationMs = 0.0;
       m_eventBus.Emit(Peter::Core::Event{
         Peter::Core::EventCategory::Gameplay,
         "gameplay.scene.transition.deferred",
@@ -102,21 +122,27 @@ namespace Peter::World
       return;
     }
 
+    const auto started = std::chrono::steady_clock::now();
     const auto loadResult = m_sceneAdapter->LoadScene(Peter::Adapters::SceneLoadRequest{
       state.sceneId,
       binding->levelName,
       binding->levelAssetPath,
       binding->spawnPointId});
+    const auto finished = std::chrono::steady_clock::now();
+    m_lastTransition.statusCode = loadResult.statusCode;
+    m_lastTransition.lastDurationMs =
+      std::chrono::duration<double, std::milli>(finished - started).count();
 
     m_eventBus.Emit(Peter::Core::Event{
       Peter::Core::EventCategory::Gameplay,
       loadResult.success ? "gameplay.scene.transition.loaded" : "gameplay.scene.transition.failed",
       {
-        {"backend", loadResult.backendName},
-        {"level_name", binding->levelName},
-        {"message", loadResult.message},
-        {"scene_id", state.sceneId},
-        {"status", loadResult.statusCode}
+          {"backend", loadResult.backendName},
+          {"level_name", binding->levelName},
+          {"message", loadResult.message},
+          {"scene_id", state.sceneId},
+          {"status", loadResult.statusCode},
+          {"transition_ms", std::to_string(m_lastTransition.lastDurationMs)}
       }});
   }
 } // namespace Peter::World

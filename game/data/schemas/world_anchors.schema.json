@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "scene_id",
+    "display_name",
+    "room_id",
+    "anchor_kind",
+    "entity_name",
+    "x_meters",
+    "y_meters",
+    "z_meters",
+    "marker_ids"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "scene_id": {"type": "string", "minLength": 1},
+    "display_name": {"type": "string", "minLength": 1},
+    "room_id": {"type": "string", "minLength": 1},
+    "anchor_kind": {"type": "string", "enum": ["spawn", "station", "room_marker", "loot", "mission", "extraction", "terminal", "results"]},
+    "entity_name": {"type": "string", "minLength": 1},
+    "x_meters": {"type": "string", "pattern": "^-?[0-9.]+$"},
+    "y_meters": {"type": "string", "pattern": "^-?[0-9.]+$"},
+    "z_meters": {"type": "string", "pattern": "^-?[0-9.]+$"},
+    "marker_ids": {"type": "string"}
+  },
+  "additionalProperties": true
+}

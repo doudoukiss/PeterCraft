@@ -24,6 +24,9 @@ CONTENT_SCHEMA_BY_DIR = {
   "encounter-patterns": "encounter_patterns.schema.json",
   "mission-blueprints": "mission_blueprints.schema.json",
   "scene-bindings": "scene_bindings.schema.json",
+  "world-anchors": "world_anchors.schema.json",
+  "interactions": "interactions.schema.json",
+  "playable-room-metrics": "playable_room_metrics.schema.json",
   "feedback-tags": "feedback_tags.schema.json",
   "style-profiles": "style_profiles.schema.json",
   "content-manifests": "content_manifests.schema.json",
@@ -98,9 +101,16 @@ def load_content_registry() -> dict[str, dict[str, dict[str, str]]]:
   registry: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
   for path in iter_content_files():
     payload = load_json(path)
-    if not isinstance(payload, dict) or "id" not in payload:
+    if not isinstance(payload, dict):
       continue
-    registry[path.parent.name][str(payload["id"])] = {str(key): str(value) for key, value in payload.items()}
+    content_key = None
+    if "id" in payload:
+      content_key = str(payload["id"])
+    elif "scene_id" in payload:
+      content_key = str(payload["scene_id"])
+    if content_key is None:
+      continue
+    registry[path.parent.name][content_key] = {str(key): str(value) for key, value in payload.items()}
   return registry
 
 
@@ -121,6 +131,9 @@ def validate_content_registry() -> list[str]:
   encounter_patterns = registry["encounter-patterns"]
   mission_blueprints = registry["mission-blueprints"]
   scene_bindings = registry["scene-bindings"]
+  world_anchors = registry["world-anchors"]
+  interactions = registry["interactions"]
+  playable_room_metrics = registry["playable-room-metrics"]
   feedback_tags = registry["feedback-tags"]
   style_profiles = registry["style-profiles"]
   manifests = registry["content-manifests"]
@@ -223,6 +236,34 @@ def validate_content_registry() -> list[str]:
         )
     else:
       issues.append(f"game/data/content/scene-bindings/{content_id}.json: missing level_asset_path")
+
+  anchors_by_scene: dict[str, set[str]] = defaultdict(set)
+  for content_id, payload in world_anchors.items():
+    scene_id = payload.get("scene_id", "")
+    anchors_by_scene[scene_id].add(content_id)
+    try:
+      float(payload.get("x_meters", "0"))
+      float(payload.get("y_meters", "0"))
+      float(payload.get("z_meters", "0"))
+    except ValueError:
+      issues.append(f"game/data/content/world-anchors/{content_id}.json: anchor coordinates must parse as numbers")
+
+  for content_id, payload in interactions.items():
+    scene_id = payload.get("scene_id", "")
+    anchor_id = payload.get("anchor_id", "")
+    if scene_id not in scene_ids:
+      issues.append(f"game/data/content/interactions/{content_id}.json: interaction scene_id has no scene binding")
+    if anchor_id not in world_anchors:
+      issues.append(f"game/data/content/interactions/{content_id}.json: interaction anchor_id is unknown")
+    elif world_anchors[anchor_id].get("scene_id") != scene_id:
+      issues.append(f"game/data/content/interactions/{content_id}.json: interaction anchor scene_id does not match interaction scene_id")
+
+  for content_id, payload in playable_room_metrics.items():
+    if payload.get("scene_id") not in scene_ids:
+      issues.append(f"game/data/content/playable-room-metrics/{content_id}.json: metrics scene_id has no scene binding")
+    review = REVIEW_ROOT / "playable-spaces" / f"{payload.get('scene_id')}.md"
+    if not review.exists():
+      issues.append(f"{review.relative_to(REPO_ROOT)}: missing playable-space review record")
 
   for manifest_id, payload in manifests.items():
     for room_variant_id in split_csv(payload.get("room_variant_ids", "")):

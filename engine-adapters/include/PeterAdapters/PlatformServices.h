@@ -38,6 +38,38 @@ namespace Peter::Adapters
     bool jump = false;
     bool crouch = false;
     bool interact = false;
+    bool primaryAction = false;
+    bool secondaryAction = false;
+    bool callCompanion = false;
+    bool openInventory = false;
+    bool openExplain = false;
+    bool pause = false;
+    double moveAxisX = 0.0;
+    double moveAxisY = 0.0;
+    double lookAxisX = 0.0;
+    double lookAxisY = 0.0;
+    bool sprintPressed = false;
+    bool sprintHeld = false;
+    bool jumpPressed = false;
+    bool jumpHeld = false;
+    bool crouchPressed = false;
+    bool crouchHeld = false;
+    bool interactPressed = false;
+    bool interactHeld = false;
+    bool primaryActionPressed = false;
+    bool primaryActionHeld = false;
+    bool secondaryActionPressed = false;
+    bool secondaryActionHeld = false;
+    bool callCompanionPressed = false;
+    bool callCompanionHeld = false;
+    bool openInventoryPressed = false;
+    bool openInventoryHeld = false;
+    bool openExplainPressed = false;
+    bool openExplainHeld = false;
+    bool pausePressed = false;
+    bool pauseHeld = false;
+    bool controllerActive = false;
+    bool mouseKeyboardActive = true;
   };
 
   struct ActionBinding
