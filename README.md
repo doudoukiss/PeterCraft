@@ -6,7 +6,7 @@ This repository now contains a **Phase 7.2 playable runtime slice**: the portabl
 ## Current focus
 
 - keep gameplay rules portable and data-driven
-- preserve the headless shell for tests, validation, and CI
+- preserve the headless shell for local tests and validation
 - host the runtime through O3DE without pushing core rules into engine-only scripts
 - keep quality, save safety, explainability, and creator safety mandatory during playable integration
 
@@ -22,7 +22,7 @@ This repository now contains a **Phase 7.2 playable runtime slice**: the portabl
 
 - `headless`
   - default and stable
-  - used by tests, validation, deterministic scenarios, and CI smoke
+  - used by local tests, validation and deterministic smoke scenarios
   - runs the portable shell with `NullPlatformServices`
 - `playable`
   - Windows-only Phase 7.2 path
@@ -72,7 +72,7 @@ The repo currently includes:
 - O3DE bootstrap, adapter logging, real scene-binding based level launches, and a playable session controller
 - portable traversal, interaction, world-anchor, and extraction runtime types for the Phase 7.2 slice
 - separate Phase 6 shell and Phase 7 playable quality profiles
-- headless-first Windows Debug/Release workflows plus Linux Clang compile smoke in CI
-- additive manual playable smoke workflow expectations without making playable a PR prerequisite yet
+- headless-first Windows Debug/Release checks plus Linux Clang compile smoke; retained CI workflows are inactive
+- additive manual playable smoke checks without making playable a PR prerequisite yet
 
 The repo still does **not** include the later Phase 7.3 real-time combat slice or the broader Phase 7.4 readability and HUD polish pass. Phase 7.2 establishes the first playable controller, world, and interaction loop.
